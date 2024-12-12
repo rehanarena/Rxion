@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
+  <!-- Heart with ribbon -->
+  <path d="M250 160c-40-50-110-20-110 40 0 50 55 80 110 120 55-40 110-70 110-120 0-60-70-90-110-40z" fill="#00BFFF" />
+  <path d="M250 320c-15-15-60-40-90-55-10-5-15 10-7 15 40 20 90 60 97 70 7-10 70-50 97-70 8-5 3-20-7-15-30 15-75 40-90 55z" fill="#00BFFF" />
+
+  <!-- Text -->
+  <text x="250" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" fill="#303EFF">Rxion</text>
+  <text x="250" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#303EFF">Health care</text>
+</svg>
