@@ -1,84 +1,80 @@
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, useContext } from "react";
+import axios from "axios";
+import { AppContext } from "../context/AppContext";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
-const OtpVerify: React.FC = () => {
-  const [otp, setOtp] = useState<string[]>(new Array(6).fill("")); // State for 6-digit OTP
-  const [message, setMessage] = useState<string>("");
 
-  // Handle input change for each box
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement>,
-    index: number
-  ): void => {
-    const value = e.target.value;
-    if (/^[0-9]?$/.test(value)) {
-      const newOtp = [...otp];
-      newOtp[index] = value;
-      setOtp(newOtp);
+interface AppContextType {
+  backendUrl: string;
+  token: string | null;
+  setToken: (token: string) => void;
+}
+const VerifyOtp = () => {
+   const { backendUrl } = useContext(AppContext) as AppContextType;
+  const navigate = useNavigate();
+  const [otp, setOtp] = useState("");
+  const [userId, setUserId] = useState<string | undefined>(undefined);
 
-      // Move focus to the next input
-      if (value && e.target.nextSibling) {
-        (e.target.nextSibling as HTMLInputElement).focus();
-      }
-    }
-  };
+  // Get the userId passed from the registration page
+  const { state } = useLocation();
 
-  // Handle form submission
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-
-    const enteredOtp = otp.join("");
-    if (enteredOtp.length === 6) {
-      // Replace with your OTP verification logic
-      console.log("OTP Submitted:", enteredOtp);
-      setMessage("OTP Verified Successfully!");
+  useEffect(() => {
+    console.log('State:', state); // Debugging log
+    if (state && state.userId) {
+      setUserId(state.userId);
     } else {
-      setMessage("Please enter a valid 6-digit OTP.");
+      console.error("userId not passed to VerifyOtp component.");
+    }
+  }, [state]);
+  
+
+  const verifyOtpHandler = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    console.log("Entered OTP: ", otp); // Log OTP for debugging
+    console.log('User ID:', userId);
+  
+    try {
+      const { data } = await axios.post(backendUrl + "/api/user/verify-otp", {
+        otp,
+        userId,
+      });
+      if (data.success) {
+        toast.success(data.message);
+        navigate("/login");  // Redirect to login page after successful verification
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error((error as Error).message);
     }
   };
+  
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-6 bg-white shadow-md rounded-lg">
-        <h2 className="text-2xl font-bold text-center mb-2">
-          Enter Verification Code
-        </h2>
-        <p className="text-gray-600 text-center mb-4">
-          OTP has been sent via email
-        </p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex justify-center gap-2">
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                type="text"
-                value={digit}
-                onChange={(e) => handleChange(e, index)}
-                maxLength={1}
-                className="w-12 h-12 text-center text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            ))}
-          </div>
-          <button
-            type="submit"
-            className="w-full px-4 py-2 text-white bg-indigo-500 rounded-md hover:bg-indigo-600 transition duration-300"
-          >
-            Verify OTP
-          </button>
-        </form>
-        {message && (
-          <p
-            className={`mt-4 text-center ${
-              message.includes("Successfully")
-                ? "text-green-600"
-                : "text-red-600"
-            }`}
-          >
-            {message}
-          </p>
-        )}
+    <form onSubmit={verifyOtpHandler} className="min-h-[80vh] flex items-center">
+      <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-96 border rounded-xl text-zinc-600 text-sm shadow-lg">
+        <p className="text-2xl font-semibold">Verify OTP</p>
+        <p>Enter the OTP sent to your email.</p>
+        <div className="w-full">
+          <label className="block">
+            OTP
+            <input
+              className="border border-zinc-300 rounded w-full p-2 mt-1"
+              type="text"
+              onChange={(e) => setOtp(e.target.value)}
+              value={otp}
+              required
+            />
+          </label>
+        </div>
+        <button type="submit" className="bg-primary text-white w-full py-2 rounded-md text-base">
+          Verify OTP
+        </button>
       </div>
-    </div>
+    </form>
   );
 };
 
-export default OtpVerify;
+export default VerifyOtp;
+

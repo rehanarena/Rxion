@@ -5,6 +5,7 @@ interface AppContextType {
     token: string | null; // Allow null for logout
     setToken: (token: string | null) => void; // Accept null
     backendUrl: string;
+    userId: string | null;
 }
 
 // Create the context with the defined type
@@ -19,11 +20,13 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     // console.log("Backend URL:", backendUrl);
 
     const [token, setToken] = useState<string | null>(null); 
+    const [userId] = useState<string | null>(null);
 
     const value = {
         token,
         setToken,
         backendUrl,
+        userId,
     };
 
     return (

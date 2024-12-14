@@ -13,6 +13,9 @@ interface IUser extends Document {
   gender: string;
   dob: string;
   phone: string;
+  isVerified: boolean;
+  otp: string | null; // OTP field
+  otpExpires: Date | null; 
 }
 
 // Define the Mongoose schema
@@ -28,9 +31,12 @@ const userSchema = new Schema<IUser>({
   gender: { type: String, default: 'Not Selected' },
   dob: { type: String, default: 'Not Selected' },
   phone: { type: String, default: '000000' },
+  isVerified: { type: Boolean, default: false },
+  otp: { type: String, default: null }, // Store OTP
+  otpExpires: { type: Date, default: null },
 });
 
 // Define the Mongoose model
-const userModel: Model<IUser> = mongoose.models.user || mongoose.model<IUser>("user", userSchema);
+const userModel: Model<IUser> = mongoose.models.user || mongoose.model<IUser>("User", userSchema);
 
 export default userModel;

@@ -20,38 +20,42 @@ const Login = () => {
   const [name, setName] = useState<string>("");
 
   // Handle form submission for Login and Sign Up
-  const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    event.preventDefault();
+  // In your Login component, modify the registration flow
 
-    try {
-      if (state === "Sign Up") {
-        const { data } = await axios.post(backendUrl + "/api/user/register", {
-          name,
-          password,
-          email,
-        });
-        if (data.success) {
-          localStorage.setItem("token", data.token);
-          setToken(data.token);
-        } else {
-          toast.error(data.message);
-        }
+const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  event.preventDefault();
+
+  try {
+    if (state === "Sign Up") {
+      const { data } = await axios.post(backendUrl + "/api/user/register", {
+        name,
+        password,
+        email,
+      });
+      if (data.success) {
+        toast.success(data.message);
+        console.log("User ID before navigating:", data.userId);
+        navigate("/verify-otp", { state: { userId: data.userId } });  
       } else {
-        const { data } = await axios.post(backendUrl + "/api/user/login", {
-          password,
-          email,
-        });
-        if (data.success) {
-          localStorage.setItem("token", data.token);
-          setToken(data.token);
-        } else {
-          toast.error(data.message);
-        }
+        toast.error(data.message);
       }
-    } catch (error) {
-      toast.error((error as Error).message);
+    } else {
+      const { data } = await axios.post(backendUrl + "/api/user/login", {
+        password,
+        email,
+      });
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        setToken(data.token);
+        navigate("/");  // Redirect to home page
+      } else {
+        toast.error(data.message);
+      }
     }
-  };
+  } catch (error) {
+    toast.error((error as Error).message);
+  }
+};
 
   useEffect(() => {
     if (token) {

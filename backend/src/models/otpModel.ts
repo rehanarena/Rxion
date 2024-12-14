@@ -1,37 +1,16 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-interface IOtpData extends Document {
-  userId: string;
+interface IOTP extends Document {
   otp: string;
-  createdAt: Date;
+  userId: mongoose.Schema.Types.ObjectId;
   expiresAt: Date;
 }
 
-const otpSchema = new Schema<IOtpData>(
-  {
-    userId: {
-      type: String,
-      required: true,
-    },
-    otp: {
-      type: String,
-      required: true,
-    },
-    createdAt: {
-      type: Date,
-    },
-    expiresAt: {
-      type: Date,
-      expires: 300, // 300 seconds = 5 minutes
-      default: Date.now,
-    },
-  },
-  { timestamps: true }
-);
+const otpSchema = new Schema<IOTP>({
+  otp: { type: String, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  expiresAt: { type: Date, required: true },
+});
 
-// Create an index on the `expiresAt` field to enable TTL
-otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
-const OtpData = mongoose.model<IOtpData>('OtpData', otpSchema);
-
-export default OtpData;
+const OTP = mongoose.model<IOTP>('OTP', otpSchema);
+export default OTP;
