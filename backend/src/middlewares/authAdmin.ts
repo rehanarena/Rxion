@@ -4,15 +4,15 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const secretKey = process.env.JWT_SECRET as string; 
+const secretKey = process.env.JWT_SECRET as string;
+const adminEmail = process.env.ADMIN_EMAIL as string;
+const adminPassword = process.env.ADMIN_PASSWORD as string;
 
-/**
- * Admin authentication middleware
- * @param req - Express request object
- * @param res - Express response object
- * @param next - Express next function
- */
-const authAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const authAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const atoken = req.headers.atoken as string;
 
@@ -24,12 +24,12 @@ const authAdmin = async (req: Request, res: Response, next: NextFunction): Promi
       return;
     }
 
-    const tokenDecode = jwt.verify(atoken, secretKey) as JwtPayload;
+    const token_decode = jwt.verify(atoken, secretKey) as JwtPayload;
+    // console.log("Decoded Token:", token_decode);
 
-    // Validate the decoded token
     const isValid =
-      tokenDecode.email === process.env.ADMIN_EMAIL &&
-      tokenDecode.password === process.env.ADMIN_PASSWORD;
+      token_decode.email === adminEmail &&
+      token_decode.password === adminPassword;
 
     if (!isValid) {
       res.status(401).json({

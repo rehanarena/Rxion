@@ -17,6 +17,7 @@ const Login = () => {
   const [state, setState] = useState<"Sign Up" | "Login">("Sign Up");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
 
   // Handle form submission for Login and Sign Up
@@ -31,6 +32,7 @@ const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>): Promise
         name,
         password,
         email,
+        confirmPassword,
       });
       if (data.success) {
         toast.success(data.message);
@@ -109,6 +111,20 @@ const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>): Promise
               required
             />
           </label>
+          {state === "Sign Up" && (
+        <div className="w-full">
+          <label className="block">
+            ConfirmPassword
+            <input
+              className="border border-zinc-300 rounded w-full p-2 mt-1"
+              type="confirmPassword"
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              value={confirmPassword}
+              required
+            />
+          </label>
+        </div>
+         )}
         </div>
         <button type="submit" className="bg-primary text-white w-full py-2 rounded-md text-base">
           {state === "Sign Up" ? "Create Account" : "Login"}
@@ -128,6 +144,17 @@ const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>): Promise
             Create a new account?{" "}
             <span
               onClick={() => setState("Sign Up")}
+              className="text-primary underline cursor-pointer"
+            >
+              Click here
+            </span>
+          </p>
+        )}
+         {state === "Login" && (
+          <p>
+            Forgot your password?{" "}
+            <span
+              onClick={() => navigate("/forgot-password")}
               className="text-primary underline cursor-pointer"
             >
               Click here

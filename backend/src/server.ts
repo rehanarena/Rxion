@@ -5,6 +5,8 @@ import connectDB from './config/mongodb';
 import connectCloudinary from './config/cloudinary';
 import adminRouter from './routes/adminRoute';
 import userRouter from './routes/userRoute';
+import fs from "fs";
+import path from "path";
 
 // App configuration
 const app: Application = express(); 
@@ -26,6 +28,14 @@ app.use('/api/user',userRouter)
 app.get("/", (req, res) => {
   res.send("API Working");
 });
+
+//manually upload file
+const uploadDir = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+
 
 // Start the server
 app.listen(port, (): void => {

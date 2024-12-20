@@ -1,39 +1,49 @@
-import { createContext, useState, ReactNode } from "react";
+import { createContext, useState, ReactNode, useContext } from "react";
 
-// Define types for the context value
 interface AppContextType {
-    token: string | null; // Allow null for logout
-    setToken: (token: string | null) => void; // Accept null
-    backendUrl: string;
-    userId: string | null;
+  token: string | null; 
+  setToken: (token: string | null) => void; 
+  backendUrl: string;
+  userId: string | null; 
+  setUserId: (userId: string | null) => void; 
 }
 
 // Create the context with the defined type
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 interface AppContextProviderProps {
-    children: ReactNode;
+  children: ReactNode;
 }
 
 const AppContextProvider = ({ children }: AppContextProviderProps) => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL ; 
-    // console.log("Backend URL:", backendUrl);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-    const [token, setToken] = useState<string | null>(null); 
-    const [userId] = useState<string | null>(null);
+  // State for token and userId
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-    const value = {
-        token,
-        setToken,
-        backendUrl,
-        userId,
-    };
+  const value = {
+    token,
+    setToken,
+    backendUrl,
+    userId,
+    setUserId, 
+  };
 
-    return (
-        <AppContext.Provider value={value}>
-            {children}
-        </AppContext.Provider>
-    );
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+// Custom hook to access context
+export const useAppContext = (): AppContextType => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error("useAppContext must be used within an AppContextProvider");
+  }
+  return context;
 };
 
 export default AppContextProvider;

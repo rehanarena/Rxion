@@ -1,39 +1,54 @@
 import { useContext, useState, FormEvent } from "react";
 import { AdminContext } from "../context/AdminContext";
+import { DoctorContext } from "../context/DoctorContext";
 import axios from "axios";
+import { toast } from "react-toastify";
 
-const Login: React.FC = () => {
-  const { setAToken, backendUrl } = useContext(AdminContext); // Correctly typed context
+const Login = () => {
   const [state, setState] = useState<"Admin" | "Doctor">("Admin");
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
-  const onSubmitHandler = async (event: FormEvent): Promise<void> => {
+  const { setAToken, backendUrl } = useContext(AdminContext)!; 
+  const { setDToken } = useContext(DoctorContext)!; 
+
+  const onSubmitHandler = async (event: FormEvent) => {
     event.preventDefault();
     try {
       if (state === "Admin") {
-        const { data } = await axios.post(`${backendUrl}/api/admin/login`, {
-          email,
-          password,
-        });
+        const { data } = await axios.post(`${backendUrl}/api/admin/login`, { email, password });
         if (data.success) {
-          console.log("Token:", data.token);
+          localStorage.setItem("aToken", data.token);
           setAToken(data.token);
+          toast.success('Admin logged in successfully');
+          console.log("Admin Token:", data.token);
+        } else {
+          toast.error(data.message);
         }
       } else {
-        console.log("Doctor login is not implemented yet.");
+        const { data } = await axios.post(`${backendUrl}/api/doctor/login`, { email, password });
+        if (data.success) {
+          localStorage.setItem("dToken", data.token); 
+          setDToken(data.token); 
+          toast.success('Doctor logged in successfully');
+        } else {
+          toast.error(data.message);
+        }
       }
-    } catch (error) {
-      console.error("Error logging in:", error);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unknown error occurred');
+      }
     }
   };
-
 
   return (
     <form onSubmit={onSubmitHandler} className="min-h-[80vh] flex items-center">
       <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-[-340px] sm:min-w-96 border rounded-xl text-[#5E5E5E] text-sm shadow-lg">
         <p className="text-2xl font-semibold m-auto">
-          <span className="text-primary">{state}</span> Login
+          <span className="text-primary"> {state} </span>Login
         </p>
         <div className="w-full">
           <p>Email</p>

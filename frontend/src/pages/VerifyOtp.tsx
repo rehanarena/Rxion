@@ -4,52 +4,97 @@ import { AppContext } from "../context/AppContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-
 interface AppContextType {
   backendUrl: string;
   token: string | null;
   setToken: (token: string) => void;
 }
+
 const VerifyOtp = () => {
-   const { backendUrl } = useContext(AppContext) as AppContextType;
+  const { backendUrl } = useContext(AppContext) as AppContextType;
   const navigate = useNavigate();
   const [otp, setOtp] = useState("");
-  const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  const [timer, setTimer] = useState(60); // Countdown timer in seconds
+  const [isResendActive, setIsResendActive] = useState(false);
 
-  // Get the userId passed from the registration page
+  // Get userId and context (registration or forgot-password)
   const { state } = useLocation();
+  const { userId, isForPasswordReset } = state || {}; // Added isForPasswordReset flag
 
   useEffect(() => {
-    console.log('State:', state); // Debugging log
-    if (state && state.userId) {
-      setUserId(state.userId);
-    } else {
-      console.error("userId not passed to VerifyOtp component.");
+    if (!userId) {
+      toast.error("Invalid access! Redirecting to registration.");
+      navigate("/register");
     }
-  }, [state]);
-  
+  }, [userId, navigate]);
+
+  // Timer Effect
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+
+      return () => clearInterval(interval); 
+    } else {
+      setIsResendActive(true); 
+    }
+  }, [timer]);
 
   const verifyOtpHandler = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log("Entered OTP: ", otp); // Log OTP for debugging
-    console.log('User ID:', userId);
-  
+    if (!/^\d{6}$/.test(otp)) {
+      toast.error("OTP must be a 6-digit number.");
+      return;
+    }
+    setIsLoading(true);
     try {
-      const { data } = await axios.post(backendUrl + "/api/user/verify-otp", {
+      const { data } = await axios.post(`${backendUrl}/api/user/verify-otp`, {
         otp,
         userId,
       });
       if (data.success) {
         toast.success(data.message);
-        navigate("/login");  // Redirect to login page after successful verification
+        
+        if (isForPasswordReset) {
+          // If it's for password reset, navigate to reset password page
+          navigate("/reset-password", { state: { userId } });
+        } else {
+          // If it's for registration, navigate to login page
+          navigate("/login");
+        }
       } else {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error((error as Error).message);
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(error.response.data.message || "Failed to verify OTP.");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
+  const resendOtpHandler = async () => {
+    try {
+      setIsResendActive(false);
+      setTimer(60); // Reset timer to 60 seconds
+      const { data } = await axios.post(`${backendUrl}/api/user/resend-otp`, {
+        userId,
+      });
+      if (data.success) {
+        toast.success("OTP has been resent to your email.");
+      } else {
+        toast.error(data.message);
+      }
+    } catch  {
+      toast.error("Failed to resend OTP. Please try again.");
+      setIsResendActive(true); // Allow retry if the API call fails
+    }
+  };
 
   return (
     <form onSubmit={verifyOtpHandler} className="min-h-[80vh] flex items-center">
@@ -65,11 +110,33 @@ const VerifyOtp = () => {
               onChange={(e) => setOtp(e.target.value)}
               value={otp}
               required
+              aria-label="Enter OTP"
             />
           </label>
         </div>
-        <button type="submit" className="bg-primary text-white w-full py-2 rounded-md text-base">
-          Verify OTP
+        <button
+          type="submit"
+          className={`bg-primary text-white w-full py-2 rounded-md text-base ${
+            isLoading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          disabled={isLoading}
+        >
+          {isLoading ? "Verifying..." : "Verify OTP"}
+        </button>
+        <p className="text-sm text-zinc-500 mt-2">
+          {timer > 0
+            ? `Resend OTP in ${timer} seconds`
+            : "You can now resend the OTP."}
+        </p>
+        <button
+          type="button"
+          onClick={resendOtpHandler}
+          className={`text-primary mt-2 text-base ${
+            isResendActive ? "" : "opacity-50 cursor-not-allowed"
+          }`}
+          disabled={!isResendActive}
+        >
+          Resend OTP
         </button>
       </div>
     </form>
@@ -77,4 +144,3 @@ const VerifyOtp = () => {
 };
 
 export default VerifyOtp;
-

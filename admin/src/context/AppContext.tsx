@@ -1,19 +1,20 @@
-import React, { createContext, ReactNode } from "react";
+import { createContext, ReactNode } from "react";
 
-// Define the type for the context value
-interface AppContextValue {
-  // Add properties as required, e.g., example: string;
+
+interface AppContextType {
+  settoken :string
 }
 
-// Initialize the context with a default value (if needed)
-export const AppContext = createContext<AppContextValue | undefined>(undefined);
+export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 interface AppContextProviderProps {
-  children: ReactNode; // Type for children prop
+  children: ReactNode;
 }
 
-const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => {
-  const value: AppContextValue = {}; // Provide an appropriate initial value
+const AppContextProvider = ({ children }: AppContextProviderProps) => {
+  const value: AppContextType = {
+    
+  };
 
   return (
     <AppContext.Provider value={value}>{children}</AppContext.Provider>
