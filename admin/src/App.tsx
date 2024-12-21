@@ -4,18 +4,49 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AdminContext } from './context/AdminContext';
 import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import { Route, Routes } from 'react-router-dom';
+import Dashboard from '../src/pages/Admin/Dashboard';
+import AllAppoinments from './pages/Admin/AllAppoinments';
+import AddDoctor from './pages/Admin/AddDoctor';
+import DoctorList from './pages/Admin/DoctorList';
+import { DoctorContext } from './context/DoctorContext';
+import DoctorDashboard from './pages/Doctor/DoctorDashboard';
+import DoctorAppoinments from './pages/Doctor/DoctorAppoinments';
+import DoctorProfile from './pages/Doctor/DoctorProfile';
 
 interface AdminContextType {
   aToken: string | null;
 }
 
+interface DoctorContextType {
+  dToken: string | null;
+}
+
 const App = () => {
   const { aToken } = useContext(AdminContext) as AdminContextType;
+  const{ dToken} = useContext(DoctorContext) as DoctorContextType;
 
-  return aToken ? (
+  return aToken || dToken? (
     <div className='bg-[#F8F9FD]'>
       <ToastContainer />
       <Navbar />
+      <div className='flex items-start'>
+        <Sidebar />
+        <Routes>
+          {/* * Admin Route * */}
+          <Route path='/' element={<></>} />
+          <Route path='/admin-dashboard' element={<Dashboard />} />
+          <Route path='/all-appoinments' element={<AllAppoinments />} />
+          <Route path='/add-doctor' element={<AddDoctor />} />
+          <Route path='/doctor-list' element={<DoctorList />} />
+
+          {/* * Doctor Route * */}
+          <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
+          <Route path='/doctor-appoinments' element={<DoctorAppoinments />} />
+          <Route path='/doctor-profile' element={<DoctorProfile />} />
+        </Routes>
+      </div>
     </div>
   ) : (
     <>

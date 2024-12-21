@@ -7,6 +7,7 @@ import adminRouter from './routes/adminRoute';
 import userRouter from './routes/userRoute';
 import fs from "fs";
 import path from "path";
+import doctorRouter from './routes/doctorRoute';
 
 // App configuration
 const app: Application = express(); 
@@ -24,6 +25,7 @@ app.use(cors());
 // API endpoints
 app.use('/api/admin',adminRouter)
 app.use('/api/user',userRouter)
+app.use('/api/doctor',doctorRouter)
 
 app.get("/", (req, res) => {
   res.send("API Working");

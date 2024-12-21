@@ -1,0 +1,98 @@
+import React, { useContext } from "react"
+import { AdminContext } from "../context/AdminContext"
+import { NavLink } from "react-router-dom"
+import home_icon from '../assets/home_icon.svg';
+import appoinment_icon from '../assets/appointment_icon.svg';
+import add_icon from '../assets/add_icon.svg'
+import people_icon from '../assets/people_icon.svg'
+import { DoctorContext } from "../context/DoctorContext";
+
+interface AdminContextType{
+  aToken: string| null
+}
+interface DoctorContextType{
+  dToken: string| null
+}
+
+const Sidebar: React.FC = () => {
+
+  const {aToken} = useContext(AdminContext)as AdminContextType
+  const {dToken} = useContext(DoctorContext)as DoctorContextType
+
+  return (
+    <div className="min-h-screen bg-white border-r">
+      {
+        aToken && <ul className="text-[#515151] mt-5">
+          <NavLink  className={({ isActive }) =>
+              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
+                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+              }`
+            } to={'/admin-dashboard'}>
+            <img src={home_icon} alt="" />
+            <p>Dashboard</p>
+          </NavLink>
+
+          <NavLink  className={({ isActive }) =>
+              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
+                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+              }`
+            } to={'/all-appoinments'}>
+            <img src={appoinment_icon} alt="" />
+            <p>Appoinments</p>
+          </NavLink>
+
+          <NavLink  className={({ isActive }) =>
+              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
+                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+              }`
+            } to={'/add-doctor'}>
+            <img src={add_icon} alt="" />
+            <p>Add Doctor</p>
+          </NavLink>
+
+          <NavLink  className={({ isActive }) =>
+              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
+                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+              }`
+            } to={'/doctor-list'}>
+            <img src={people_icon} alt="" />
+            <p>Doctor List</p>
+          </NavLink>
+        </ul>
+      }
+
+{
+        dToken && <ul className="text-[#515151] mt-5">
+          <NavLink  className={({ isActive }) =>
+              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
+                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+              }`
+            } to={'/doctor-dashboard'}>
+            <img src={home_icon} alt="" />
+            <p>Dashboard</p>
+          </NavLink>
+
+          <NavLink  className={({ isActive }) =>
+              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
+                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+              }`
+            } to={'/doctor-appoinments'}>
+            <img src={appoinment_icon} alt="" />
+            <p>Appoinments</p>
+          </NavLink>
+
+          <NavLink  className={({ isActive }) =>
+              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
+                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+              }`
+            } to={'/doctor-profile'}>
+            <img src={people_icon} alt="" />
+            <p>Profile</p>
+          </NavLink>
+        </ul>
+      }
+    </div>
+  )
+}
+
+export default Sidebar

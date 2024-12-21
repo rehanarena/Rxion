@@ -3,6 +3,7 @@ import validator from "validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import doctorModel from "../models/doctorModel";
+import userModel from "../models/userModel";
 
 interface AddDoctorRequestBody {
   name: string;
@@ -102,4 +103,23 @@ const loginAdmin = async (req: Request, res: Response): Promise<void> => {
     res.json({ success: false, message: error instanceof Error ? error.message : "An unexpected error occurred" });
   }
 };
-export { addDoctor, loginAdmin};
+
+/// Dashboard ///
+const adminDashboard = async(req: Request,res: Response): Promise<void> =>{
+  try {
+    const doctors = await doctorModel.find({})
+    const users = await userModel.find({})
+
+    const dashData = {
+      doctors: doctors.length,
+      patients: users.length,
+    }
+    res.json ({success:true,dashData});
+
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error instanceof Error ? error.message : "An unexpected error occurred" });
+  }
+}
+
+export { addDoctor, loginAdmin, adminDashboard};
