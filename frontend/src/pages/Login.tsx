@@ -20,48 +20,52 @@ const Login = () => {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
 
-  // Handle form submission for Login and Sign Up
-  // In your Login component, modify the registration flow
+  const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
 
-const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
-  event.preventDefault();
+    try {
+      if (state === "Sign Up") {
+        const { data } = await axios.post(backendUrl + "/api/user/register", {
+          name,
+          password,
+          email,
+          confirmPassword,
+        });
+        if (data.success) {
+          toast.success(data.message);
+          console.log("User ID before navigating:", data.userId);
+          navigate("/verify-otp", { state: { userId: data.userId } });
+        } else {
+          toast.error(data.message);
+        }
+      } else {
+        const { data } = await axios.post(backendUrl + "/api/user/login", {
+          password,
+          email,
+        });
 
-  try {
-    if (state === "Sign Up") {
-      const { data } = await axios.post(backendUrl + "/api/user/register", {
-        name,
-        password,
-        email,
-        confirmPassword,
-      });
-      if (data.success) {
-        toast.success(data.message);
-        console.log("User ID before navigating:", data.userId);
-        navigate("/verify-otp", { state: { userId: data.userId } });  
-      } else {
-        toast.error(data.message);
+        if (data.success) {
+          if (data.user?.isBlocked) {
+            toast.error("Your account has been blocked by the admin.");
+            return; 
+          }
+          localStorage.setItem("token", data.token);
+          setToken(data.token);
+          navigate("/");
+        } else {
+          toast.error(data.message);
+        }
       }
-    } else {
-      const { data } = await axios.post(backendUrl + "/api/user/login", {
-        password,
-        email,
-      });
-      if (data.success) {
-        localStorage.setItem("token", data.token);
-        setToken(data.token);
-        navigate("/");  // Redirect to home page
-      } else {
-        toast.error(data.message);
-      }
+    } catch (error) {
+      toast.error((error as Error).message);
     }
-  } catch (error) {
-    toast.error((error as Error).message);
-  }
-};
+  };
 
   useEffect(() => {
     if (token) {
-      navigate("/");
+      navigate("/"); 
+    } else {
+      navigate("/login"); 
     }
   }, [token, navigate]);
 
@@ -112,19 +116,19 @@ const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>): Promise
             />
           </label>
           {state === "Sign Up" && (
-        <div className="w-full">
-          <label className="block">
-            ConfirmPassword
-            <input
-              className="border border-zinc-300 rounded w-full p-2 mt-1"
-              type="confirmPassword"
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              value={confirmPassword}
-              required
-            />
-          </label>
-        </div>
-         )}
+            <div className="w-full">
+              <label className="block">
+                ConfirmPassword
+                <input
+                  className="border border-zinc-300 rounded w-full p-2 mt-1"
+                  type="password"
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  value={confirmPassword}
+                  required
+                />
+              </label>
+            </div>
+          )}
         </div>
         <button type="submit" className="bg-primary text-white w-full py-2 rounded-md text-base">
           {state === "Sign Up" ? "Create Account" : "Login"}
@@ -150,7 +154,7 @@ const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>): Promise
             </span>
           </p>
         )}
-         {state === "Login" && (
+        {state === "Login" && (
           <p>
             Forgot your password?{" "}
             <span

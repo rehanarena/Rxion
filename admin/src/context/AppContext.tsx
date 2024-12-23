@@ -1,8 +1,7 @@
-import { createContext, ReactNode } from "react";
-
+import { createContext, ReactNode, useState } from "react";
 
 interface AppContextType {
-  settoken :string
+  settoken: string;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -12,8 +11,11 @@ interface AppContextProviderProps {
 }
 
 const AppContextProvider = ({ children }: AppContextProviderProps) => {
+  const [token] = useState<string>("");
+  
+
   const value: AppContextType = {
-    
+    settoken: token, 
   };
 
   return (

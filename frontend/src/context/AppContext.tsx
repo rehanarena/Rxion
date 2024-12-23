@@ -8,7 +8,6 @@ interface AppContextType {
   setUserId: (userId: string | null) => void; 
 }
 
-// Create the context with the defined type
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 interface AppContextProviderProps {
@@ -37,7 +36,6 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
   );
 };
 
-// Custom hook to access context
 export const useAppContext = (): AppContextType => {
   const context = useContext(AppContext);
   if (!context) {

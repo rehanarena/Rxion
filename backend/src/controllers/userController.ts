@@ -14,8 +14,8 @@ interface RegisterRequestBody {
   password: string;
   confirmPassword: string;
 }
-/// Register User////
 
+/// Register User////
 const registerUser = async (
   req: Request<{}, {}, RegisterRequestBody>,
   res: Response
@@ -125,6 +125,8 @@ const verifyOtp = async (req: Request, res: Response): Promise<void> => {
       res.json({
         success: true,
         message: "User verified successfully. You can log in now.",
+        isForPasswordReset: true,
+        userId,
       });
     } else {
       res.json({ success: false, message: "User not found" });
@@ -164,7 +166,6 @@ const resendOtp = async (req: Request, res: Response): Promise<void> => {
       { upsert: true, new: true }
     );
 
-    const emailSubject = "Your OTP";
     const emailBody = `
       Hello ${user.name || "User"},
       
@@ -198,6 +199,11 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
     const user = await userModel.findOne({ email });
     if (!user) {
       res.json({ success: false, message: "User does not exist" });
+      return;
+    }
+
+    if (user.isBlocked) {
+      res.json({ success: false, message: "Your account has been blocked." });
       return;
     }
 

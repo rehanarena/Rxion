@@ -121,5 +121,59 @@ const adminDashboard = async(req: Request,res: Response): Promise<void> =>{
     res.json({ success: false, message: error instanceof Error ? error.message : "An unexpected error occurred" });
   }
 }
+const userList = async (req: Request, res:Response): Promise<void>=>{
+  try {
+    const users = await userModel.find(); 
+    // console.log(users);
+     res.status(200).json(users); 
+     return
+  } catch (error) {
+    console.error(error);
+     res.status(500).json({ message: "Server error while fetching users." });
+     return
+  }
+};
+const blockUnblockUser = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { action } = req.body;
 
-export { addDoctor, loginAdmin, adminDashboard};
+  try {
+    const user = await userModel.findById(id);
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    if (action === "block") {
+      user.isBlocked = true;
+    } else if (action === "unblock") {
+      user.isBlocked = false;
+    } else {
+      res.status(400).json({ message: "Invalid action" });
+      return;
+    }
+
+    await user.save();
+    res.status(200).json({ message: `User has been ${action}ed successfully.` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const doctorList = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const doctors = await doctorModel.find(); 
+
+    res.status(200).json(doctors); 
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({ message: "Server error while fetching doctors." });
+  }
+};
+
+
+
+export { addDoctor, loginAdmin, adminDashboard, userList, blockUnblockUser, doctorList};

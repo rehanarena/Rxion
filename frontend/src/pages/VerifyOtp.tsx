@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import axios from "axios";
-import { AppContext } from "../context/AppContext";
 import { useLocation, useNavigate } from "react-router-dom";
+import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
 
 interface AppContextType {
@@ -15,19 +15,19 @@ const VerifyOtp = () => {
   const navigate = useNavigate();
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [timer, setTimer] = useState(60); // Countdown timer in seconds
+  const [timer, setTimer] = useState(30); 
   const [isResendActive, setIsResendActive] = useState(false);
 
-  // Get userId and context (registration or forgot-password)
   const { state } = useLocation();
-  const { userId, isForPasswordReset } = state || {}; // Added isForPasswordReset flag
+  const { userId, isForPasswordReset } = state || {}; 
 
   useEffect(() => {
+    console.log(state);
     if (!userId) {
       toast.error("Invalid access! Redirecting to registration.");
       navigate("/register");
     }
-  }, [userId, navigate]);
+  }, [userId, navigate,state]);
 
   // Timer Effect
   useEffect(() => {
@@ -56,12 +56,10 @@ const VerifyOtp = () => {
       });
       if (data.success) {
         toast.success(data.message);
-        
+
         if (isForPasswordReset) {
-          // If it's for password reset, navigate to reset password page
-          navigate("/reset-password", { state: { userId } });
+          navigate("/reset-password", { state: { userId } }); 
         } else {
-          // If it's for registration, navigate to login page
           navigate("/login");
         }
       } else {
@@ -81,7 +79,7 @@ const VerifyOtp = () => {
   const resendOtpHandler = async () => {
     try {
       setIsResendActive(false);
-      setTimer(60); // Reset timer to 60 seconds
+      setTimer(30); 
       const { data } = await axios.post(`${backendUrl}/api/user/resend-otp`, {
         userId,
       });
@@ -92,7 +90,7 @@ const VerifyOtp = () => {
       }
     } catch  {
       toast.error("Failed to resend OTP. Please try again.");
-      setIsResendActive(true); // Allow retry if the API call fails
+      setIsResendActive(true); 
     }
   };
 

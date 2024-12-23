@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 
-// Function to generate a random OTP
 const generateOTP = (length: number = 6): string => {
   const digits = '0123456789';
   let otp = '';
@@ -10,34 +9,53 @@ const generateOTP = (length: number = 6): string => {
   return otp;
 };
 
-// Function to send OTP via email
-export const sendOTP = async (email: string): Promise<void> => {
-  // Generate OTP
-  const otp = generateOTP();
+const sendEmail = async ({
+  to,
+  subject,
+  text,
+  html = '',
+}: {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+}): Promise<void> => {
 
-  // Create a transporter for Nodemailer
   const transporter = nodemailer.createTransport({
-    service: 'gmail', 
+    service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER, 
-      pass: process.env.EMAIL_PASS, 
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
     },
   });
 
-  // Set up the email options
+
   const mailOptions = {
-    from: process.env.EMAIL_USER, 
-    to: email, 
-    subject: 'Your OTP Code', 
-    text: `Your OTP code is: ${otp}`, // Pass the generated OTP
+    from: process.env.EMAIL_USER,
+    to,
+    subject,
+    text,
+    html,
   };
 
-  // Send email with OTP
   try {
     await transporter.sendMail(mailOptions);
-    console.log('OTP sent successfully to', email);
-    // Store OTP in a database or session for validation if needed
+    console.log(`Email sent successfully to ${to}`);
   } catch (error) {
-    console.error('Error sending OTP:', error);
+    console.error('Error sending email:', error);
   }
 };
+
+export const sendOTP = async (email: string): Promise<void> => {
+  const otp = generateOTP(); 
+
+  await sendEmail({
+    to: email,
+    subject: 'Your OTP Code',
+    text: `Your OTP code is: ${otp}`,
+  });
+
+ 
+};
+
+

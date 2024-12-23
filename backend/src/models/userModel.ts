@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-// Define an interface for the User document
 interface IUser extends Document {
   name: string;
   email: string;
@@ -14,11 +13,11 @@ interface IUser extends Document {
   dob: string;
   phone: string;
   isVerified: boolean;
-  otp: string | null; // OTP field
+  otp: string | null; 
   otpExpires: Date | null; 
+  isBlocked: boolean;
 }
 
-// Define the Mongoose schema
 const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -32,11 +31,11 @@ const userSchema = new Schema<IUser>({
   dob: { type: String, default: 'Not Selected' },
   phone: { type: String, default: '000000' },
   isVerified: { type: Boolean, default: false },
-  otp: { type: String, default: null }, // Store OTP
+  otp: { type: String, default: null }, 
   otpExpires: { type: Date, default: null },
+  isBlocked: { type: Boolean, default: false },
 });
 
-// Define the Mongoose model
 const userModel: Model<IUser> = mongoose.models.user || mongoose.model<IUser>("User", userSchema);
 
 export default userModel;
