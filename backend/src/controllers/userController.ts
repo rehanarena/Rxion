@@ -7,6 +7,8 @@ import userModel from "../models/userModel";
 import { sendOtpEmail } from "../helper/mailer";
 import { generateOTP } from "../utils/generateOTP";
 import { ObjectId } from "mongodb";
+import doctorModel from "../models/doctorModel";
+import appointmentModel from "../models/appoinmentModel";
 
 interface RegisterRequestBody {
   name: string;
@@ -14,6 +16,40 @@ interface RegisterRequestBody {
   password: string;
   confirmPassword: string;
 }
+interface AppointmentData {
+  userId: string;
+  docId: string;
+  userData: Record<string, any>;
+  doctData: Record<string, any>;
+  amount: number;
+  slotTime: string;
+  slotDate: string;
+  date: number;
+}
+interface Doctor {
+  available: boolean;
+  slots_booked?: { [key: string]: string[] };
+  fees: number;
+  _id: string;
+}
+
+interface User {
+  _id: string;
+}
+
+const generateAccessToken = (userId: string): string => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET as string, {
+    expiresIn: "45m",
+  });
+};
+
+const generateRefreshToken = (userId: string): string => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET as string, {
+    expiresIn: "7d",
+  });
+};
+
+const refreshTokens: Map<string, string> = new Map(); 
 
 /// Register User////
 const registerUser = async (
@@ -66,10 +102,6 @@ const registerUser = async (
     const newUser = new userModel(userData);
     const user = await newUser.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
-      expiresIn: "1d",
-    });
-
     const otp = generateOTP(6);
     console.log(otp);
 
@@ -84,7 +116,6 @@ const registerUser = async (
 
     res.json({
       success: true,
-      token,
       userId: user._id,
       message: "OTP sent to email. Please verify.",
     });
@@ -137,7 +168,7 @@ const verifyOtp = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-///resend otp///
+/// Resend OTP ///
 const resendOtp = async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.body;
 
@@ -214,20 +245,52 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
-      const token = jwt.sign(
-        { id: user._id },
-        process.env.JWT_SECRET as string,
-        {
-          expiresIn: "1d",
-        }
-      );
-      res.json({ success: true, token });
+      const userId = (user._id as ObjectId).toString();
+      const accessToken = generateAccessToken(userId);
+      const refreshToken = generateRefreshToken(userId);
+
+      refreshTokens.set(userId, refreshToken); 
+
+      res.json({
+        success: true,
+        accessToken,
+        refreshToken,
+      });
     } else {
       res.json({ success: false, message: "Invalid credentials" });
     }
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+/// Refresh Access Token ///
+const refreshAccessToken = (req: Request, res: Response): void => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    res.status(401).json({ success: false, message: "No refresh token provided" });
+    return;
+  }
+
+  try {
+    const decoded: any = jwt.verify(refreshToken, process.env.REFRESH_SECRET as string);
+
+    const storedToken = refreshTokens.get(decoded.id);
+    if (storedToken !== refreshToken) {
+      res.status(403).json({ success: false, message: "Invalid refresh token" });
+      return;
+    }
+
+    const newAccessToken = generateAccessToken(decoded.id);
+    res.json({
+      success: true,
+      accessToken: newAccessToken,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(403).json({ success: false, message: "Invalid or expired refresh token" });
   }
 };
 
@@ -267,8 +330,7 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
 
     res.json({
       success: true,
-      message: "OTP sent to your email.",
-      userId: user._id,
+      message: "OTP sent to your email. Please verify to reset password.",
     });
   } catch (error) {
     console.error(error);
@@ -324,11 +386,78 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/// book appoinment ///
+const bookAppointment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, docId, slotDate, slotTime } = req.body;
+
+    // Fetch doctor data
+    const docData = await doctorModel.findById(docId).select("-password") as Doctor;
+    if (!docData || !docData.available) {
+      res.json({ success: false, message: "Doctor not available" });
+      return;
+    }
+
+    let slots_booked = docData.slots_booked || {};
+
+    // Checking for available slots
+    if (slots_booked[slotDate]) {
+      if (slots_booked[slotDate].includes(slotTime)) {
+        res.json({ success: false, message: "Slot not available" });
+        return;
+      } else {
+        slots_booked[slotDate].push(slotTime);
+      }
+    } else {
+      slots_booked[slotDate] = [];
+      slots_booked[slotDate].push(slotTime);
+    }
+
+    // Fetch user data
+    const userData = await userModel.findById(userId).select("-password") as User;
+
+    if (!userData) {
+      res.status(400).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    // Log docData to verify its value
+    console.log('docData:', docData);
+
+    // Appointment data
+    const appointmentData: AppointmentData = {
+      userId,
+      docId,
+      userData,
+      doctData: docData, // Ensure correct field name matches schema
+      amount: docData.fees,
+      slotTime,
+      slotDate,
+      date: Date.now(),
+    };
+
+    const newAppointment = new appointmentModel(appointmentData);
+    await newAppointment.save();
+
+    // Save new slots data in docData
+    await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+
+    res.json({ success: true, message: "Appointment Booked" });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+
+
 export {
   registerUser,
-  loginUser,
   verifyOtp,
   resendOtp,
+  loginUser,
+  refreshAccessToken,
   forgotPassword,
   resetPassword,
+  bookAppointment,
 };

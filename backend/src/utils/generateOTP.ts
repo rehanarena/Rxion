@@ -1,4 +1,3 @@
-// utils/generateOTP.ts
 export const generateOTP = (length: number): string => {
     const digits = '0123456789';
     let otp = '';

@@ -15,6 +15,7 @@ import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 import DoctorAppoinments from './pages/Doctor/DoctorAppoinments';
 import DoctorProfile from './pages/Doctor/DoctorProfile';
 import UserList from './pages/Admin/UserList';
+import AllDoctors from './pages/Admin/AllDoctors';
 
 interface AdminContextType {
   aToken: string | null;
@@ -41,6 +42,7 @@ const App = () => {
           <Route path='/all-appoinments' element={<AllAppoinments />} />
           <Route path='/add-doctor' element={<AddDoctor />} />
           <Route path='/doctor-list' element={<DoctorList />} />
+          <Route path='/all-doctors' element={<AllDoctors />} />
           <Route path='/user-list' element={<UserList />} />
 
           {/* * Doctor Route * */}

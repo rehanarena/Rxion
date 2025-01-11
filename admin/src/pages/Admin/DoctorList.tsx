@@ -5,7 +5,8 @@ import axios from 'axios';
 interface Doctor {
   _id: string;
   name: string;
-  specialty: string;
+  email: string;
+  speciality: string;
   isBlocked: boolean;
 }
 
@@ -22,7 +23,7 @@ const DoctorList = () => {
     const fetchDoctors = async () => {
       try {
         const response = await axios.get(`${backendUrl}/api/admin/doctors`);
-        console.log('User API Response:', response.data);
+        // console.log('User API Response:', response.data);
         if (Array.isArray(response.data)) {
           setDoctors(response.data);
         } else {
@@ -77,6 +78,7 @@ const DoctorList = () => {
             <tr className="bg-gray-100">
               <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
               <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">speciality</th>
               <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
               <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Actions</th>
             </tr>
@@ -85,7 +87,8 @@ const DoctorList = () => {
             {currentDoctors.map((doctor) => (
               <tr key={doctor._id} className="border-t hover:bg-gray-50">
                 <td className="px-4 py-2 text-sm text-gray-700">{doctor.name}</td>
-                <td className="px-4 py-2 text-sm text-gray-700">{doctor.specialty}</td>
+                <td className="px-4 py-2 text-sm text-gray-700">{doctor.email}</td>
+                <td className="px-4 py-2 text-sm text-gray-700">{doctor.speciality}</td>
                 <td className="px-4 py-2 text-sm text-gray-700">
                   <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full 
                     ${doctor.isBlocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>

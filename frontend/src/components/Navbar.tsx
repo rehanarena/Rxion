@@ -18,11 +18,12 @@ const Navbar: React.FC = () => {
   const [showMenu, setShowMenu] = useState(false);
 
   const logout = () => {
-    setToken(""); // Clear token in the context
-    localStorage.removeItem("token"); // Clear token from localStorage
+    setToken(null); // Updated to set token to null
+    localStorage.removeItem("token"); // Clear token from local storage
     navigate("/login"); // Redirect to login page
   };
 
+  // console.log(token)
   return (
     <nav className="flex items-center justify-between py-4 mb-5 border-b border-gray-300">
       {/* Logo */}

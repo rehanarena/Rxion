@@ -11,7 +11,7 @@ interface AppContextType {
 }
 
 const Login = () => {
-  const { backendUrl, token, setToken } = useContext(AppContext) as AppContextType;
+  const { backendUrl, setToken } = useContext(AppContext) as AppContextType;
   const navigate = useNavigate();
 
   const [state, setState] = useState<"Sign Up" | "Login">("Sign Up");
@@ -25,21 +25,26 @@ const Login = () => {
 
     try {
       if (state === "Sign Up") {
-        const { data } = await axios.post(backendUrl + "/api/user/register", {
+        if (password !== confirmPassword) {
+          toast.error("Passwords do not match.");
+          return;
+        }
+
+        const { data } = await axios.post(`${backendUrl}/api/user/register`, {
           name,
           password,
           email,
           confirmPassword,
         });
+
         if (data.success) {
           toast.success(data.message);
-          console.log("User ID before navigating:", data.userId);
           navigate("/verify-otp", { state: { userId: data.userId } });
         } else {
           toast.error(data.message);
         }
       } else {
-        const { data } = await axios.post(backendUrl + "/api/user/login", {
+        const { data } = await axios.post(`${backendUrl}/api/user/login`, {
           password,
           email,
         });
@@ -47,10 +52,11 @@ const Login = () => {
         if (data.success) {
           if (data.user?.isBlocked) {
             toast.error("Your account has been blocked by the admin.");
-            return; 
+            return;
           }
-          localStorage.setItem("token", data.token);
-          setToken(data.token);
+          localStorage.setItem("accessToken", data.accessToken); // Store access token
+          localStorage.setItem("refreshToken", data.refreshToken); // Store refresh token
+          setToken(data.accessToken);
           navigate("/");
         } else {
           toast.error(data.message);
@@ -61,13 +67,55 @@ const Login = () => {
     }
   };
 
+  // Check token on mount
   useEffect(() => {
-    if (token) {
-      navigate("/"); 
+    const storedToken = localStorage.getItem("accessToken");
+    if (storedToken) {
+      setToken(storedToken);
     } else {
-      navigate("/login"); 
+      navigate("/login");
     }
-  }, [token, navigate]);
+  }, [setToken, navigate]);
+
+  // Axios Interceptor for Token Refresh
+  useEffect(() => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    
+    if (!refreshToken) return;
+
+    const interceptor = axios.interceptors.response.use(
+      (response) => response, // pass through successful responses
+      async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+
+          try {
+            const response = await axios.post(`${backendUrl}/api/user/refresh-token`, {
+              refreshToken,
+            });
+
+            const { accessToken } = response.data;
+            localStorage.setItem("accessToken", accessToken);
+            setToken(accessToken);
+
+            originalRequest.headers["Authorization"] = "Bearer " + accessToken;
+            return axios(originalRequest); // retry original request with new token
+          } catch  {
+            // If the refresh fails, logout the user
+            navigate("/login");
+            toast.error("Session expired. Please log in again.");
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor); // Clean up interceptor on component unmount
+    };
+  }, [setToken, backendUrl, navigate]);
 
   return (
     <form onSubmit={onSubmitHandler} className="min-h-[80vh] flex items-center">
@@ -115,21 +163,21 @@ const Login = () => {
               required
             />
           </label>
-          {state === "Sign Up" && (
-            <div className="w-full">
-              <label className="block">
-                ConfirmPassword
-                <input
-                  className="border border-zinc-300 rounded w-full p-2 mt-1"
-                  type="password"
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  value={confirmPassword}
-                  required
-                />
-              </label>
-            </div>
-          )}
         </div>
+        {state === "Sign Up" && (
+          <div className="w-full">
+            <label className="block">
+              Confirm Password
+              <input
+                className="border border-zinc-300 rounded w-full p-2 mt-1"
+                type="password"
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={confirmPassword}
+                required
+              />
+            </label>
+          </div>
+        )}
         <button type="submit" className="bg-primary text-white w-full py-2 rounded-md text-base">
           {state === "Sign Up" ? "Create Account" : "Login"}
         </button>

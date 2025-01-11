@@ -9,14 +9,23 @@ interface RequestWithUser extends Request {
 
 const authUser = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { token } = req.headers;
-    
-    if (!token) {
+    // Extract the token from the Authorization header
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
       res.json({ success: false, message: "Not Authorized. Please log in again." });
       return;
     }
 
-    const token_decode = jwt.verify(token as string, process.env.JWT_SECRET as string) as JwtPayload;
+    // The token is the second part of the 'Bearer <token>' string
+    const token = authHeader.split(' ')[1]; 
+
+    if (!token) {
+      res.json({ success: false, message: "Token not found." });
+      return;
+    }
+
+    const token_decode = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
 
     req.body.userId = token_decode.id;
 
@@ -26,5 +35,6 @@ const authUser = async (req: RequestWithUser, res: Response, next: NextFunction)
     res.json({ success: false, message: error.message });
   }
 };
+
 
 export default authUser;

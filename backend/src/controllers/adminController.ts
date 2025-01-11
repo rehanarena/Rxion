@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import validator from "validator";
+import { v2 as cloudinary } from "cloudinary";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import doctorModel from "../models/doctorModel";
@@ -30,6 +31,7 @@ const addDoctor = async (req: Request, res: Response): Promise<void> => {
       fees,
       address,
     } = req.body as AddDoctorRequestBody;
+    const imageFile = req.file;
 
     
     if (!name || !email || !password || !speciality || !degree || !experience || !about || !fees || !address) {
@@ -50,6 +52,12 @@ const addDoctor = async (req: Request, res: Response): Promise<void> => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const imageUpload = await cloudinary.uploader.upload(imageFile!.path, {
+      resource_type: "image",
+    });
+
+    const imageUrl = imageUpload.secure_url;
+
     let parsedAddress;
     try {
       parsedAddress = JSON.parse(address);
@@ -61,6 +69,7 @@ const addDoctor = async (req: Request, res: Response): Promise<void> => {
     const doctorData = {
       name,
       email,
+      image: imageUrl,
       password: hashedPassword,
       speciality,
       degree,
@@ -86,9 +95,7 @@ const addDoctor = async (req: Request, res: Response): Promise<void> => {
 const loginAdmin = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
-
-    // console.log(process.env.ADMIN_EMAIL, process.env.ADMIN_PASSWORD);
-
+    
     if (
       email === process.env.ADMIN_EMAIL &&
       password === process.env.ADMIN_PASSWORD
@@ -162,6 +169,35 @@ const blockUnblockUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+
+const blockUnblockDoctor = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { action } = req.body;
+
+  try {
+    const doctor = await doctorModel.findById(id);
+
+    if (!doctor) {
+      res.status(404).json({ message: "Doctor not found" });
+      return;
+    }
+
+    if (action === "block") {
+      doctor.isBlocked = true;
+    } else if (action === "unblock") {
+      doctor.isBlocked = false;
+    } else {
+      res.status(400).json({ message: "Invalid action" });
+      return;
+    }
+
+    await doctor.save();
+    res.status(200).json({ message: `Doctor has been ${action}ed successfully.` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 const doctorList = async (req: Request, res: Response): Promise<void> => {
   try {
     const doctors = await doctorModel.find(); 
@@ -172,8 +208,20 @@ const doctorList = async (req: Request, res: Response): Promise<void> => {
 
     res.status(500).json({ message: "Server error while fetching doctors." });
   }
-};
+}
+
+const allDoctors = async(req: Request, res: Response): Promise<void> =>{
+  try {
+    const doctors = await doctorModel.find({}).select('-password')
+    res.json({success:true,doctors})
+  }catch (error) {
+    console.error(error);
+
+    res.status(500).json({ message: "Server error while fetching doctors." });
+  }
+}
 
 
 
-export { addDoctor, loginAdmin, adminDashboard, userList, blockUnblockUser, doctorList};
+
+export { addDoctor, loginAdmin, adminDashboard, userList, blockUnblockUser,blockUnblockDoctor, doctorList,allDoctors};

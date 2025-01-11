@@ -15,9 +15,9 @@ export interface IDoctor extends Document {
   address: Record<string, any>; 
   date: number;
   slots_booked: Record<string, any>; 
+  isBlocked: boolean;
 }
 
-// Create the schema using the interface
 const doctorSchema: Schema<IDoctor> = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -33,11 +33,11 @@ const doctorSchema: Schema<IDoctor> = new mongoose.Schema(
     address: { type: Object, required: true },
     date: { type: Number, required: true },
     slots_booked: { type: Object, default: {} },
+    isBlocked: { type: Boolean, default: false },
   },
   { minimize: false }
 );
 
-// Create the model with type annotations
 const doctorModel: Model<IDoctor> =
   mongoose.models.doctor || mongoose.model<IDoctor>("doctor", doctorSchema);
 

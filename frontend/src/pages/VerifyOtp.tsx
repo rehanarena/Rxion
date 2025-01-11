@@ -13,37 +13,56 @@ interface AppContextType {
 const VerifyOtp = () => {
   const { backendUrl } = useContext(AppContext) as AppContextType;
   const navigate = useNavigate();
-  const [otp, setOtp] = useState("");
+  const [otpArray, setOtpArray] = useState(Array(6).fill("")); // Array for 6 OTP digits
   const [isLoading, setIsLoading] = useState(false);
-  const [timer, setTimer] = useState(30); 
+  const [timer, setTimer] = useState(30);
   const [isResendActive, setIsResendActive] = useState(false);
 
   const { state } = useLocation();
-  const { userId, isForPasswordReset } = state || {}; 
+  const { userId, isForPasswordReset } = state || {};
 
   useEffect(() => {
-    console.log(state);
     if (!userId) {
       toast.error("Invalid access! Redirecting to registration.");
       navigate("/register");
     }
-  }, [userId, navigate,state]);
+  }, [userId, navigate, state]);
 
-  // Timer Effect
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
-
-      return () => clearInterval(interval); 
+      return () => clearInterval(interval);
     } else {
-      setIsResendActive(true); 
+      setIsResendActive(true);
     }
   }, [timer]);
 
+  const handleChange = (value: string, index: number) => {
+    if (!/^\d?$/.test(value)) return; // Allow only single digit numbers
+
+    const updatedOtpArray = [...otpArray];
+    updatedOtpArray[index] = value;
+    setOtpArray(updatedOtpArray);
+
+    // Automatically focus on the next field
+    if (value && index < otpArray.length - 1) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      if (nextInput) (nextInput as HTMLInputElement).focus();
+    }
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (event.key === "Backspace" && !otpArray[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-input-${index - 1}`);
+      if (prevInput) (prevInput as HTMLInputElement).focus();
+    }
+  };
+
   const verifyOtpHandler = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const otp = otpArray.join("");
     if (!/^\d{6}$/.test(otp)) {
       toast.error("OTP must be a 6-digit number.");
       return;
@@ -56,9 +75,8 @@ const VerifyOtp = () => {
       });
       if (data.success) {
         toast.success(data.message);
-
         if (isForPasswordReset) {
-          navigate("/reset-password", { state: { userId } }); 
+          navigate("/reset-password", { state: { userId } });
         } else {
           navigate("/login");
         }
@@ -79,7 +97,7 @@ const VerifyOtp = () => {
   const resendOtpHandler = async () => {
     try {
       setIsResendActive(false);
-      setTimer(30); 
+      setTimer(30);
       const { data } = await axios.post(`${backendUrl}/api/user/resend-otp`, {
         userId,
       });
@@ -88,9 +106,9 @@ const VerifyOtp = () => {
       } else {
         toast.error(data.message);
       }
-    } catch  {
+    } catch {
       toast.error("Failed to resend OTP. Please try again.");
-      setIsResendActive(true); 
+      setIsResendActive(true);
     }
   };
 
@@ -99,18 +117,20 @@ const VerifyOtp = () => {
       <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-96 border rounded-xl text-zinc-600 text-sm shadow-lg">
         <p className="text-2xl font-semibold">Verify OTP</p>
         <p>Enter the OTP sent to your email.</p>
-        <div className="w-full">
-          <label className="block">
-            OTP
+        <div className="flex gap-2 w-full">
+          {otpArray.map((digit, index) => (
             <input
-              className="border border-zinc-300 rounded w-full p-2 mt-1"
+              key={index}
+              id={`otp-input-${index}`}
               type="text"
-              onChange={(e) => setOtp(e.target.value)}
-              value={otp}
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleChange(e.target.value, index)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+              className="border border-zinc-300 rounded w-12 p-2 text-center"
               required
-              aria-label="Enter OTP"
             />
-          </label>
+          ))}
         </div>
         <button
           type="submit"

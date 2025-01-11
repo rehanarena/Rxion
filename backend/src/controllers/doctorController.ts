@@ -2,11 +2,12 @@
  import bcrypt from 'bcrypt';
  import jwt from 'jsonwebtoken';
  import doctorModel  from '../models/doctorModel';
-import { Console } from 'console';
  interface Doctor {
    _id: string;
    email: string;
    password: string;
+   available:boolean;
+   isBlocked:boolean;
  }
 
 
@@ -20,6 +21,11 @@ import { Console } from 'console';
        res.json({ success: false, message: "Invalid credentials" });
        return;
      }
+
+     if (doctor.isBlocked) {
+      res.json({ success: false, message: "Your account has been blocked by the admin." });
+      return
+    }
 
      const isMatch: boolean = await bcrypt.compare(password, doctor.password);
 
@@ -54,7 +60,36 @@ import { Console } from 'console';
   }
  }
 
- export { loginDoctor, doctorDashboard };
+ const changeAvailability = async (req: Request, res: Response): Promise<void> =>{
+  try {
+    const {docId} = req.body;
+
+    const docData: Doctor|null = await doctorModel.findById(docId)
+    if (!docData) {
+      res.status(404).json({ success: false, message: 'Doctor not found' });
+      return;
+    }
+
+    await doctorModel.findByIdAndUpdate(docId,{available:!docData.available})
+    res.json({success:true,message:'Availability Changed'})
+
+  } catch (error) {
+    console.log(error)
+    res.json({success:false, message: "Server error while changeAvailability." })
+  }
+ }
+
+ const doctorList = async(req: Request, res: Response): Promise<void> =>{
+  try {
+    const doctors = await doctorModel.find({}).select(['-password','-email'])
+    res.json({success:true,doctors})
+  } catch (error) {
+    console.log(error)
+    res.json({success:false, message: "Server error while fetching doctors." })
+  }
+ }
+
+ export { loginDoctor, doctorDashboard,changeAvailability,doctorList };
 
 
 

@@ -6,7 +6,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import MyProfile from "./pages/MyProfile";
 import MyAppoinments from "./pages/MyAppoinments";
-import Appoinment from "./pages/Appoinment";
+import Appointment from "./pages/Appoinment";
 import Navbar from "./components/Navbar";
 import OtpVerify from './pages/VerifyOtp'
 import Footer from "./components/Footer";
@@ -32,7 +32,7 @@ const App = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/my-profile" element={<MyProfile />} />
         <Route path="/my-appoinments" element={<MyAppoinments />} />
-        <Route path="/appoinment/:docI" element={<Appoinment />} />
+        <Route path="/appointment/:docId" element={<Appointment />} />
       </Routes>
       <Footer />
     </div>
