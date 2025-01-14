@@ -9,6 +9,7 @@ import { generateOTP } from "../utils/generateOTP";
 import { ObjectId } from "mongodb";
 import doctorModel from "../models/doctorModel";
 import appointmentModel from "../models/appoinmentModel";
+import razorpay from "razorpay";
 
 interface RegisterRequestBody {
   name: string;
@@ -36,6 +37,12 @@ interface Doctor {
 interface User {
   _id: string;
 }
+interface RazorpayOrderCreateRequestBody {
+  amount: number;
+  currency: string;
+  receipt: string;
+  payment_capture?: number;
+}
 
 const generateAccessToken = (userId: string): string => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET as string, {
@@ -49,7 +56,11 @@ const generateRefreshToken = (userId: string): string => {
   });
 };
 
-const refreshTokens: Map<string, string> = new Map(); 
+const refreshTokens: Map<string, string> = new Map();
+const razorpayInstance = new razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID!,
+  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+});
 
 /// Register User////
 const registerUser = async (
@@ -249,7 +260,7 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
       const accessToken = generateAccessToken(userId);
       const refreshToken = generateRefreshToken(userId);
 
-      refreshTokens.set(userId, refreshToken); 
+      refreshTokens.set(userId, refreshToken);
 
       res.json({
         success: true,
@@ -270,16 +281,23 @@ const refreshAccessToken = (req: Request, res: Response): void => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
-    res.status(401).json({ success: false, message: "No refresh token provided" });
+    res
+      .status(401)
+      .json({ success: false, message: "No refresh token provided" });
     return;
   }
 
   try {
-    const decoded: any = jwt.verify(refreshToken, process.env.REFRESH_SECRET as string);
+    const decoded: any = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_SECRET as string
+    );
 
     const storedToken = refreshTokens.get(decoded.id);
     if (storedToken !== refreshToken) {
-      res.status(403).json({ success: false, message: "Invalid refresh token" });
+      res
+        .status(403)
+        .json({ success: false, message: "Invalid refresh token" });
       return;
     }
 
@@ -290,7 +308,9 @@ const refreshAccessToken = (req: Request, res: Response): void => {
     });
   } catch (error) {
     console.error(error);
-    res.status(403).json({ success: false, message: "Invalid or expired refresh token" });
+    res
+      .status(403)
+      .json({ success: false, message: "Invalid or expired refresh token" });
   }
 };
 
@@ -391,8 +411,9 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId, docId, slotDate, slotTime } = req.body;
 
-    // Fetch doctor data
-    const docData = await doctorModel.findById(docId).select("-password") as Doctor;
+    const docData = (await doctorModel
+      .findById(docId)
+      .select("-password")) as Doctor;
     if (!docData || !docData.available) {
       res.json({ success: false, message: "Doctor not available" });
       return;
@@ -400,7 +421,6 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
 
     let slots_booked = docData.slots_booked || {};
 
-    // Checking for available slots
     if (slots_booked[slotDate]) {
       if (slots_booked[slotDate].includes(slotTime)) {
         res.json({ success: false, message: "Slot not available" });
@@ -413,23 +433,23 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
       slots_booked[slotDate].push(slotTime);
     }
 
-    // Fetch user data
-    const userData = await userModel.findById(userId).select("-password") as User;
+    const userData = (await userModel
+      .findById(userId)
+      .select("-password")) as User;
 
     if (!userData) {
       res.status(400).json({ success: false, message: "User not found" });
       return;
     }
 
-    // Log docData to verify its value
-    console.log('docData:', docData);
+    // console.log("docData:", docData);
 
-    // Appointment data
+    
     const appointmentData: AppointmentData = {
       userId,
       docId,
       userData,
-      doctData: docData, // Ensure correct field name matches schema
+      doctData: docData, 
       amount: docData.fees,
       slotTime,
       slotDate,
@@ -439,7 +459,6 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
     const newAppointment = new appointmentModel(appointmentData);
     await newAppointment.save();
 
-    // Save new slots data in docData
     await doctorModel.findByIdAndUpdate(docId, { slots_booked });
 
     res.json({ success: true, message: "Appointment Booked" });
@@ -449,7 +468,114 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/// appoinments list in my-appointments ///
+const listAppointments = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.body;
+    const appointments = await appointmentModel.find({ userId });
 
+    res.json({ success: true, appointments });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+///cancel appointment ///
+
+const cancelAppointment = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { userId, appointmentId } = req.body;
+
+    const appointmentData = await appointmentModel.findById(appointmentId);
+    if (!appointmentData) {
+      res.json({ success: false, message: "Appointment not found" });
+      return;
+    }
+
+    if (appointmentData.userId !== userId) {
+      res.json({ success: false, message: "Unauthorized action" });
+      return;
+    }
+
+    await appointmentModel.findByIdAndUpdate(appointmentId, {
+      cancelled: true,
+    });
+
+    const { docId, slotDate, slotTime } = appointmentData;
+
+    const doctorData = await doctorModel.findById(docId);
+    if (!doctorData) {
+      res.json({ success: false, message: "Doctor not found" });
+      return;
+    }
+
+    let slots_booked = doctorData.slots_booked;
+    if (slots_booked[slotDate]) {
+      slots_booked[slotDate] = slots_booked[slotDate].filter(
+        (e: string) => e !== slotTime
+      );
+      await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+    }
+
+    res.json({ success: true, message: "Appointment Cancelled" });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+/// payment razorpay ///
+const paymentRazorpay = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { appointmentId } = req.body;
+    const appointmentData = await appointmentModel.findById(appointmentId);
+
+    if (!appointmentData || appointmentData.cancelled) {
+      res.json({
+        success: false,
+        message: "Appointment Cancelled or not found",
+      });
+      return;
+    }
+
+    const currency = process.env.CURRENCY || 'INR'; 
+
+    const options: RazorpayOrderCreateRequestBody = {
+      amount: appointmentData.amount * 100, 
+      currency: currency,
+      receipt: appointmentId.toString(),
+      payment_capture: 1, 
+    };
+
+    const order = await razorpayInstance.orders.create(options);
+    res.json({ success: true, order });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+/// verify payment ///
+const verifyRazorpay = async(req: Request, res: Response): Promise<void> => {
+  try {
+    const {razorpay_payment_id,razorpay_order_id} = req.body
+    const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id)
+    
+    if (orderInfo.status === 'paid') {
+      await appointmentModel.findByIdAndUpdate(orderInfo.receipt,{payment:true})
+      res.json({success:true,message:'Payment Successful'})
+    }else{
+      res.json({success:false,message:'Payment Failed'})
+    }
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message });
+  }
+  }
 
 export {
   registerUser,
@@ -460,4 +586,8 @@ export {
   forgotPassword,
   resetPassword,
   bookAppointment,
+  listAppointments,
+  cancelAppointment,
+  paymentRazorpay,
+  verifyRazorpay,
 };

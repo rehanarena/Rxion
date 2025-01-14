@@ -2,6 +2,7 @@
  import bcrypt from 'bcrypt';
  import jwt from 'jsonwebtoken';
  import doctorModel  from '../models/doctorModel';
+import appointmentModel from '../models/appoinmentModel';
  interface Doctor {
    _id: string;
    email: string;
@@ -88,8 +89,59 @@
     res.json({success:false, message: "Server error while fetching doctors." })
   }
  }
+ /// appoinments ///
+ const appoinmentsDoctor = async(req: Request, res: Response): Promise<void> =>{
+  try {
+    const {docId} = req.body
+    const appointments = await appointmentModel.find({docId})
 
- export { loginDoctor, doctorDashboard,changeAvailability,doctorList };
+    res.json({success:true,appointments})
+  } catch (error) {
+      console.log(error)
+      res.json({success:false, message: "Server error while fetching appoinments." })
+  }
+ }
+  /// appointment complete ///
+  const appoinmentComplete = async(req: Request, res: Response): Promise<void> =>{
+    try {
+      const {docId,appointmentId} =req.body
+
+      const appointmentData = await appointmentModel.findById(appointmentId)
+      if (appointmentData && appointmentData.docId === docId) {
+        await appointmentModel.findByIdAndUpdate(appointmentId,{isCompleted:true})
+        res.json({success:true,message:'Appointment Completed'})
+        return
+      }else{
+        res.json({success:false,message:'Mark Failed'})
+        return
+      }
+    } catch (error) {
+      console.log(error)
+      res.json({success:false, message: "Server error while complete appoinments." })
+  }
+  }
+
+  /// appointment Cancel ///
+  const appoinmentCancel = async(req: Request, res: Response): Promise<void> =>{
+    try {
+      const {docId,appointmentId} =req.body
+
+      const appointmentData = await appointmentModel.findById(appointmentId)
+      if (appointmentData && appointmentData.docId === docId) {
+        await appointmentModel.findByIdAndUpdate(appointmentId,{cancelled:true})
+        res.json({success:true,message:'Appointment Cancelled'})
+        return
+      }else{
+        res.json({success:false,message:'cancellation Failed'})
+        return
+      }
+    } catch (error) {
+      console.log(error)
+      res.json({success:false, message: "Server error while complete appoinments." })
+  }
+  }
+
+ export { loginDoctor, doctorDashboard,changeAvailability,doctorList,appoinmentsDoctor,appoinmentComplete,appoinmentCancel };
 
 
 

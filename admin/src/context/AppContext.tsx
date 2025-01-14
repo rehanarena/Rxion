@@ -31,6 +31,9 @@ interface AppContextType {
   userData: UserData | false;
   setUserData: React.Dispatch<React.SetStateAction<UserData | false>>;
   loadUserProfileData: () => void;
+  calculateAge: (dob: string) => number;
+  slotDateFormat: (slotDate: string) => string;
+  logout: () => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -39,27 +42,57 @@ interface AppContextProviderProps {
   children: ReactNode;
 }
 
-const AppContextProvider: React.FC<AppContextProviderProps> = (props) => {
+const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => {
   const currencySymbol = "₹";
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [token, setToken] = useState<string | false>(
-    localStorage.getItem("token") ?? false // Handle null case by falling back to false
+    localStorage.getItem("token") || false
   );
   const [userData, setUserData] = useState<UserData | false>(false);
 
+
+  // Calculate age based on date of birth
+  const calculateAge = (dob: string) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const month = today.getMonth() - birthDate.getMonth();
+  
+    if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+  
+    return isNaN(age) ? 0 : age; // Ensure no NaN value is returned
+  };
+  
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  const slotDateFormat = (slotDate: string): string => {
+    const dateArray = slotDate.split('_');
+    if (dateArray.length === 3) {
+      const day = dateArray[0];
+      const month = months[Number(dateArray[1]) - 1]; // Correct month indexing
+      const year = dateArray[2];
+      return `${day} ${month} ${year}`;
+    }
+    return "Invalid date"; // Fallback in case of invalid date format
+  };
+
+  // Fetch user profile data
   const loadUserProfileData = async () => {
     try {
-      const { data } = await axios.get(backendUrl + '/api/user/get-profile', {
-        headers: { token }
+      const { data } = await axios.get(`${backendUrl}/api/user/get-profile`, {
+        headers: { token },
       });
       if (data.success) {
         setUserData(data.userData);
       } else {
         toast.error(data.message);
-        logout(); // Add a logout function if the token is invalid or expired
+        logout();
       }
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
@@ -68,16 +101,16 @@ const AppContextProvider: React.FC<AppContextProviderProps> = (props) => {
     }
   };
 
+  // Fetch doctors data
   const getDoctorsData = async () => {
     try {
-      console.log(backendUrl + "/api/doctor/list");
-      const { data } = await axios.get(backendUrl + "/api/doctor/list");
+      const { data } = await axios.get(`${backendUrl}/api/doctor/list`);
       if (data.success) {
         setDoctors(data.doctors);
       } else {
         toast.error(data.message);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
@@ -86,6 +119,7 @@ const AppContextProvider: React.FC<AppContextProviderProps> = (props) => {
     }
   };
 
+  // Logout functionality
   const logout = () => {
     setToken(false);
     setUserData(false);
@@ -93,6 +127,7 @@ const AppContextProvider: React.FC<AppContextProviderProps> = (props) => {
     toast.info("Logged out due to invalid or expired session");
   };
 
+  // Provide context value
   const value: AppContextType = {
     doctors,
     getDoctorsData,
@@ -103,6 +138,9 @@ const AppContextProvider: React.FC<AppContextProviderProps> = (props) => {
     userData,
     setUserData,
     loadUserProfileData,
+    calculateAge,
+    slotDateFormat,
+    logout,
   };
 
   useEffect(() => {
@@ -118,7 +156,7 @@ const AppContextProvider: React.FC<AppContextProviderProps> = (props) => {
   }, [token]);
 
   return (
-    <AppContext.Provider value={value}>{props.children}</AppContext.Provider>
+    <AppContext.Provider value={value}>{children}</AppContext.Provider>
   );
 };
 

@@ -17,6 +17,7 @@ interface Doctor {
   experience: string;
   about: string;
   fees: number;
+  slots_booked?: { [date: string]: string[] };
 }
 
 interface Slot {
@@ -44,34 +45,53 @@ const Appointment: React.FC = () => {
   const getAvailableSlots = () => {
     const today = new Date();
     const slots: Slot[][] = [];
-
+  
     for (let i = 0; i < 7; i++) {
       const currentDate = new Date(today);
       currentDate.setDate(today.getDate() + i);
-
+  
       const endTime = new Date(currentDate);
       endTime.setHours(21, 0, 0, 0);
-
+  
       if (i === 0) {
         currentDate.setHours(Math.max(currentDate.getHours() + 1, 10));
         currentDate.setMinutes(currentDate.getMinutes() > 30 ? 30 : 0);
       } else {
         currentDate.setHours(10, 0, 0, 0);
       }
-
+  
       const daySlots: Slot[] = [];
       while (currentDate < endTime) {
-        daySlots.push({
-          dateTime: new Date(currentDate),
-          time: currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        });
+        const day = currentDate.getDate();
+        const month = currentDate.getMonth() + 1; // Months are 0-indexed
+        const year = currentDate.getFullYear();
+        const slotDate = `${day}_${month}_${year}`;
+        const slotTime = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+        const isSlotAvailable =
+          docInfo?.slots_booked?.[slotDate] &&
+          docInfo.slots_booked[slotDate].includes(slotTime)
+            ? false
+            : true;
+  
+        if (isSlotAvailable) {
+          daySlots.push({
+            dateTime: new Date(currentDate),
+            time: currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          });
+        }
         currentDate.setMinutes(currentDate.getMinutes() + 30);
       }
-      slots.push(daySlots);
+  
+      if (daySlots.length > 0) {
+        slots.push(daySlots);
+      }
     }
+  
     setDocSlots(slots);
   };
 
+  
   const bookAppointment = async () => {
     if (!token) {
       toast.warn('Login to book appointment');

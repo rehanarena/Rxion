@@ -14,6 +14,7 @@ interface DoctorContextType {
   setDToken: React.Dispatch<React.SetStateAction<string>>;
   dashData: DashDataType | boolean;
   getDashData: () => Promise<void>;
+  getAppointments: () => Promise<void>;
 }
 
 export const DoctorContext = createContext<DoctorContextType | undefined>(
@@ -31,6 +32,7 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
     localStorage.getItem("dToken") ?? ""
   );
   const [dashData, setDashData] = useState<DashDataType | boolean>(false);
+  const [appointments,setAppointments] = useState([])
 
   const getDashData = async (): Promise<void> => {
     if (dashData !== false) {
@@ -57,12 +59,75 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
     }
   };
 
+  const getAppointments = async()=>{
+    try {
+      const {data} = await axios.get(backendUrl+ '/api/doctor/appointments',{headers:{dToken}})
+      if (data.success) {
+        setAppointments(data.appointments)
+        console.log(data.appointments)
+      }else{
+        toast.error(data.message)
+      }
+    } catch (error: unknown) {
+      console.log(error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    }
+  }
+
+  const completeAppointment = async(appointmentId: string) =>{
+    try {
+      const {data} = await axios.post(backendUrl + '/api/doctor/complete-appointment',{appointmentId},{headers:{dToken}})
+      if(data.success){
+        toast.success(data.message)
+        getAppointments()
+      }else{
+        toast.error(data.message)
+      }
+    } catch (error: unknown) {
+      console.log(error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    }
+  }
+
+  const cancelAppointment = async(appointmentId: string) =>{
+    try {
+      const {data} = await axios.post(backendUrl + '/api/doctor/cancel-appointment',{appointmentId},{headers:{dToken}})
+      if(data.success){
+        toast.success(data.message)
+        getAppointments()
+      }else{
+        toast.error(data.message)
+      }
+    } catch (error: unknown) {
+      console.log(error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    }
+  }
+
+
   const value = {
     backendUrl,
     dToken,
     setDToken,
     dashData,
     getDashData,
+    getAppointments,
+    appointments,
+    setAppointments,
+    completeAppointment,
+    cancelAppointment,
   };
 
   return (

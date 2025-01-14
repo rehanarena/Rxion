@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, verifyOtp, loginUser, resendOtp, forgotPassword, resetPassword, refreshAccessToken, bookAppointment} from '../controllers/userController';
+import { registerUser, verifyOtp, loginUser, resendOtp, forgotPassword, resetPassword, refreshAccessToken, bookAppointment, listAppointments, cancelAppointment, paymentRazorpay, verifyRazorpay} from '../controllers/userController';
 import authUser from '../middlewares/authUser';
 
 
@@ -12,6 +12,10 @@ userRouter.post("/refresh-token",refreshAccessToken);
 userRouter.post('/forgot-password', forgotPassword);
 userRouter.post('/reset-password', resetPassword);
 userRouter.post('/book-appointment',authUser,bookAppointment);
+userRouter.get('/appointments',authUser,listAppointments);
+userRouter.post('/cancel-appointment',authUser,cancelAppointment);
+userRouter.post('/payment-razorpay',authUser,paymentRazorpay)
+userRouter.post('/verify-razorpay',authUser,verifyRazorpay)
 
 
 

@@ -29,7 +29,7 @@ const Sidebar: React.FC = () => {
               }`
             } to={'/admin-dashboard'}>
             <img src={home_icon} alt="" />
-            <p>Dashboard</p>
+            <p className="hidden md:block">Dashboard</p>
           </NavLink>
 
           <NavLink  className={({ isActive }) =>
@@ -38,7 +38,7 @@ const Sidebar: React.FC = () => {
               }`
             } to={'/user-list'}>
             <img src={people_icon} alt="" />
-            <p>UserList</p>
+            <p className="hidden md:block">UserList</p>
           </NavLink>
 
           <NavLink  className={({ isActive }) =>
@@ -47,7 +47,7 @@ const Sidebar: React.FC = () => {
               }`
             } to={'/all-appoinments'}>
             <img src={appoinment_icon} alt="" />
-            <p>Appoinments</p>
+            <p className="hidden md:block">Appoinments</p>
           </NavLink>
 
           <NavLink  className={({ isActive }) =>
@@ -56,7 +56,7 @@ const Sidebar: React.FC = () => {
               }`
             } to={'/add-doctor'}>
             <img src={add_icon} alt="" />
-            <p>Add Doctor</p>
+            <p className="hidden md:block">Add Doctor</p>
           </NavLink>
 
           <NavLink  className={({ isActive }) =>
@@ -65,7 +65,7 @@ const Sidebar: React.FC = () => {
               }`
             } to={'/doctor-list'}>
             <img src={people_icon} alt="" />
-            <p>Doctor List</p>
+            <p className="hidden md:block">Doctor List</p>
           </NavLink>
 
 
@@ -75,7 +75,7 @@ const Sidebar: React.FC = () => {
               }`
             } to={'/all-doctors'}>
             <img src={people_icon} alt="" />
-            <p>AllDoctors</p>
+            <p className="hidden md:block">AllDoctors</p>
           </NavLink>
         </ul>
       }
@@ -88,7 +88,7 @@ const Sidebar: React.FC = () => {
               }`
             } to={'/doctor-dashboard'}>
             <img src={home_icon} alt="" />
-            <p>Dashboard</p>
+            <p className="hidden md:block">Dashboard</p>
           </NavLink>
 
 
@@ -98,7 +98,7 @@ const Sidebar: React.FC = () => {
               }`
             } to={'/doctor-appoinments'}>
             <img src={appoinment_icon} alt="" />
-            <p>Appoinments</p>
+            <p className="hidden md:block">Appoinments</p>
           </NavLink>
 
           <NavLink  className={({ isActive }) =>
@@ -107,7 +107,7 @@ const Sidebar: React.FC = () => {
               }`
             } to={'/doctor-profile'}>
             <img src={people_icon} alt="" />
-            <p>Profile</p>
+            <p className="hidden md:block">Profile</p>
           </NavLink>
         </ul>
       }

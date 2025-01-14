@@ -21,7 +21,7 @@ const userModel_1 = __importDefault(require("../models/userModel"));
 const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { name, email, password } = req.body;
-        // Validate fields
+        
         if (!name || !email || !password) {
             res.json({
                 success: false,
@@ -41,13 +41,12 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             res.json({ success: false, message: "Enter a strong password" });
             return;
         }
-        // Hash the password
-        const salt = yield bcrypt_1.default.genSalt(10); // Generates salt correctly
+        
+        const salt = yield bcrypt_1.default.genSalt(10); 
         if (!salt) {
             throw new Error("Failed to generate salt");
         }
-        const hashedPassword = yield bcrypt_1.default.hash(password, salt); // Hash password with valid salt
-        // Save user data
+        const hashedPassword = yield bcrypt_1.default.hash(password, salt); 
         const userData = {
             name,
             email,
@@ -55,7 +54,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         };
         const newUser = new userModel_1.default(userData);
         const user = yield newUser.save();
-        // Generate JWT token
+        // Generate JWT token //
         const token = jsonwebtoken_1.default.sign({ id: user._id }, process.env.JWT_SECRET, {
             expiresIn: "1d",
         });
@@ -67,20 +66,20 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.registerUser = registerUser;
-// API for user login
+
 const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
-        // Check if the user exists
+        
         const user = yield userModel_1.default.findOne({ email });
         if (!user) {
             res.json({ success: false, message: "User does not exist" });
             return;
         }
-        // Compare passwords
+       
         const isMatch = yield bcrypt_1.default.compare(password, user.password);
         if (isMatch) {
-            // Generate JWT token
+            
             const token = jsonwebtoken_1.default.sign({ id: user._id }, process.env.JWT_SECRET);
             res.json({ success: true, token });
         }
@@ -95,7 +94,7 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.loginUser = loginUser;
-//verifyOtp
+
 const verifyOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { val1, val2, val3, val4, val5, val6 } = req.body;
@@ -104,31 +103,31 @@ const verifyOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             res.json({ success: false, message: 'Session timeout. Please log in again.' });
             return;
         }
-        // Fetch OTP verification data
+        
         const otpVerifyData = yield otpModel_1.default.findOne({ userId: req.session.verifyToken });
         if (!otpVerifyData) {
             res.json({ success: false, message: 'OTP expired. Please try logging in again.' });
             return;
         }
-        // Compare the OTP
+        
         const isOtpValid = yield bcrypt_1.default.compare(otp, otpVerifyData.otp);
         if (!isOtpValid) {
             res.json({ success: false, message: 'Invalid OTP. Please try again.' });
             return;
         }
-        // Update user as verified
+        
         const updateUser = yield userModel_1.default.updateOne({ _id: req.session.verifyToken }, { $set: { isVerified: true } });
         if (!updateUser) {
             res.json({ success: false, message: 'Failed to verify user. Please try again later.' });
             return;
         }
-        // Fetch updated user data
+       
         const user = yield userModel_1.default.findOne({ _id: req.session.verifyToken });
         if (!user) {
             res.json({ success: false, message: 'User not found after verification.' });
             return;
         }
-        // Clear the session and respond
+        
         delete req.session.verifyToken;
         res.json({ success: true, message: 'User verification successful. Please log in.', redirect: '/login' });
     }

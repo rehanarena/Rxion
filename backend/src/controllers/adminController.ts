@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import doctorModel from "../models/doctorModel";
 import userModel from "../models/userModel";
+import appointmentModel from "../models/appoinmentModel";
 
 interface AddDoctorRequestBody {
   name: string;
@@ -221,7 +222,65 @@ const allDoctors = async(req: Request, res: Response): Promise<void> =>{
   }
 }
 
+/// All appointment list ///
+const appointmentsAdmin = async(req: Request, res: Response): Promise<void> =>{
+
+  try {
+    const appointments = await appointmentModel.find({})
+    res.json({success:true,appointments}) 
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({ message: "Server error while fetching doctors." });
+  }
+}
+
+
+/// cancelAppointment ///
+const cancelAppointment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { appointmentId }: { appointmentId: string } = req.body;
+
+    const appointmentData = await appointmentModel.findById(appointmentId) ;
+
+    if (!appointmentData) {
+      res.status(404).json({ success: false, message: 'Appointment not found' });
+      return;
+    }
+
+    await appointmentModel.findByIdAndUpdate(appointmentId, {
+      cancelled: true,
+    });
+
+    // Releasing doctor's slot
+    const { docId, slotDate, slotTime } = appointmentData;
+    const doctorData = await doctorModel.findById(docId) ;
+
+    if (!doctorData) {
+      res.status(404).json({ success: false, message: 'Doctor not found' });
+      return;
+    }
+
+    let slots_booked = doctorData.slots_booked;
+    console.log("Slots booked: ", slots_booked);
+
+    // Filtering the slotTime from the booked slots
+    if (slots_booked[slotDate]) {
+      console.log("Filtered: ", slots_booked[slotDate].filter((e: string) => e !== slotTime));
+      slots_booked[slotDate] = slots_booked[slotDate].filter((e: string) => e !== slotTime);
+      console.log("After filtering: ", slots_booked[slotDate]);
+
+      await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+    }
+
+    res.json({ success: true, message: "Appointment cancelled successfully" });
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 
 
-export { addDoctor, loginAdmin, adminDashboard, userList, blockUnblockUser,blockUnblockDoctor, doctorList,allDoctors};
+
+export { addDoctor, loginAdmin, adminDashboard, userList, blockUnblockUser,blockUnblockDoctor, doctorList,allDoctors,appointmentsAdmin, cancelAppointment};
