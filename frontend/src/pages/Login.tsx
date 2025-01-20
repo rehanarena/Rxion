@@ -54,8 +54,8 @@ const Login = () => {
             toast.error("Your account has been blocked by the admin.");
             return;
           }
-          localStorage.setItem("accessToken", data.accessToken); // Store access token
-          localStorage.setItem("refreshToken", data.refreshToken); // Store refresh token
+          localStorage.setItem("accessToken", data.accessToken); 
+          localStorage.setItem("refreshToken", data.refreshToken); 
           setToken(data.accessToken);
           navigate("/");
         } else {
@@ -67,7 +67,6 @@ const Login = () => {
     }
   };
 
-  // Check token on mount
   useEffect(() => {
     const storedToken = localStorage.getItem("accessToken");
     if (storedToken) {
@@ -77,14 +76,13 @@ const Login = () => {
     }
   }, [setToken, navigate]);
 
-  // Axios Interceptor for Token Refresh
   useEffect(() => {
     const refreshToken = localStorage.getItem("refreshToken");
     
     if (!refreshToken) return;
 
     const interceptor = axios.interceptors.response.use(
-      (response) => response, // pass through successful responses
+      (response) => response, 
       async (error) => {
         const originalRequest = error.config;
 
@@ -101,9 +99,8 @@ const Login = () => {
             setToken(accessToken);
 
             originalRequest.headers["Authorization"] = "Bearer " + accessToken;
-            return axios(originalRequest); // retry original request with new token
+            return axios(originalRequest); 
           } catch  {
-            // If the refresh fails, logout the user
             navigate("/login");
             toast.error("Session expired. Please log in again.");
           }
@@ -113,7 +110,7 @@ const Login = () => {
     );
 
     return () => {
-      axios.interceptors.response.eject(interceptor); // Clean up interceptor on component unmount
+      axios.interceptors.response.eject(interceptor); 
     };
   }, [setToken, backendUrl, navigate]);
 
@@ -170,7 +167,7 @@ const Login = () => {
               Confirm Password
               <input
                 className="border border-zinc-300 rounded w-full p-2 mt-1"
-                type="password"
+                type="text"
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 value={confirmPassword}
                 required

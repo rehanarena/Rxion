@@ -14,6 +14,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./components/NotFound";
 
 const App = () => {
   return (
@@ -22,8 +23,9 @@ const App = () => {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="*" element={<NotFound />} />
         <Route path="/doctors" element={<Doctors />} />
-        <Route path="/doctors/:speciality" element={<Home />} />
+        <Route path='/doctors/:speciality' element={<Doctors />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-otp" element={< OtpVerify/>} />

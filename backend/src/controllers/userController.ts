@@ -379,15 +379,14 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const otpData = await OTP.findOne({ otp, userId: user._id });
-
+    const otpData = await OTP.findOne({ userId: user._id, otp });
     if (!otpData) {
-      res.json({ success: false, message: "Invalid OTP" });
+      res.json({ success: false, message: "Invalid OTP." });
       return;
     }
 
     if (otpData.expiresAt < new Date()) {
-      res.json({ success: false, message: "OTP has expired" });
+      res.json({ success: false, message: "OTP has expired." });
       return;
     }
 
@@ -397,14 +396,18 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
     user.password = hashedPassword;
     await user.save();
 
-    await OTP.deleteOne({ otp });
+    await OTP.deleteOne({ userId: user._id });
 
-    res.json({ success: true, message: "Password reset successfully." });
+    res.json({
+      success: true,
+      message: "Password reset successfully. You can now log in.",
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
 
 /// book appoinment ///
 const bookAppointment = async (req: Request, res: Response): Promise<void> => {
@@ -542,6 +545,7 @@ const paymentRazorpay = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    ///payment order using razorpay api ///
     const currency = process.env.CURRENCY || 'INR'; 
 
     const options: RazorpayOrderCreateRequestBody = {

@@ -40,17 +40,15 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const currencySymbol = '₹';
 
-  // Check for accessToken in localStorage on mount
   useEffect(() => {
     const storedToken = localStorage.getItem("accessToken");
     if (storedToken) {
       setToken(storedToken);
     }
-  }, []); // Only run once on mount
+  }, []); 
 
-  // Update localStorage whenever the token changes
   useEffect(() => {
-    console.log("Token updated:", token);
+    // console.log("Token updated:", token);
     if (token) {
       localStorage.setItem("accessToken", token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -58,7 +56,7 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
       localStorage.removeItem("accessToken");
       delete axios.defaults.headers.common['Authorization'];
     }
-  }, [token]); // Runs whenever `token` changes
+  }, [token]); 
 
 
   const getDoctorsData = async (): Promise<void> => {
@@ -81,7 +79,7 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
 
   useEffect(() => {
     getDoctorsData();
-  }, []); // Run only once when the component mounts
+  }, []); 
   const value = {
     token,
     setToken,

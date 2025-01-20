@@ -9,10 +9,10 @@ const adminRouter = express.Router();
 adminRouter.post("/login", loginAdmin)
 adminRouter.post("/add-doctor",authAdmin,upload.single('image'), addDoctor);
 adminRouter.get("/dashboard",authAdmin,adminDashboard)
-adminRouter.get("/users", userList)
-adminRouter.patch("/users/block-unblock/:id", blockUnblockUser);
-adminRouter.patch("/doctors/block-unblock/:id", blockUnblockDoctor);
-adminRouter.get("/doctors", doctorList);
+adminRouter.get("/users",authAdmin, userList)
+adminRouter.patch("/users/block-unblock/:id",authAdmin, blockUnblockUser);
+adminRouter.patch("/doctors/block-unblock/:id",authAdmin, blockUnblockDoctor);
+adminRouter.get("/doctors",authAdmin, doctorList);
 adminRouter.post("/all-doctors",authAdmin,allDoctors);
 adminRouter.post("/change-availability",authAdmin,changeAvailability);
 adminRouter.get("/appointments",authAdmin,appointmentsAdmin);

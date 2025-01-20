@@ -16,7 +16,7 @@ interface DoctorData {
     line1: string;
     line2: string;
   };
-  date: number; // Unix timestamp (in milliseconds)
+  date: number; 
   time: string;
 }
 
@@ -29,7 +29,6 @@ interface Appointment {
   payment: boolean;
 }
 
-// Define the context structure
 interface AppContextType {
   backendUrl: string;
   token: string | false;
@@ -64,11 +63,11 @@ const MyAppointments = () => {
     const dateArray = slotDate.split('_');
     if (dateArray.length === 3) {
       const day = dateArray[0];
-      const month = months[Number(dateArray[1]) - 1]; // Correct month indexing
+      const month = months[Number(dateArray[1]) - 1]; 
       const year = dateArray[2];
       return `${day} ${month} ${year}`;
     }
-    return "Invalid date"; // Fallback in case of invalid date format
+    return "Invalid date";
   };
 
   const getUsersAppointments = async () => {

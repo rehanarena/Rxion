@@ -2,7 +2,6 @@ import { createContext, useEffect, useState, ReactNode } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-// Define types for the context
 interface Doctor {
   _id: string;
   name: string;
@@ -52,7 +51,7 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
   const [userData, setUserData] = useState<UserData | false>(false);
 
 
-  // Calculate age based on date of birth
+  /// Calculate age based on date of birth /// 
   const calculateAge = (dob: string) => {
     const birthDate = new Date(dob);
     const today = new Date();
@@ -63,7 +62,7 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
       age--;
     }
   
-    return isNaN(age) ? 0 : age; // Ensure no NaN value is returned
+    return isNaN(age) ? 0 : age; 
   };
   
 
@@ -73,14 +72,13 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
     const dateArray = slotDate.split('_');
     if (dateArray.length === 3) {
       const day = dateArray[0];
-      const month = months[Number(dateArray[1]) - 1]; // Correct month indexing
+      const month = months[Number(dateArray[1]) - 1]; 
       const year = dateArray[2];
       return `${day} ${month} ${year}`;
     }
-    return "Invalid date"; // Fallback in case of invalid date format
+    return "Invalid date"; 
   };
 
-  // Fetch user profile data
   const loadUserProfileData = async () => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/user/get-profile`, {
@@ -101,7 +99,6 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
     }
   };
 
-  // Fetch doctors data
   const getDoctorsData = async () => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/doctor/list`);
@@ -119,7 +116,6 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
     }
   };
 
-  // Logout functionality
   const logout = () => {
     setToken(false);
     setUserData(false);
@@ -127,7 +123,6 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
     toast.info("Logged out due to invalid or expired session");
   };
 
-  // Provide context value
   const value: AppContextType = {
     doctors,
     getDoctorsData,

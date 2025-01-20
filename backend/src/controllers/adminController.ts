@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import doctorModel from "../models/doctorModel";
 import userModel from "../models/userModel";
 import appointmentModel from "../models/appoinmentModel";
+import { sendPasswordEmail } from "../helper/mailer";
 
 interface AddDoctorRequestBody {
   name: string;
@@ -34,7 +35,6 @@ const addDoctor = async (req: Request, res: Response): Promise<void> => {
     } = req.body as AddDoctorRequestBody;
     const imageFile = req.file;
 
-    
     if (!name || !email || !password || !speciality || !degree || !experience || !about || !fees || !address) {
       res.status(400).json({ success: false, message: "Missing Details" });
       return;
@@ -84,7 +84,10 @@ const addDoctor = async (req: Request, res: Response): Promise<void> => {
     const newDoctor = new doctorModel(doctorData);
     await newDoctor.save();
 
-    res.status(201).json({ success: true, message: "Doctor Added Successfully" });
+    // Send the password to the added doctor's email
+    await sendPasswordEmail(email, password);
+
+    res.status(201).json({ success: true, message: "Doctor Added Successfully and Password Sent to Email" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: error instanceof Error ? error.message : "An unexpected error occurred" });
@@ -264,7 +267,7 @@ const cancelAppointment = async (req: Request, res: Response): Promise<void> => 
     let slots_booked = doctorData.slots_booked;
     console.log("Slots booked: ", slots_booked);
 
-    // Filtering the slotTime from the booked slots
+    /// Filtering the slotTime from the booked slots ///
     if (slots_booked[slotDate]) {
       console.log("Filtered: ", slots_booked[slotDate].filter((e: string) => e !== slotTime));
       slots_booked[slotDate] = slots_booked[slotDate].filter((e: string) => e !== slotTime);

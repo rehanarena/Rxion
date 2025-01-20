@@ -7,6 +7,8 @@ import { toast } from "react-toastify";
 import axios from "axios";
 // import RelatedDoctors from "../components/RelatedDoctors";
 
+
+
 interface Doctor {
   _id: string;
   image: string;
@@ -41,6 +43,8 @@ const Appointment: React.FC = () => {
     const doc = doctors.find((doctor: Doctor) => doctor._id === docId);
     setDocInfo(doc || null);
   };
+  
+  // console.log(doctors)
 
   const getAvailableSlots = () => {
     const today = new Date();
@@ -63,7 +67,7 @@ const Appointment: React.FC = () => {
       const daySlots: Slot[] = [];
       while (currentDate < endTime) {
         const day = currentDate.getDate();
-        const month = currentDate.getMonth() + 1; // Months are 0-indexed
+        const month = currentDate.getMonth() + 1; 
         const year = currentDate.getFullYear();
         const slotDate = `${day}_${month}_${year}`;
         const slotTime = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -164,6 +168,7 @@ const Appointment: React.FC = () => {
           <p className="text-gray-500 font-medium mt-4">
             Appointment Fee: <span className="text-gray-600">{currencySymbol}{docInfo.fees}</span>
           </p>
+
         </div>
       </div>
 
