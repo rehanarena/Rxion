@@ -16,6 +16,7 @@ import DoctorAppoinments from './pages/Doctor/DoctorAppoinments';
 import DoctorProfile from './pages/Doctor/DoctorProfile';
 import UserList from './pages/Admin/UserList';
 import AllDoctors from './pages/Admin/AllDoctors';
+import SlotManagement from './pages/Admin/SlotManagement'
 
 interface AdminContextType {
   aToken: string | null;
@@ -44,6 +45,7 @@ const App = () => {
           <Route path='/doctor-list' element={<DoctorList />} />
           <Route path='/all-doctors' element={<AllDoctors />} />
           <Route path='/user-list' element={<UserList />} />
+          <Route path="/slot-management/:doctorId" element={<SlotManagement />} />
 
           {/* * Doctor Route * */}
           <Route path='/doctor-dashboard' element={<DoctorDashboard />} />

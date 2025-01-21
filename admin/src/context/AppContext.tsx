@@ -23,6 +23,7 @@ interface UserData {
 interface AppContextType {
   doctors: Doctor[];
   getDoctorsData: () => void;
+  updateDoctorSlots: (doctorId: string, slotDate: string, slotTime: string) => void;
   currencySymbol: string;
   token: string | false;
   setToken: React.Dispatch<React.SetStateAction<string | false>>;
@@ -45,26 +46,22 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
   const currencySymbol = "₹";
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [token, setToken] = useState<string | false>(
-    localStorage.getItem("token") || false
-  );
+  const [token, setToken] = useState<string | false>(localStorage.getItem("token") || false);
   const [userData, setUserData] = useState<UserData | false>(false);
 
-
-  /// Calculate age based on date of birth /// 
+  // Calculate age based on date of birth
   const calculateAge = (dob: string) => {
     const birthDate = new Date(dob);
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const month = today.getMonth() - birthDate.getMonth();
-  
+
     if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-  
-    return isNaN(age) ? 0 : age; 
+
+    return isNaN(age) ? 0 : age;
   };
-  
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -72,11 +69,11 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
     const dateArray = slotDate.split('_');
     if (dateArray.length === 3) {
       const day = dateArray[0];
-      const month = months[Number(dateArray[1]) - 1]; 
+      const month = months[Number(dateArray[1]) - 1];
       const year = dateArray[2];
       return `${day} ${month} ${year}`;
     }
-    return "Invalid date"; 
+    return "Invalid date";
   };
 
   const loadUserProfileData = async () => {
@@ -116,6 +113,35 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
     }
   };
 
+  const updateDoctorSlots = async (doctorId: string, slotDate: string, slotTime: string) => {
+    try {
+      const { data, status } = await axios.patch(
+        `${backendUrl}/api/admin/update-slots`, 
+        { doctorId, slotDate, slotTime },
+        { headers: { token } }
+      );
+  
+      if (status === 404) {
+        toast.error("Doctor not found.");
+      } else if (data.success) {
+        toast.success("Doctor's slots updated successfully");
+        getDoctorsData(); // Refresh doctors' data after the update
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          toast.error("Doctor not found.");
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    }
+  };
+
   const logout = () => {
     setToken(false);
     setUserData(false);
@@ -126,6 +152,7 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
   const value: AppContextType = {
     doctors,
     getDoctorsData,
+    updateDoctorSlots, // Added the updateDoctorSlots function to context
     currencySymbol,
     token,
     setToken,

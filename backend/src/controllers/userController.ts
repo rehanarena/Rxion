@@ -276,6 +276,71 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/// Google Auth ///
+const google = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // console.log('Request Body:', req.body); 
+    const { email, name, photo } = req.body;
+
+    if (!name || !email || !photo) {
+       res.status(400).json({ message: 'Name, email, and photo are required' });
+       return
+    }
+
+    let user = await userModel.findOne({ email });
+
+    if (user) {
+      // Generate token and send the response
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
+        expiresIn: "45m",
+      });
+
+      const userObject = user.toObject();
+      const { password, ...rest } = userObject;
+      const expiryDate = new Date(Date.now() + 3600000); // 1 hour
+
+      res
+        .cookie('access_token', token, {
+          httpOnly: true,
+          expires: expiryDate,
+        })
+        .status(200)
+        .json({ success: true, message: 'Login successful', user: rest, accessToken: token });
+    } else {
+      const generatedPassword = Math.random().toString(36).slice(-8) +
+                                Math.random().toString(36).slice(-8);
+      const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
+
+      const newUser = new userModel({
+        username: name.split(' ').join('').toLowerCase() + Math.random().toString(36).slice(-8),
+        email,
+        password: hashedPassword,
+        profilePicture: photo,
+      });
+
+      // console.log('New User Data:', newUser); 
+
+      await newUser.save();
+      const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET as string, {
+        expiresIn: "45m",
+      });
+
+      const userObject = newUser.toObject();
+      const { password: hashedPassword2, ...rest } = userObject;
+      res.status(201).json({ message: 'Account created', user: rest, accessToken: token });
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
+
+
+
+
+
 /// Refresh Access Token ///
 const refreshAccessToken = (req: Request, res: Response): void => {
   const { refreshToken } = req.body;
@@ -414,45 +479,43 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId, docId, slotDate, slotTime } = req.body;
 
-    const docData = (await doctorModel
-      .findById(docId)
-      .select("-password")) as Doctor;
+    const docData = await doctorModel.findById(docId).select("-password");
     if (!docData || !docData.available) {
-      res.json({ success: false, message: "Doctor not available" });
-      return;
+       res.json({ success: false, message: "Doctor not available" });
+       return
     }
 
-    let slots_booked = docData.slots_booked || {};
+    // Check if the slot exists in the available slots for that day (from admin side)
+    const availableSlots = docData.availableSlots && docData.availableSlots[slotDate];
+    if (!availableSlots || !availableSlots.includes(slotTime)) {
+      res.json({ success: false, message: "Doctor is not available at the selected time" });
+      return 
+    }
 
+    // Check if the slot is already booked
+    let slots_booked = docData.slots_booked || {};
     if (slots_booked[slotDate]) {
       if (slots_booked[slotDate].includes(slotTime)) {
-        res.json({ success: false, message: "Slot not available" });
-        return;
+         res.json({ success: false, message: "Slot not available" });
+         return
       } else {
         slots_booked[slotDate].push(slotTime);
       }
     } else {
-      slots_booked[slotDate] = [];
-      slots_booked[slotDate].push(slotTime);
+      slots_booked[slotDate] = [slotTime];
     }
 
-    const userData = (await userModel
-      .findById(userId)
-      .select("-password")) as User;
-
+    const userData = await userModel.findById(userId).select("-password");
     if (!userData) {
-      res.status(400).json({ success: false, message: "User not found" });
-      return;
+       res.status(400).json({ success: false, message: "User not found" });
+       return
     }
 
-    // console.log("docData:", docData);
-
-    
     const appointmentData: AppointmentData = {
       userId,
       docId,
       userData,
-      doctData: docData, 
+      doctData: docData,
       amount: docData.fees,
       slotTime,
       slotDate,
@@ -467,9 +530,10 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
     res.json({ success: true, message: "Appointment Booked" });
   } catch (error: any) {
     console.error(error);
-    res.json({ success: false, message: error.message });
+    res.json({ success: false, message: error.message || "An error occurred" });
   }
 };
+
 
 /// appoinments list in my-appointments ///
 const listAppointments = async (req: Request, res: Response): Promise<void> => {
@@ -586,6 +650,7 @@ export {
   verifyOtp,
   resendOtp,
   loginUser,
+  google,
   refreshAccessToken,
   forgotPassword,
   resetPassword,

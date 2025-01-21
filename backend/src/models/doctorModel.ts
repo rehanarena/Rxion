@@ -15,6 +15,8 @@ export interface IDoctor extends Document {
   address: Record<string, any>; 
   date: number;
   slots_booked: Record<string, any>; 
+  slots: { slotDate: string; slotTime: string; }[];
+  availableSlots: Record<string, string[]>;  // New property
   isBlocked: boolean;
 }
 
@@ -33,6 +35,8 @@ const doctorSchema: Schema<IDoctor> = new mongoose.Schema(
     address: { type: Object, required: true },
     date: { type: Number, required: true },
     slots_booked: { type: Object, default: {} },
+    slots: { type: [Object], default: [] },
+    availableSlots: { type: Object, default: {} },  // New field to store available slots
     isBlocked: { type: Boolean, default: false },
   },
   { minimize: false }

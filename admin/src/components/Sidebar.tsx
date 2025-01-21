@@ -5,6 +5,7 @@ import home_icon from '../assets/home_icon.svg';
 import appoinment_icon from '../assets/appointment_icon.svg';
 import add_icon from '../assets/add_icon.svg'
 import people_icon from '../assets/people_icon.svg'
+import time_icon from '../assets/time_icon.svg'
 import { DoctorContext } from "../context/DoctorContext";
 
 interface AdminContextType{
@@ -108,6 +109,15 @@ const Sidebar: React.FC = () => {
             } to={'/doctor-profile'}>
             <img src={people_icon} alt="" />
             <p className="hidden md:block">Profile</p>
+          </NavLink>
+
+          <NavLink  className={({ isActive }) =>
+              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
+                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
+              }`
+            } to={'/doctor-slots'}>
+            <img src={time_icon} alt="" />
+            <p className="hidden md:block">Slot Management</p>
           </NavLink>
         </ul>
       }

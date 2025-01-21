@@ -8,6 +8,7 @@ import userModel from "../models/userModel";
 import appointmentModel from "../models/appoinmentModel";
 import { sendPasswordEmail } from "../helper/mailer";
 
+
 interface AddDoctorRequestBody {
   name: string;
   email: string;
@@ -238,6 +239,47 @@ const appointmentsAdmin = async(req: Request, res: Response): Promise<void> =>{
   }
 }
 
+/// manage slot //
+export const updateSlots = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { doctorId, slotDate, slotTime } = req.body;
+
+    // Find the doctor by ID
+    const doctor = await doctorModel.findById(doctorId);
+    
+    // Check if doctor exists
+    if (!doctor) {
+      res.status(404).json({ success: false, message: "Doctor not found" });
+      return;
+    }
+
+    // Check if slot is already booked for the given date and time
+    const slotExists = doctor.slots_booked.some(
+      (slot: { date: string; time: string }) =>
+        slot.date === slotDate && slot.time === slotTime
+    );
+
+    if (slotExists) {
+      res.status(400).json({ success: false, message: "Slot already booked" });
+      return;
+    }
+
+    // Add the new slot to the doctor's schedule
+    doctor.slots_booked.push({ date: slotDate, time: slotTime });
+    
+    // Save the doctor with the updated slot
+    await doctor.save();
+
+    // Send a successful response
+    res.status(200).json({ success: true, message: "Slots updated successfully" });
+
+  } catch (error) {
+    console.error("Error updating slots:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
 
 /// cancelAppointment ///
 const cancelAppointment = async (req: Request, res: Response): Promise<void> => {
@@ -282,6 +324,8 @@ const cancelAppointment = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
 
 
 
