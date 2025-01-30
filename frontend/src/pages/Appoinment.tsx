@@ -1,3 +1,4 @@
+
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
@@ -51,60 +52,33 @@ const Appointment: React.FC = () => {
 
   // console.log(doctors)
 
-  const getAvailableSlots = () => {
-    const today = new Date();
-    const slots: Slot[][] = [];
+  const getAvailableSlots = async (docId: string|undefined, date: string) => {
+    console.log(`Requesting available slots for doctor ${docId} on ${date}`);
 
-    for (let i = 0; i < 7; i++) {
-      const currentDate = new Date(today);
-      currentDate.setDate(today.getDate() + i);
+    try {
+      const response = await axios.get(`${backendUrl}/api/doctor/get-slots/${docId}?date=${date}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log(`Received request: /api/doctor/get-slots/${docId}?date=${date}`);
 
-      const endTime = new Date(currentDate);
-      endTime.setHours(21, 0, 0, 0);
-
-      if (i === 0) {
-        currentDate.setHours(Math.max(currentDate.getHours() + 1, 10));
-        currentDate.setMinutes(currentDate.getMinutes() > 30 ? 30 : 0);
+  
+      if (response.data.success) {
+        const formattedSlots = response.data.slots.map((time: string) => ({
+          dateTime: new Date(date.replace(/_/g, "-")), // Convert "DD_MM_YYYY" to Date object
+          time,
+        }));
+  
+        setDocSlots([formattedSlots]); // Wrap in an array for UI handling
       } else {
-        currentDate.setHours(10, 0, 0, 0);
+        setDocSlots([]); // No slots available
       }
-
-      const daySlots: Slot[] = [];
-      while (currentDate < endTime) {
-        const day = currentDate.getDate();
-        const month = currentDate.getMonth() + 1;
-        const year = currentDate.getFullYear();
-        const slotDate = `${day}_${month}_${year}`;
-        const slotTime = currentDate.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-
-        const isSlotAvailable =
-          docInfo?.slots_booked?.[slotDate] &&
-          docInfo.slots_booked[slotDate].includes(slotTime)
-            ? false
-            : true;
-
-        if (isSlotAvailable) {
-          daySlots.push({
-            dateTime: new Date(currentDate),
-            time: currentDate.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          });
-        }
-        currentDate.setMinutes(currentDate.getMinutes() + 30);
-      }
-
-      if (daySlots.length > 0) {
-        slots.push(daySlots);
-      }
+    } catch (error) {
+      console.error(error);
     }
-
-    setDocSlots(slots);
   };
+  
+  
+  
 
   const bookAppointment = async () => {
     if (!token) {
@@ -146,7 +120,8 @@ const Appointment: React.FC = () => {
 
   useEffect(() => {
     if (docInfo) {
-      getAvailableSlots();
+      const date = new Date().toISOString().split('T')[0];
+      getAvailableSlots(docId,date)
     }
   }, [docInfo]);
   console.log(docInfo);

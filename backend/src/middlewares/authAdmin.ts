@@ -1,51 +1,43 @@
-import jwt, { JwtPayload } from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
-import dotenv from "dotenv";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
-dotenv.config();
+interface CustomRequest extends Request {
+  headers: {
+    atoken?: string;
+    [key: string]: any;  
+  };
+}
 
-const secretKey = process.env.JWT_SECRET as string;
-const adminEmail = process.env.ADMIN_EMAIL as string;
-const adminPassword = process.env.ADMIN_PASSWORD as string;
-
-const authAdmin = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+const authAdmin = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const atoken = req.headers.atoken as string;
+    const { atoken } = req.headers;
 
     if (!atoken) {
-      res.status(401).json({
+       res.status(401).json({
         success: false,
-        message: "Not Authorized. Please log in again.",
+        message: "Not Authorized. Login Again.",
       });
-      return;
+      return
     }
 
-    const token_decode = jwt.verify(atoken, secretKey) as JwtPayload;
-    // console.log("Decoded Token:", token_decode);
+    const token_decode = jwt.verify(atoken, process.env.JWT_SECRET as string) as JwtPayload;
 
     const isValid =
-      token_decode.email === adminEmail &&
-      token_decode.password === adminPassword;
+      `${process.env.ADMIN_EMAIL}${process.env.ADMIN_PASSWORD}` ===
+      `${token_decode.email}${token_decode.password}`;
 
     if (!isValid) {
       res.status(401).json({
         success: false,
-        message: "Not Authorized. Please log in again.",
-      });
+        message: "Not Authorized. Login Again.",
+      })
       return;
     }
 
     next();
   } catch (error: any) {
-    console.error("Error in admin authentication:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    console.error("Authentication Error:", error.message || error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

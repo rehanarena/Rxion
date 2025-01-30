@@ -4,6 +4,7 @@ import OTP from "../models/otpModel";
 import jwt from "jsonwebtoken";
 import validator from "validator";
 import userModel from "../models/userModel";
+import { v2 as cloudinary } from "cloudinary";
 import { sendOtpEmail } from "../helper/mailer";
 import { generateOTP } from "../utils/generateOTP";
 import { ObjectId } from "mongodb";
@@ -16,6 +17,19 @@ interface RegisterRequestBody {
   email: string;
   password: string;
   confirmPassword: string;
+}
+interface Address {
+  line1: string;
+  line2: string;
+}
+
+interface UpdateProfileRequestBody {
+  userId: string;
+  name: string;
+  phone: string;
+  address: string; 
+  dob: string;
+  gender: string;
 }
 interface AppointmentData {
   userId: string;
@@ -290,14 +304,13 @@ const google = async (req: Request, res: Response): Promise<void> => {
     let user = await userModel.findOne({ email });
 
     if (user) {
-      // Generate token and send the response
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
         expiresIn: "45m",
       });
 
       const userObject = user.toObject();
       const { password, ...rest } = userObject;
-      const expiryDate = new Date(Date.now() + 3600000); // 1 hour
+      const expiryDate = new Date(Date.now() + 3600000); 
 
       res
         .cookie('access_token', token, {
@@ -334,11 +347,6 @@ const google = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
-
-
-
-
-
 
 
 /// Refresh Access Token ///
@@ -474,6 +482,57 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
 };
 
 
+const getProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.body;
+    const userData = await userModel.findById(userId).select("-password");
+    res.json({ success: true, userData });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message || "An error occurred" });
+  }
+};
+
+// API to update user profile
+const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, name, phone, address, dob, gender }: UpdateProfileRequestBody = req.body;
+    const imageFile = req.file;
+    
+    if (!userId || !name || !phone || !address || !dob || !gender) {
+       res.json({
+        success: false,
+        message: "Enter details in all missing fields",
+      });
+      return
+    }
+
+    await userModel.findByIdAndUpdate(userId, {
+      name,
+      phone,
+      address: JSON.parse(address) as Address,
+      dob,
+      gender,
+    });
+
+    if (imageFile) {
+      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        resource_type: "image",
+      });
+      const imageURL = imageUpload.secure_url;
+
+      await userModel.findByIdAndUpdate(userId, { image: imageURL });
+    }
+
+    res.json({ success: true, message: "Profile updated" });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message || "An error occurred" });
+  }
+};
+
+
+
 /// book appoinment ///
 const bookAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -485,14 +544,8 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
        return
     }
 
-    // Check if the slot exists in the available slots for that day (from admin side)
-    const availableSlots = docData.availableSlots && docData.availableSlots[slotDate];
-    if (!availableSlots || !availableSlots.includes(slotTime)) {
-      res.json({ success: false, message: "Doctor is not available at the selected time" });
-      return 
-    }
 
-    // Check if the slot is already booked
+
     let slots_booked = docData.slots_booked || {};
     if (slots_booked[slotDate]) {
       if (slots_booked[slotDate].includes(slotTime)) {
@@ -654,6 +707,8 @@ export {
   refreshAccessToken,
   forgotPassword,
   resetPassword,
+  getProfile,
+  updateProfile,
   bookAppointment,
   listAppointments,
   cancelAppointment,

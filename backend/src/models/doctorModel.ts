@@ -1,5 +1,11 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
+// Define AvailableSlot type
+interface AvailableSlot {
+  startTime: string;
+  endTime: string;
+}
+
 // TypeScript interface for the Doctor schema
 export interface IDoctor extends Document {
   name: string;
@@ -16,7 +22,7 @@ export interface IDoctor extends Document {
   date: number;
   slots_booked: Record<string, any>; 
   slots: { slotDate: string; slotTime: string; }[];
-  availableSlots: Record<string, string[]>;  // New property
+  availableSlots: Record<string, AvailableSlot[]>; // Reference the AvailableSlot type correctly
   isBlocked: boolean;
 }
 
@@ -36,7 +42,7 @@ const doctorSchema: Schema<IDoctor> = new mongoose.Schema(
     date: { type: Number, required: true },
     slots_booked: { type: Object, default: {} },
     slots: { type: [Object], default: [] },
-    availableSlots: { type: Object, default: {} },  // New field to store available slots
+    availableSlots: { type: Object, of: { startTime: String, endTime: String }, default: {} }, // Correctly define availableSlots with types
     isBlocked: { type: Boolean, default: false },
   },
   { minimize: false }

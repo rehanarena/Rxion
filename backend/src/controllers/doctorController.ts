@@ -3,6 +3,7 @@
  import jwt from 'jsonwebtoken';
  import doctorModel  from '../models/doctorModel';
 import appointmentModel from '../models/appoinmentModel';
+import { RRule } from 'rrule';
  interface Doctor {
    _id: string;
    email: string;
@@ -11,6 +12,10 @@ import appointmentModel from '../models/appoinmentModel';
    isBlocked:boolean;
  }
 
+ type AvailableSlot = {
+  startTime: string;
+  endTime: string;
+};
 
  const loginDoctor = async (req: Request, res: Response): Promise<void> => {
    try {
@@ -79,7 +84,6 @@ import appointmentModel from '../models/appoinmentModel';
     res.json({success:false, message: "Server error while changeAvailability." })
   }
  }
-
  const doctorList = async(req: Request, res: Response): Promise<void> =>{
   try {
     const doctors = await doctorModel.find({}).select(['-password','-email'])
@@ -89,6 +93,85 @@ import appointmentModel from '../models/appoinmentModel';
     res.json({success:false, message: "Server error while fetching doctors." })
   }
  }
+ export const addSlot = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { docId } = req.params; // docId from the URL parameter
+    const { type, date, day, time, endTime } = req.body; // Slot details from the request body
+
+    if (!docId || (!date && !day) || !time) {
+      res.status(400).json({ success: false, message: "Invalid slot data" });
+      return;
+    }
+
+    // Find the doctor by docId
+    const doctor = await doctorModel.findById(docId);
+    if (!doctor) {
+      res.status(404).json({ success: false, message: "Doctor not found" });
+      return;
+    }
+
+    // Add the slot to the doctor document
+    if (type === 'specific' && date && time) {
+      // Adding a specific date and time slot
+      doctor.slots.push({ slotDate: date, slotTime: time });
+    } else if (type === 'recurring' && day && time && endTime) {
+      // Adding a recurring slot
+      doctor.availableSlots[day] = doctor.availableSlots[day] || [];
+      doctor.availableSlots[day].push({ startTime: time, endTime });
+    }
+
+    // Save the updated doctor document
+    await doctor.save();
+
+    console.log("Updated Doctor:", doctor);
+    res.status(200).json({ success: true, message: "Slot added successfully" });
+  } catch (error) {
+    console.error("Error adding slot:", error);
+    res.status(500).json({ success: false, message: "Failed to add slot" });
+  }
+};
+// Get available slots for a doctor
+export const getSlot = async (req: Request, res: Response): Promise<void> => {
+  const { docId } = req.params;
+  const { date } = req.query;
+
+  console.log('Received doctorId:', docId, 'Requested Date:', date);
+
+  // Find doctor by doctorId
+  const doctor = await doctorModel.findById(docId);
+  if (!doctor) {
+    res.status(404).json({ success: false, message: "Doctor not found" });
+    return;
+  }
+
+  // Initialize availableSlots as an empty array of AvailableSlot
+  let availableSlots: AvailableSlot[] = []; // Change to AvailableSlot[] instead of string[]
+
+  // Check if a date is provided, and filter slots accordingly
+  if (date) {
+    try {
+      const selectedDate = new Date(date as string);
+      selectedDate.setHours(0, 0, 0, 0); // Normalize the date to start of day
+
+      // Check if the specific date has slots in availableSlots
+      availableSlots = doctor.availableSlots[selectedDate.toISOString().split('T')[0]] || [];
+    } catch (error) {
+      res.status(400).json({ success: false, message: "Invalid date format" });
+      return;
+    }
+  } else {
+    // If no date is provided, return all available slots from doctor.availableSlots
+    availableSlots = Object.values(doctor.availableSlots).flat();
+  }
+
+  // Return available slots (even if empty) with a success response
+  res.status(200).json({ success: true, slots: availableSlots });
+};
+
+
+
+
+
  /// appoinments ///
  const appoinmentsDoctor = async(req: Request, res: Response): Promise<void> =>{
   try {

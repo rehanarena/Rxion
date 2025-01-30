@@ -49,7 +49,6 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
   const [token, setToken] = useState<string | false>(localStorage.getItem("token") || false);
   const [userData, setUserData] = useState<UserData | false>(false);
 
-  // Calculate age based on date of birth
   const calculateAge = (dob: string) => {
     const birthDate = new Date(dob);
     const today = new Date();
@@ -115,6 +114,11 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
 
   const updateDoctorSlots = async (doctorId: string, slotDate: string, slotTime: string) => {
     try {
+      if (!doctorId || !slotDate || !slotTime) {
+        toast.error("Invalid slot data.");
+        return;
+      }
+  
       const { data, status } = await axios.patch(
         `${backendUrl}/api/admin/update-slots`, 
         { doctorId, slotDate, slotTime },
@@ -125,22 +129,23 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
         toast.error("Doctor not found.");
       } else if (data.success) {
         toast.success("Doctor's slots updated successfully");
-        getDoctorsData(); // Refresh doctors' data after the update
+        getDoctorsData(); 
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "An error occurred while updating slots.");
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 404) {
           toast.error("Doctor not found.");
         } else {
-          toast.error(error.message);
+          toast.error(error.message || "An error occurred while updating the slot.");
         }
       } else {
-        toast.error("An unexpected error occurred");
+        toast.error("An unexpected error occurred.");
       }
     }
   };
+  
 
   const logout = () => {
     setToken(false);
@@ -152,7 +157,7 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
   const value: AppContextType = {
     doctors,
     getDoctorsData,
-    updateDoctorSlots, // Added the updateDoctorSlots function to context
+    updateDoctorSlots,
     currencySymbol,
     token,
     setToken,

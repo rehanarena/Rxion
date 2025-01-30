@@ -62,7 +62,7 @@ const Login = () => {
           localStorage.setItem("accessToken", data.accessToken);
           localStorage.setItem("refreshToken", data.refreshToken);
           setToken(data.accessToken);
-          navigate("/");
+          navigate("/", { replace: true });
         } else {
           toast.error(data.message);
         }
@@ -76,8 +76,7 @@ const Login = () => {
     const storedToken = localStorage.getItem("accessToken");
     if (storedToken) {
       setToken(storedToken);
-    } else {
-      navigate("/login");
+      navigate("/", { replace: true }); 
     }
   }, [setToken, navigate]);
 
@@ -127,15 +126,13 @@ const Login = () => {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
-      // Send the Google login data to the backend
       const { data } = await axios.post(`${backendUrl}/api/user/google`, {
         name: result.user.displayName,
         email: result.user.email,
-        photo: result.user.photoURL, // Include photo URL here
+        photo: result.user.photoURL,
       });
       
   
-      // Handle successful response from backend
       if (data.success) {
         if (data.user?.isBlocked) {
           toast.error("Your account has been blocked by the admin.");
@@ -145,7 +142,7 @@ const Login = () => {
         localStorage.setItem("refreshToken", data.refreshToken);
         setToken(data.accessToken);
         toast.success(data.message);
-        navigate('/');
+        navigate("/", { replace: true });
       } else {
         toast.error(data.message);
       }
