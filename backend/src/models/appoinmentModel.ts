@@ -22,7 +22,7 @@ const appointmentSchema: Schema<IAppointment> = new mongoose.Schema({
   slotDate: { type: String, required: true },
   slotTime: { type: String, required: true },
   userData: { type: Object, required: true },
-  doctData: { type: Object, required: true },
+  doctData: { type: Object},
   amount: { type: Number, required: true },
   date: { type: Number, required: true },
   cancelled: { type: Boolean, required: false },

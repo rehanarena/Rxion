@@ -36,13 +36,15 @@ interface Appointment {
 interface AppContextType {
   slotDateFormat: (date: string) => string;
   currencySymbol: string;
+  calculateAge: (dob: string) => number;
 }
 
 const AllAppointments = () => {
   const { aToken, appointments, getAllAppointments, cancelAppointment } =
     useContext(AdminContext) as AdminContextType;
-  const { slotDateFormat, currencySymbol } = useContext(AppContext) as AppContextType;
+  const { calculateAge, slotDateFormat, currencySymbol } = useContext(AppContext) as AppContextType;
 
+  // console.log(calculateAge)
   useEffect(() => {
     if (aToken) {
       getAllAppointments();
@@ -58,6 +60,7 @@ const AllAppointments = () => {
         <div className="hidden sm:grid grid-cols-[0.5fr_2.5fr_2fr_2.5fr_1.5fr_1fr] py-3 px-6 border-b bg-gray-100 text-gray-700">
           <p>#</p>
           <p>Patient</p>
+          <p>Age</p>
           <p>Date & Time</p>
           <p>Doctor</p>
           <p>Fees</p>
@@ -78,6 +81,7 @@ const AllAppointments = () => {
               />
               <p className="text-gray-800 font-medium">{item.userData.name}</p>
             </div>
+            <p className="hidden sm:block">{calculateAge(item.userData.dob)}</p>
             <p className="text-gray-600">
               {slotDateFormat(item.slotDate)}, {item.slotTime}
             </p>

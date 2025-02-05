@@ -1,5 +1,6 @@
-import {  useEffect, useState } from 'react';
+import {  useContext, useEffect, useState } from 'react';
 import axios from 'axios';
+import { AdminContext } from '../../context/AdminContext';
 
 
 interface Doctor {
@@ -10,7 +11,12 @@ interface Doctor {
   isBlocked: boolean;
 }
 
+interface AdminContextType {
+  aToken: string;
+}
+
 const DoctorList = () => {
+  const { aToken } = useContext(AdminContext)as AdminContextType; 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -19,34 +25,54 @@ const DoctorList = () => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        const response = await axios.get(`${backendUrl}/api/admin/doctors`);
-        // console.log('User API Response:', response.data);
-        if (Array.isArray(response.data)) {
-          setDoctors(response.data);
-        } else {
-          setError('Received user data is not in the expected format.');
+    useEffect(() => {
+      const fetchDoctors = async () => {
+        if (!aToken) {
+          setError('Not Authorized. Please login.');
+          setLoading(false);
+          return;
         }
-      } catch (error) {
-        if (axios.isAxiosError(error) && error.response) {
-          setError(error.response.data.message || 'Error fetching users.');
-        } else {
-          setError('Error fetching users.');
+        try {
+          // Ensure you are hitting the correct doctors endpoint
+          const response = await axios.get(`${backendUrl}/api/admin/doctors`, {
+            headers: {
+              atoken: aToken,  
+            },
+          });
+      
+          // Ensure the response data contains an array of doctors
+          if (Array.isArray(response.data)) {
+            setDoctors(response.data);
+          } else {
+            setError('Received data is not in the expected format.');
+          }
+        } catch (error) {
+          if (axios.isAxiosError(error) && error.response) {
+            setError(error.response.data.message || 'Error fetching doctors.');
+          } else {
+            setError('Error fetching doctors.');
+          }
+        } finally {
+          setLoading(false);
         }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDoctors();
-  }, []);
+      };
+      
+      fetchDoctors();
+    }, [aToken, backendUrl]);
 
 
-  const handleBlockUnblockDoctor = async (doctorId: string, action: 'block' | 'unblock') => {
+
+  const handleBlockUnblockDoctor = async (doctorId: string, action: 'block' | 'unblock') =>  {
     try {
-      await axios.patch(`${backendUrl}/api/admin/doctors/block-unblock/${doctorId}`, { action });
+      if (!aToken) {
+        setError('Not Authorized. Please login.');
+        return;
+      }
+      await axios.patch(
+        `${backendUrl}/api/admin/doctors/block-unblock/${doctorId}`,
+        { action },
+        { headers: { atoken: aToken } }
+      );
       setDoctors(doctors.map(doctor =>
         doctor._id === doctorId ? { ...doctor, isBlocked: action === 'block' } : doctor
       ));
@@ -70,7 +96,7 @@ const DoctorList = () => {
     {error && <p className="text-red-500">{error}</p>}
 
     {currentDoctors.length === 0 && !loading ? (
-      <p className="text-gray-500">No users found.</p>
+      <p className="text-gray-500">No doctors found.</p>
     ) : (
       <div className="overflow-x-auto shadow-lg rounded-lg">
         <table className="min-w-full table-auto border-collapse">

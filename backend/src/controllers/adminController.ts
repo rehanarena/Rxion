@@ -20,6 +20,10 @@ interface AddDoctorRequestBody {
   fees: string;
   address: string;
 }
+export interface IBookedSlot {
+  startTime: string;
+  isBooked: boolean;
+}
 
 const addDoctor = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -85,8 +89,8 @@ const addDoctor = async (req: Request, res: Response): Promise<void> => {
     const newDoctor = new doctorModel(doctorData);
     await newDoctor.save();
 
-    // Send the password to the added doctor's email
     await sendPasswordEmail(email, password);
+    console.log("password for the doc:" ,password)
 
     res.status(201).json({ success: true, message: "Doctor Added Successfully and Password Sent to Email" });
   } catch (error) {
@@ -239,46 +243,6 @@ const appointmentsAdmin = async(req: Request, res: Response): Promise<void> =>{
   }
 }
 
-/// manage slot //
-export const updateSlots = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { doctorId, slotDate, slotTime } = req.body;
-
-    // Find the doctor by ID
-    const doctor = await doctorModel.findById(doctorId);
-    
-    // Check if doctor exists
-    if (!doctor) {
-      res.status(404).json({ success: false, message: "Doctor not found" });
-      return;
-    }
-
-    // Check if slot is already booked for the given date and time
-    const slotExists = doctor.slots_booked.some(
-      (slot: { date: string; time: string }) =>
-        slot.date === slotDate && slot.time === slotTime
-    );
-
-    if (slotExists) {
-      res.status(400).json({ success: false, message: "Slot already booked" });
-      return;
-    }
-
-    // Add the new slot to the doctor's schedule
-    doctor.slots_booked.push({ date: slotDate, time: slotTime });
-    
-    // Save the doctor with the updated slot
-    await doctor.save();
-
-    // Send a successful response
-    res.status(200).json({ success: true, message: "Slots updated successfully" });
-
-  } catch (error) {
-    console.error("Error updating slots:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
-
 
 
 /// cancelAppointment ///
@@ -297,7 +261,6 @@ const cancelAppointment = async (req: Request, res: Response): Promise<void> => 
       cancelled: true,
     });
 
-    // Releasing doctor's slot
     const { docId, slotDate, slotTime } = appointmentData;
     const doctorData = await doctorModel.findById(docId) ;
 
@@ -309,10 +272,9 @@ const cancelAppointment = async (req: Request, res: Response): Promise<void> => 
     let slots_booked = doctorData.slots_booked;
     console.log("Slots booked: ", slots_booked);
 
-    /// Filtering the slotTime from the booked slots ///
     if (slots_booked[slotDate]) {
-      console.log("Filtered: ", slots_booked[slotDate].filter((e: string) => e !== slotTime));
-      slots_booked[slotDate] = slots_booked[slotDate].filter((e: string) => e !== slotTime);
+      console.log("Filtered: ", slots_booked[slotDate].filter((slot: IBookedSlot) => slot.startTime !== slotTime));
+      slots_booked[slotDate] = slots_booked[slotDate].filter((slot: IBookedSlot) => slot.startTime !== slotTime);
       console.log("After filtering: ", slots_booked[slotDate]);
 
       await doctorModel.findByIdAndUpdate(docId, { slots_booked });

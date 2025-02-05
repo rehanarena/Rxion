@@ -4,18 +4,33 @@ import OTP from "../models/otpModel";
 import jwt from "jsonwebtoken";
 import validator from "validator";
 import userModel from "../models/userModel";
+import { v2 as cloudinary } from "cloudinary";
 import { sendOtpEmail } from "../helper/mailer";
 import { generateOTP } from "../utils/generateOTP";
 import { ObjectId } from "mongodb";
 import doctorModel from "../models/doctorModel";
 import appointmentModel from "../models/appoinmentModel";
 import razorpay from "razorpay";
+import IBookedSlot from "../models/doctorModel";
 
 interface RegisterRequestBody {
   name: string;
   email: string;
   password: string;
   confirmPassword: string;
+}
+interface Address {
+  line1: string;
+  line2: string;
+}
+
+interface UpdateProfileRequestBody {
+  userId: string;
+  name: string;
+  phone: string;
+  address: string;
+  dob: string;
+  gender: string;
 }
 interface AppointmentData {
   userId: string;
@@ -37,6 +52,17 @@ interface Doctor {
 interface User {
   _id: string;
 }
+interface Slot {
+  startTime: string;
+  isBooked?: boolean;
+}
+
+// Define the IBookedSlot interface before usage
+export interface IBookedSlot {
+  startTime: string;
+  isBooked: boolean;
+}
+
 interface RazorpayOrderCreateRequestBody {
   amount: number;
   currency: string;
@@ -46,7 +72,7 @@ interface RazorpayOrderCreateRequestBody {
 
 const generateAccessToken = (userId: string): string => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET as string, {
-    expiresIn: "45m",
+    expiresIn: "49m",
   });
 };
 
@@ -279,67 +305,78 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
 /// Google Auth ///
 const google = async (req: Request, res: Response): Promise<void> => {
   try {
-    // console.log('Request Body:', req.body); 
+    // console.log('Request Body:', req.body);
     const { email, name, photo } = req.body;
 
     if (!name || !email || !photo) {
-       res.status(400).json({ message: 'Name, email, and photo are required' });
-       return
+      res.status(400).json({ message: "Name, email, and photo are required" });
+      return;
     }
 
     let user = await userModel.findOne({ email });
 
     if (user) {
-      // Generate token and send the response
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
-        expiresIn: "45m",
-      });
+      const token = jwt.sign(
+        { id: user._id },
+        process.env.JWT_SECRET as string,
+        {
+          expiresIn: "45m",
+        }
+      );
 
       const userObject = user.toObject();
       const { password, ...rest } = userObject;
-      const expiryDate = new Date(Date.now() + 3600000); // 1 hour
+      const expiryDate = new Date(Date.now() + 3600000);
 
       res
-        .cookie('access_token', token, {
+        .cookie("access_token", token, {
           httpOnly: true,
           expires: expiryDate,
         })
         .status(200)
-        .json({ success: true, message: 'Login successful', user: rest, accessToken: token });
+        .json({
+          success: true,
+          message: "Login successful",
+          user: rest,
+          accessToken: token,
+        });
     } else {
-      const generatedPassword = Math.random().toString(36).slice(-8) +
-                                Math.random().toString(36).slice(-8);
+      const generatedPassword =
+        Math.random().toString(36).slice(-8) +
+        Math.random().toString(36).slice(-8);
       const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
 
       const newUser = new userModel({
-        username: name.split(' ').join('').toLowerCase() + Math.random().toString(36).slice(-8),
+        username:
+          name.split(" ").join("").toLowerCase() +
+          Math.random().toString(36).slice(-8),
         email,
         password: hashedPassword,
         profilePicture: photo,
       });
 
-      // console.log('New User Data:', newUser); 
+      // console.log('New User Data:', newUser);
 
       await newUser.save();
-      const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET as string, {
-        expiresIn: "45m",
-      });
+      const token = jwt.sign(
+        { id: newUser._id },
+        process.env.JWT_SECRET as string,
+        {
+          expiresIn: "45m",
+        }
+      );
 
       const userObject = newUser.toObject();
       const { password: hashedPassword2, ...rest } = userObject;
-      res.status(201).json({ message: 'Account created', user: rest, accessToken: token });
+      res
+        .status(201)
+        .json({ message: "Account created", user: rest, accessToken: token });
     }
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
-
-
-
-
-
-
 
 /// Refresh Access Token ///
 const refreshAccessToken = (req: Request, res: Response): void => {
@@ -355,7 +392,7 @@ const refreshAccessToken = (req: Request, res: Response): void => {
   try {
     const decoded: any = jwt.verify(
       refreshToken,
-      process.env.REFRESH_SECRET as string
+      process.env.JWT_SECRET as string
     );
 
     const storedToken = refreshTokens.get(decoded.id);
@@ -473,77 +510,162 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-
-/// book appoinment ///
-const bookAppointment = async (req: Request, res: Response): Promise<void> => {
+const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { userId, docId, slotDate, slotTime } = req.body;
-
-    const docData = await doctorModel.findById(docId).select("-password");
-    if (!docData || !docData.available) {
-       res.json({ success: false, message: "Doctor not available" });
-       return
-    }
-
-    // Check if the slot exists in the available slots for that day (from admin side)
-    const availableSlots = docData.availableSlots && docData.availableSlots[slotDate];
-    if (!availableSlots || !availableSlots.includes(slotTime)) {
-      res.json({ success: false, message: "Doctor is not available at the selected time" });
-      return 
-    }
-
-    // Check if the slot is already booked
-    let slots_booked = docData.slots_booked || {};
-    if (slots_booked[slotDate]) {
-      if (slots_booked[slotDate].includes(slotTime)) {
-         res.json({ success: false, message: "Slot not available" });
-         return
-      } else {
-        slots_booked[slotDate].push(slotTime);
-      }
-    } else {
-      slots_booked[slotDate] = [slotTime];
-    }
-
+    const { userId } = req.body;
     const userData = await userModel.findById(userId).select("-password");
-    if (!userData) {
-       res.status(400).json({ success: false, message: "User not found" });
-       return
-    }
-
-    const appointmentData: AppointmentData = {
-      userId,
-      docId,
-      userData,
-      doctData: docData,
-      amount: docData.fees,
-      slotTime,
-      slotDate,
-      date: Date.now(),
-    };
-
-    const newAppointment = new appointmentModel(appointmentData);
-    await newAppointment.save();
-
-    await doctorModel.findByIdAndUpdate(docId, { slots_booked });
-
-    res.json({ success: true, message: "Appointment Booked" });
+    res.json({ success: true, userData });
   } catch (error: any) {
     console.error(error);
     res.json({ success: false, message: error.message || "An error occurred" });
   }
 };
 
+// API to update user profile
+const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const {
+      userId,
+      name,
+      phone,
+      address,
+      dob,
+      gender,
+    }: UpdateProfileRequestBody = req.body;
+    const imageFile = req.file;
+
+    if (!userId || !name || !phone || !address || !dob || !gender) {
+      res.json({
+        success: false,
+        message: "Enter details in all missing fields",
+      });
+      return;
+    }
+
+    await userModel.findByIdAndUpdate(userId, {
+      name,
+      phone,
+      address: JSON.parse(address) as Address,
+      dob,
+      gender,
+    });
+
+    if (imageFile) {
+      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        resource_type: "image",
+      });
+      const imageURL = imageUpload.secure_url;
+
+      await userModel.findByIdAndUpdate(userId, { image: imageURL });
+    }
+
+    res.json({ success: true, message: "Profile updated" });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message || "An error occurred" });
+  }
+};
+/// book appoinment ///
+
+const bookAppointment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { docId, slotDate, slotTime } = req.body;
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      res.status(401).json({ success: false, message: "Unauthorized access" });
+      return;
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    const userId = (decoded as any).id;
+
+    const docData = await doctorModel.findById(docId);
+    if (!docData) {
+      res.status(404).json({ success: false, message: "Doctor not found" });
+      return;
+    }
+
+    if (!docData.available) {
+      res.status(400).json({ success: false, message: "Doctor not available" });
+      return;
+    }
+
+    if (!docData.fees) {
+      res.status(400).json({ success: false, message: "Doctor fees not found" });
+      return;
+    }
+    if (!docData.slots_booked) {
+      docData.slots_booked = {};
+    }
+    if (!docData.slots_booked[slotDate]) {
+      docData.slots_booked[slotDate] = [];
+    }
+
+    const formattedSlotTime = new Date(slotTime).toISOString();
+
+    const isSlotBooked = docData.slots_booked[slotDate].some(
+      (slot: any) => slot.startTime === formattedSlotTime && slot.isBooked
+    );
+
+    if (isSlotBooked) {
+      res.status(400).json({ success: false, message: "Slot not available" });
+      return;
+    }
+
+    // console.log('Before updating slots_booked:', docData.slots_booked);
+    docData.slots_booked[slotDate].push({
+      startTime: formattedSlotTime,
+      isBooked: true,
+    });
+
+    // console.log('After updating slots_booked:', docData.slots_booked);
+
+    await docData.save();  
+    const updatedDocData = await doctorModel.findById(docId);
+    // console.log('Updated doctor data:', updatedDocData);
+
+    const userData = await userModel.findById(userId).select("-password");
+    if (!userData) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+    const appointmentData = new appointmentModel({
+      userId,
+      docId,
+      userData,
+      doctData: docData,
+      amount: docData.fees,
+      slotTime: formattedSlotTime,
+      slotDate,
+      date: new Date(),
+    });
+
+    await appointmentData.save();
+
+    res.status(201).json({ success: true, message: "Appointment booked successfully" });
+  } catch (error: any) {
+    console.error("Error booking appointment:", error);
+    res.status(500).json({ success: false, message: "An error occurred, please try again" });
+  }
+};
+
+
+
 
 /// appoinments list in my-appointments ///
 const listAppointments = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.body;
-    const appointments = await appointmentModel.find({ userId });
+    // console.log(req.body)
+    // console.log(userId)
+    const appointments = await appointmentModel.find({ userId }).lean();
+
+    // console.log(appointments)
 
     res.json({ success: true, appointments });
   } catch (error: any) {
-    console.error(error);
+    console.error("Error:", error);
     res.json({ success: false, message: error.message });
   }
 };
@@ -583,7 +705,7 @@ const cancelAppointment = async (
     let slots_booked = doctorData.slots_booked;
     if (slots_booked[slotDate]) {
       slots_booked[slotDate] = slots_booked[slotDate].filter(
-        (e: string) => e !== slotTime
+        (slot: IBookedSlot) => slot.startTime !== slotTime
       );
       await doctorModel.findByIdAndUpdate(docId, { slots_booked });
     }
@@ -610,13 +732,13 @@ const paymentRazorpay = async (req: Request, res: Response): Promise<void> => {
     }
 
     ///payment order using razorpay api ///
-    const currency = process.env.CURRENCY || 'INR'; 
+    const currency = process.env.CURRENCY || "INR";
 
     const options: RazorpayOrderCreateRequestBody = {
-      amount: appointmentData.amount * 100, 
+      amount: appointmentData.amount * 100,
       currency: currency,
       receipt: appointmentId.toString(),
-      payment_capture: 1, 
+      payment_capture: 1,
     };
 
     const order = await razorpayInstance.orders.create(options);
@@ -628,22 +750,24 @@ const paymentRazorpay = async (req: Request, res: Response): Promise<void> => {
 };
 
 /// verify payment ///
-const verifyRazorpay = async(req: Request, res: Response): Promise<void> => {
+const verifyRazorpay = async (req: Request, res: Response): Promise<void> => {
   try {
-    const {razorpay_payment_id,razorpay_order_id} = req.body
-    const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id)
-    
-    if (orderInfo.status === 'paid') {
-      await appointmentModel.findByIdAndUpdate(orderInfo.receipt,{payment:true})
-      res.json({success:true,message:'Payment Successful'})
-    }else{
-      res.json({success:false,message:'Payment Failed'})
+    const { razorpay_payment_id, razorpay_order_id } = req.body;
+    const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id);
+
+    if (orderInfo.status === "paid") {
+      await appointmentModel.findByIdAndUpdate(orderInfo.receipt, {
+        payment: true,
+      });
+      res.json({ success: true, message: "Payment Successful" });
+    } else {
+      res.json({ success: false, message: "Payment Failed" });
     }
   } catch (error: any) {
     console.error(error);
     res.json({ success: false, message: error.message });
   }
-  }
+};
 
 export {
   registerUser,
@@ -654,6 +778,8 @@ export {
   refreshAccessToken,
   forgotPassword,
   resetPassword,
+  getProfile,
+  updateProfile,
   bookAppointment,
   listAppointments,
   cancelAppointment,

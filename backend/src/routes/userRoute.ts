@@ -1,6 +1,7 @@
 import express from 'express';
-import { registerUser, verifyOtp, loginUser, resendOtp, forgotPassword, resetPassword, refreshAccessToken, bookAppointment, listAppointments, cancelAppointment, paymentRazorpay, verifyRazorpay, google} from '../controllers/userController';
+import { registerUser, verifyOtp, loginUser, resendOtp, forgotPassword, resetPassword, refreshAccessToken, bookAppointment, listAppointments, cancelAppointment, paymentRazorpay, verifyRazorpay, google, getProfile, updateProfile} from '../controllers/userController';
 import authUser from '../middlewares/authUser';
+import upload from '../middlewares/multer';
 
 
 const userRouter = express.Router();
@@ -12,6 +13,8 @@ userRouter.post('/google',google)
 userRouter.post("/refresh-token",refreshAccessToken);
 userRouter.post('/forgot-password', forgotPassword);
 userRouter.post('/reset-password', resetPassword);
+userRouter.get('/get-profile',authUser,getProfile)
+userRouter.put('/update-profile',upload.single("image"),authUser,updateProfile)
 userRouter.post('/book-appointment',authUser,bookAppointment);
 userRouter.get('/appointments',authUser,listAppointments);
 userRouter.post('/cancel-appointment',authUser,cancelAppointment);

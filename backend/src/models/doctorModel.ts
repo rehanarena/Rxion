@@ -1,6 +1,10 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
-// TypeScript interface for the Doctor schema
+export interface IBookedSlot {
+  startTime: string;
+  isBooked: boolean;
+}
+
 export interface IDoctor extends Document {
   name: string;
   email: string;
@@ -12,13 +16,13 @@ export interface IDoctor extends Document {
   about: string;
   fees: number;
   available: boolean;
-  address: Record<string, any>; 
+  address: Record<string, any>;
   date: number;
-  slots_booked: Record<string, any>; 
-  slots: { slotDate: string; slotTime: string; }[];
-  availableSlots: Record<string, string[]>;  // New property
+  slots_booked: { [slotDate: string]: IBookedSlot[] };  
   isBlocked: boolean;
 }
+
+
 
 const doctorSchema: Schema<IDoctor> = new mongoose.Schema(
   {
@@ -35,8 +39,6 @@ const doctorSchema: Schema<IDoctor> = new mongoose.Schema(
     address: { type: Object, required: true },
     date: { type: Number, required: true },
     slots_booked: { type: Object, default: {} },
-    slots: { type: [Object], default: [] },
-    availableSlots: { type: Object, default: {} },  // New field to store available slots
     isBlocked: { type: Boolean, default: false },
   },
   { minimize: false }

@@ -1,162 +1,227 @@
-import React, { useState } from "react";
-import { assets } from "../assets/assets";
-
-interface Address {
-  line1: string;
-  line2: string;
-}
+import { useContext, useState, useEffect } from "react";
+import { AppContext } from "../context/AppContext";
+import { assets } from '../assets/assets';
+import axios from "axios";
+import { toast } from "react-toastify";
 
 interface UserData {
+  _id: string;
   name: string;
-  image: string;
   email: string;
   phone: string;
-  address: Address;
-  gender: "Male" | "Female";
-  DOB: string;
+  address: {
+    line1: string;
+    line2: string;
+  };
+  gender: string;
+  dob: string;
+  image: string;
 }
 
-const MyProfile: React.FC = () => {
-  const [userData, setUserData] = useState<UserData>({
-    name: "Rehana",
-    image: assets.profile_pic,
-    email: "rena@gmail.com",
-    phone: "+971 589325787",
-    address: {
-      line1: "Street 123",
-      line2: "Near bus stop, India",
-    },
-    gender: "Female",
-    DOB: "2002-03-04",
-  });
+interface AppContextType {
+  backendUrl: string;
+  token: string | false;
+  userData: UserData | false;
+  setUserData: React.Dispatch<React.SetStateAction<UserData | false>>;
+  loadUserProfileData: () => void;
+}
+
+const MyProfile = () => {
+  const { userData, setUserData, token, backendUrl, loadUserProfileData } = useContext(AppContext) as AppContextType;
 
   const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [image, setImage] = useState<File | false>(false);
+
+  useEffect(() => {
+    if (token) {
+      loadUserProfileData();
+    }
+  }, [token]);
+
+  const updateUserProfileData = async () => {
+    if (!userData) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('name', userData.name);
+      formData.append('phone', userData.phone);
+      formData.append('address', JSON.stringify(userData.address));
+      formData.append('gender', userData.gender);
+      formData.append('dob', userData.dob);
+
+      if (image) formData.append('image', image);
+
+      const { data } = await axios.put(
+        backendUrl + '/api/user/update-profile',
+        formData,
+        { headers: { token } }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        await loadUserProfileData();
+        setIsEdit(false);
+        setImage(false);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error instanceof Error ? error.message : 'An unknown error occurred');
+    }
+  };
+
+  if (!userData) return null;
 
   return (
-    <div className="max-w-lg mx-auto p-6 shadow-lg rounded-lg bg-white text-gray-700">
-      {/* Profile Image */}
-      <div className="flex flex-col items-center mb-6">
-        <img
-          className="w-36 h-36 rounded-full object-cover border-2 border-primary shadow-md"
-          src={userData.image}
-          alt="Profile"
-        />
+    <div className="max-w-3xl mx-auto p-8 bg-gradient-to-br from-white to-blue-50 rounded-3xl shadow-2xl backdrop-blur-lg border border-white/30">
+      <div className="flex justify-center mb-8">
+        {isEdit ? (
+          <label htmlFor="image" className="cursor-pointer">
+            <div className="relative group">
+              <img
+                className="w-40 h-40 rounded-full object-cover shadow-xl border-4 border-white/50 hover:border-blue-300 transition-all duration-300"
+                src={image ? URL.createObjectURL(image) : userData.image}
+                alt="Profile"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <img
+                  className="w-12"
+                  src={assets.upload_icon}
+                  alt="Upload Icon"
+                />
+              </div>
+            </div>
+            <input
+              onChange={(e) => setImage(e.target.files ? e.target.files[0] : false)}
+              type="file"
+              id="image"
+              hidden
+            />
+          </label>
+        ) : (
+          <div className="text-center">
+            <img
+              className="w-40 h-40 rounded-full object-cover shadow-xl border-4 border-white/50"
+              src={userData.image}
+              alt="Profile"
+            />
+          </div>
+        )}
+      </div>
+      <div className="text-center">
         {isEdit ? (
           <input
-            className="bg-gray-50 text-xl font-medium text-center mt-4 border border-gray-300 rounded-lg p-2"
-            type="text"
+            className="w-full mt-4 p-3 text-xl font-medium bg-white/50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             value={userData.name}
-            onChange={(e) =>
-              setUserData((prev) => ({ ...prev, name: e.target.value }))
-            }
+            onChange={(e) => setUserData((prev) => prev ? { ...prev, name: e.target.value } : prev)}
+            type="text"
           />
         ) : (
-          <p className="font-medium text-2xl text-neutral-800 mt-4">
-            {userData.name}
-          </p>
+          <p className="text-3xl font-bold text-gray-800">{userData.name}</p>
         )}
       </div>
 
-      {/* Contact Information */}
+      <hr className="my-6 border-t-2 border-gray-200/50" />
       <div>
-        <p className="text-neutral-500 underline font-semibold">Contact Information</p>
-        <div className="grid grid-cols-[1fr_3fr] gap-y-3 mt-4 text-neutral-700">
-          <p className="font-medium">Email:</p>
-          <p className="text-blue-500">{userData.email}</p>
+        <p className="text-xl font-bold text-gray-800 mb-4">Contact Information</p>
+        <div className="grid grid-cols-1 gap-y-4 text-gray-700">
+          <div>
+            <p className="font-medium">Email:</p>
+            <p className="text-blue-600">{userData.email}</p>
+          </div>
 
-          <p className="font-medium">Phone:</p>
-          {isEdit ? (
-            <input
-              className="bg-gray-100 w-full p-2 border border-gray-300 rounded-lg"
-              type="text"
-              value={userData.phone}
-              onChange={(e) =>
-                setUserData((prev) => ({ ...prev, phone: e.target.value }))
-              }
-            />
-          ) : (
-            <p>{userData.phone}</p>
-          )}
+          <div>
+            <p className="font-medium">Phone:</p>
+            {isEdit ? (
+              <input
+                className="w-full p-3 mt-2 bg-white/50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={userData.phone}
+                onChange={(e) => setUserData((prev) => prev ? { ...prev, phone: e.target.value } : prev)}
+                type="text"
+              />
+            ) : (
+              <p className="text-gray-600">{userData.phone}</p>
+            )}
+          </div>
 
-          <p className="font-medium">Address:</p>
-          {isEdit ? (
-            <div>
-              <input
-                className="bg-gray-50 mb-2 w-full p-2 border border-gray-300 rounded-lg"
-                type="text"
-                value={userData.address.line1}
-                onChange={(e) =>
-                  setUserData((prev) => ({
-                    ...prev,
-                    address: { ...prev.address, line1: e.target.value },
-                  }))
-                }
-              />
-              <input
-                className="bg-gray-50 w-full p-2 border border-gray-300 rounded-lg"
-                type="text"
-                value={userData.address.line2}
-                onChange={(e) =>
-                  setUserData((prev) => ({
-                    ...prev,
-                    address: { ...prev.address, line2: e.target.value },
-                  }))
-                }
-              />
-            </div>
-          ) : (
-            <p>
-              {userData.address.line1} <br />
-              {userData.address.line2}
-            </p>
-          )}
+          <div>
+            <p className="font-medium">Address:</p>
+            {isEdit ? (
+              <div className="space-y-2">
+                <input
+                  className="w-full p-3 bg-white/50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  onChange={(e) => setUserData((prev) => prev ? { ...prev, address: { ...prev.address, line1: e.target.value } } : prev)}
+                  value={userData.address.line1}
+                  type="text"
+                />
+                <input
+                  className="w-full p-3 bg-white/50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  onChange={(e) => setUserData((prev) => prev ? { ...prev, address: { ...prev.address, line2: e.target.value } } : prev)}
+                  value={userData.address.line2}
+                  type="text"
+                />
+              </div>
+            ) : (
+              <p className="text-gray-600">
+                {userData.address.line1}
+                <br />
+                {userData.address.line2}
+              </p>
+            )}
+          </div>
         </div>
       </div>
+      <div className="mt-8">
+        <p className="text-xl font-bold text-gray-800 mb-4">Basic Information</p>
+        <div className="grid grid-cols-1 gap-y-4 text-gray-700">
+          <div>
+            <p className="font-medium">Gender:</p>
+            {isEdit ? (
+              <select
+                className="w-full p-3 bg-white/50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                onChange={(e) => setUserData((prev) => prev ? { ...prev, gender: e.target.value } : prev)}
+                value={userData.gender}
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            ) : (
+              <p className="text-gray-600">{userData.gender}</p>
+            )}
+          </div>
 
-      {/* Basic Information */}
-      <div className="mt-6">
-        <p className="text-neutral-500 underline font-semibold">Basic Information</p>
-        <div className="grid grid-cols-[1fr_3fr] gap-y-3 mt-4 text-neutral-700">
-          <p className="font-medium">Gender:</p>
-          {isEdit ? (
-            <select
-              className="bg-gray-100 w-full p-2 border border-gray-300 rounded-lg"
-              value={userData.gender}
-              onChange={(e) =>
-                setUserData((prev) => ({ ...prev, gender: e.target.value as "Male" | "Female" }))
-              }
-            >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          ) : (
-            <p>{userData.gender}</p>
-          )}
-
-          <p className="font-medium">Birthday:</p>
-          {isEdit ? (
-            <input
-              className="bg-gray-100 w-full p-2 border border-gray-300 rounded-lg"
-              type="date"
-              value={userData.DOB}
-              onChange={(e) =>
-                setUserData((prev) => ({ ...prev, DOB: e.target.value }))
-              }
-            />
-          ) : (
-            <p>{userData.DOB}</p>
-          )}
+          <div>
+            <p className="font-medium">Birthday:</p>
+            {isEdit ? (
+              <input
+                className="w-full p-3 bg-white/50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                onChange={(e) => setUserData((prev) => prev ? { ...prev, dob: e.target.value } : prev)}
+                value={userData.dob}
+                type="date"
+              />
+            ) : (
+              <p className="text-gray-600">{userData.dob}</p>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Edit/Save Button */}
-      <div className="mt-8 text-center">
-        <button
-          className="px-8 py-2 rounded-full text-white bg-primary hover:bg-primary-dark transition-all"
-          onClick={() => setIsEdit((prev) => !prev)}
-        >
-          {isEdit ? "Save Information" : "Edit Profile"}
-        </button>
+      <div className="mt-12 text-center">
+        {isEdit ? (
+          <button
+            className="w-full py-3 bg-gradient-to-r from-blue-500 to-white text-blue-500 font-bold rounded-full hover:from-blue-600 hover:to-white transition-all shadow-lg hover:shadow-xl"
+            onClick={updateUserProfileData}
+          >
+            Save Changes
+          </button>
+        ) : (
+          <button
+            className="w-full py-3 bg-white text-blue-500 font-bold rounded-full border border-blue-500 hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl"
+            onClick={() => setIsEdit(true)}
+          >
+            Edit Profile
+          </button>
+        )}
       </div>
     </div>
   );

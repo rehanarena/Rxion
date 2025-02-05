@@ -1,11 +1,10 @@
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../context/AppContext";
-import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import  {auth } from '../../firebase/firebaseConfig';
-
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../../firebase/firebaseConfig";
+import { getAxiosInstance } from "../utils/axiosInterceptor";
 
 interface AppContextType {
   backendUrl: string;
@@ -16,6 +15,7 @@ interface AppContextType {
 const Login = () => {
   const { backendUrl, setToken } = useContext(AppContext) as AppContextType;
   const navigate = useNavigate();
+  const axiosInstance = getAxiosInstance(navigate);
 
   const [state, setState] = useState<"Sign Up" | "Login">("Sign Up");
   const [email, setEmail] = useState<string>("");
@@ -35,12 +35,15 @@ const Login = () => {
           return;
         }
 
-        const { data } = await axios.post(`${backendUrl}/api/user/register`, {
-          name,
-          password,
-          email,
-          confirmPassword,
-        });
+        const { data } = await axiosInstance.post(
+          `${backendUrl}/api/user/register`,
+          {
+            name,
+            password,
+            email,
+            confirmPassword,
+          }
+        );
 
         if (data.success) {
           toast.success(data.message);
@@ -49,10 +52,13 @@ const Login = () => {
           toast.error(data.message);
         }
       } else {
-        const { data } = await axios.post(`${backendUrl}/api/user/login`, {
-          password,
-          email,
-        });
+        const { data } = await axiosInstance.post(
+          `${backendUrl}/api/user/login`,
+          {
+            password,
+            email,
+          }
+        );
 
         if (data.success) {
           if (data.user?.isBlocked) {
@@ -62,7 +68,7 @@ const Login = () => {
           localStorage.setItem("accessToken", data.accessToken);
           localStorage.setItem("refreshToken", data.refreshToken);
           setToken(data.accessToken);
-          navigate("/");
+          navigate("/", { replace: true });
         } else {
           toast.error(data.message);
         }
@@ -76,66 +82,24 @@ const Login = () => {
     const storedToken = localStorage.getItem("accessToken");
     if (storedToken) {
       setToken(storedToken);
-    } else {
-      navigate("/login");
+      navigate("/", { replace: true });
     }
   }, [setToken, navigate]);
-
-  useEffect(() => {
-    const refreshToken = localStorage.getItem("refreshToken");
-
-    if (!refreshToken) return;
-
-    const interceptor = axios.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-
-          try {
-            const response = await axios.post(
-              `${backendUrl}/api/user/refresh-token`,
-              {
-                refreshToken,
-              }
-            );
-
-            const { accessToken } = response.data;
-            localStorage.setItem("accessToken", accessToken);
-            setToken(accessToken);
-
-            originalRequest.headers["Authorization"] = "Bearer " + accessToken;
-            return axios(originalRequest);
-          } catch {
-            navigate("/login");
-            toast.error("Session expired. Please log in again.");
-          }
-        }
-        return Promise.reject(error);
-      }
-    );
-
-    return () => {
-      axios.interceptors.response.eject(interceptor);
-    };
-  }, [setToken, backendUrl, navigate]);
 
   const handleGoogle = async (): Promise<void> => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      
-      // Send the Google login data to the backend
-      const { data } = await axios.post(`${backendUrl}/api/user/google`, {
-        name: result.user.displayName,
-        email: result.user.email,
-        photo: result.user.photoURL, // Include photo URL here
-      });
-      
-  
-      // Handle successful response from backend
+
+      const { data } = await axiosInstance.post(
+        `${backendUrl}/api/user/google`,
+        {
+          name: result.user.displayName,
+          email: result.user.email,
+          photo: result.user.photoURL,
+        }
+      );
+
       if (data.success) {
         if (data.user?.isBlocked) {
           toast.error("Your account has been blocked by the admin.");
@@ -145,7 +109,7 @@ const Login = () => {
         localStorage.setItem("refreshToken", data.refreshToken);
         setToken(data.accessToken);
         toast.success(data.message);
-        navigate('/');
+        navigate("/", { replace: true });
       } else {
         toast.error(data.message);
       }
@@ -153,8 +117,6 @@ const Login = () => {
       toast.error((error as Error).message);
     }
   };
-  
-  
 
   return (
     <form onSubmit={onSubmitHandler} className="min-h-[80vh] flex items-center">
@@ -210,7 +172,7 @@ const Login = () => {
               Confirm Password
               <input
                 className="border border-zinc-300 rounded w-full p-2 mt-1"
-                type="text"
+                type="password"
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 value={confirmPassword}
                 required
@@ -256,7 +218,8 @@ const Login = () => {
             </span>
           </p>
         )}
-        <button onClick={handleGoogle}
+        <button
+          onClick={handleGoogle}
           type="button"
           className="w-full py-2 mt-3 rounded-md text-base border border-gray-300 flex items-center justify-center gap-3 text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
@@ -273,18 +236,18 @@ const Login = () => {
             />
             <path
               fill="#34A853"
-              d="M12 6.2c1.12 0 2.08.38 2.83 1.02L16.96 4.02C15.39 2.57 13.22 1.5 11 1.5 7.25 1.5 4.12 3.35 3.03 6.3l3.81 2.92C7.65 7.61 9.23 6.2 12 6.2z"
+              d="M12 6.2c1.12 0 2.08.38 2.83 1.02L16.96 4.02C15.39 2.57 13.22 1.5 11 1.5 7.25 1.5 4.12 3.35 3.03 6.3l3.92 2.89C7.78 7.61 9.3 6.2 12 6.2z"
             />
             <path
               fill="#FBBC05"
-              d="M3.03 6.3C4.12 3.35 7.25 1.5 11 1.5c2.22 0 4.39 1.07 5.96 2.52l2.83-2.93C15.22 2.57 13.39 1.5 12 1.5c-2.22 0-4.25 1.07-5.25 2.8l-3.81-2.92z"
+              d="M3.03 6.3c-0.26-0.75-0.41-1.56-0.41-2.4s0.15-1.65 0.41-2.4l-3.92-2.89C0.15 1.15 0 2.57 0 4s0.15 2.85 0.41 4.1l3.92-2.89z"
             />
             <path
               fill="#EA4335"
-              d="M7.65 7.61C8.4 6.39 9.62 5.5 11 5.5c1.63 0 3.08.83 3.88 2.02L16.96 4.02C15.39 2.57 13.22 1.5 11 1.5c-2.22 0-4.25 1.07-5.25 2.8L7.65 7.61z"
+              d="M11 1.5c-0.92 0-1.79.31-2.47.86L7.12 3.73C6.28 2.79 5.16 2.16 4 2.16 2.9 2.16 1.03 3.49 0.16 5.25l3.92 2.89C5.19 6.2 7.25 4.66 11 4.66c2.39 0 4.44-1.06 5.88-2.9l-3.89-2.91C14.88 1.88 12 1.5 11 1.5z"
             />
           </svg>
-          <span>Sign in with Google</span>
+          Sign in with Google
         </button>
       </div>
     </form>

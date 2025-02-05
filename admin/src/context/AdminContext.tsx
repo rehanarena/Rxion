@@ -8,7 +8,6 @@ interface Doctor {
   speciality: string;
   image: string;
   available: boolean;
-  availableSlots: { [date: string]: string[] };
 }
 interface UserData {
   _id: string;

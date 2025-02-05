@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { AdminContext } from '../../context/AdminContext'; // Use AdminContext for token
 import axios from 'axios';
 
 interface User {
@@ -8,7 +9,12 @@ interface User {
   isBlocked: boolean;
 }
 
+interface AdminContextType {
+  aToken: string;
+}
+
 const UserList = () => {
+  const { aToken } = useContext(AdminContext)as AdminContextType;  
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -18,8 +24,20 @@ const UserList = () => {
 
   useEffect(() => {
     const fetchUsers = async () => {
+      if (!aToken) {
+        setError('Not Authorized. Please login.');
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await axios.get(`${backendUrl}/api/admin/users`);
+        // Send the token in the headers of the request
+        const response = await axios.get(`${backendUrl}/api/admin/users`, {
+          headers: {
+            atoken: aToken,  
+          },
+        });
+
         if (Array.isArray(response.data)) {
           setUsers(response.data);
         } else {
@@ -37,11 +55,19 @@ const UserList = () => {
     };
 
     fetchUsers();
-  }, []);
+  }, [aToken, backendUrl]);
 
   const handleBlockUnblock = async (userId: string, action: 'block' | 'unblock') => {
     try {
-      await axios.patch(`${backendUrl}/api/admin/users/block-unblock/${userId}`, { action });
+      if (!aToken) {
+        setError('Not Authorized. Please login.');
+        return;
+      }
+      await axios.patch(
+        `${backendUrl}/api/admin/users/block-unblock/${userId}`,
+        { action },
+        { headers: { atoken: aToken } }
+      );
       setUsers(users.map(user =>
         user._id === userId ? { ...user, isBlocked: action === 'block' } : user
       ));
@@ -83,7 +109,7 @@ const UserList = () => {
                   <td className="px-4 py-2 text-sm text-gray-700">{user.email}</td>
                   <td className="px-4 py-2 text-sm text-gray-700">
                     <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full 
-                      ${user.isBlocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                      ${user.isBlocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`} >
                       {user.isBlocked ? 'Blocked' : 'Active'}
                     </span>
                   </td>

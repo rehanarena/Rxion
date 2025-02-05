@@ -7,7 +7,9 @@ interface AppContextType {
   setToken: (token: string | null) => void;
   backendUrl: string;
   userId: string | null;
-  setUserId: (userId: string | null) => void;
+  setUserId: (userId: string | null) => void;userData: UserData | false;
+  setUserData: React.Dispatch<React.SetStateAction<UserData | false>>;
+  loadUserProfileData: () => void;
   doctors: Doctor[];
   getDoctorsData: () => void;
   currencySymbol: string;
@@ -32,12 +34,19 @@ interface Doctor {
   fees: number;
 }
 
+interface UserData {
+  _id: string;
+  name: string;
+  email: string;
+}
+
 const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const [token, setToken] = useState<string | null>(localStorage.getItem("accessToken") || null);
   const [userId, setUserId] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [userData, setUserData] = useState<UserData | false>(false);
   const currencySymbol = '₹';
 
   useEffect(() => {
@@ -58,6 +67,24 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     }
   }, [token]); 
 
+  const loadUserProfileData = async (): Promise<void> => {
+    try {
+      const { data } = await axios.get<{ success: boolean; message?: string; userData?: UserData }>(
+        backendUrl + '/api/user/get-profile',
+        { headers: { token } }
+      );
+      
+      if (data.success) {
+        setUserData(data.userData || false);
+      } else {
+        toast.error(data.message || 'An error occurred');
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error instanceof Error ? error.message : 'An unknown error occurred');
+    }
+  };
+  
 
   const getDoctorsData = async (): Promise<void> => {
     try {
@@ -86,6 +113,9 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     backendUrl,
     userId,
     setUserId,
+    userData,
+    setUserData,
+    loadUserProfileData,
     doctors,
     currencySymbol,
     getDoctorsData,

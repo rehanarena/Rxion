@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState, createContext, ReactNode } from "react";
+import { useState, createContext, ReactNode, useEffect } from "react";
 import { toast } from "react-toastify";
 
 interface DashDataType {
@@ -7,14 +7,29 @@ interface DashDataType {
   earnings: number;
   patients: number;
 }
+interface Doctor {
+  _id: string;
+  name: string;
+  image: string;
+  degree: string;
+  speciality: string;
+  experience: string;
+  about: string;
+  fees: number;
+  slots_booked: Record<string, string[]> | null;
+}
 
 interface DoctorContextType {
+  doctors: Doctor[];
+  getDoctorsData: () => void;
   backendUrl: string;
   dToken: string;
   setDToken: React.Dispatch<React.SetStateAction<string>>;
   dashData: DashDataType | boolean;
   getDashData: () => Promise<void>;
   getAppointments: () => Promise<void>;
+  loggedInDoctor?: Doctor | null;
+  
 }
 
 export const DoctorContext = createContext<DoctorContextType | undefined>(
@@ -27,6 +42,9 @@ interface DoctorContextProviderProps {
 
 const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const [doctors, setDoctors] = useState<Doctor[]>([]);
+    const [loggedInDoctor, setLoggedInDoctor] = useState<Doctor | null>(null);
+
 
   const [dToken, setDToken] = useState<string>(
     localStorage.getItem("dToken") ?? ""
@@ -59,6 +77,52 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
     }
   };
 
+  const getDoctorsData = async () => {
+    try {
+      const { data } = await axios.get(`${backendUrl}/api/doctor/list`);
+      if (data.success) {
+        setDoctors(data.doctors);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    }
+  };
+  const getLoggedInDoctor = async () => {
+    if (!dToken) return;
+    try {
+      const { data } = await axios.get(`${backendUrl}/api/doctor/profile`, {
+        headers: { dToken },
+      });
+  
+      if (data.success && data.profileData) {
+        console.log("Doctor Data BEFORE state update:", loggedInDoctor);
+        
+        setLoggedInDoctor(data.profileData); 
+  
+        console.log("Doctor Data AFTER state update:", data.profileData);
+      } else {
+        toast.error(data.message || "Failed to fetch doctor profile");
+      }
+    } catch (error) {
+      console.log("Error fetching doctor profile:", error);
+      toast.error("Failed to fetch doctor profile");
+    }
+  };
+  
+  
+  useEffect(() => {
+    if (dToken) {
+      getLoggedInDoctor();
+    }
+  }, [dToken]); 
+  
+  
   const getAppointments = async()=>{
     try {
       const {data} = await axios.get(backendUrl+ '/api/doctor/appointments',{headers:{dToken}})
@@ -116,13 +180,19 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
     }
   }
 
+useEffect(() => {
+    getDoctorsData();
+  }, []);
 
   const value = {
     backendUrl,
     dToken,
     setDToken,
+    doctors,
+    getDoctorsData,
     dashData,
     getDashData,
+    loggedInDoctor,
     getAppointments,
     appointments,
     setAppointments,
