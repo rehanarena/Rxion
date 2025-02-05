@@ -1,10 +1,20 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
+<<<<<<< HEAD
 export interface IBookedSlot {
   startTime: string;
   isBooked: boolean;
 }
 
+=======
+// Define AvailableSlot type
+interface AvailableSlot {
+  startTime: string;
+  endTime: string;
+}
+
+// TypeScript interface for the Doctor schema
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
 export interface IDoctor extends Document {
   name: string;
   email: string;
@@ -18,7 +28,13 @@ export interface IDoctor extends Document {
   available: boolean;
   address: Record<string, any>;
   date: number;
+<<<<<<< HEAD
   slots_booked: { [slotDate: string]: IBookedSlot[] };  
+=======
+  slots_booked: Record<string, any>; 
+  slots: { slotDate: string; slotTime: string; }[];
+  availableSlots: Record<string, AvailableSlot[]>; // Reference the AvailableSlot type correctly
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
   isBlocked: boolean;
 }
 
@@ -39,6 +55,11 @@ const doctorSchema: Schema<IDoctor> = new mongoose.Schema(
     address: { type: Object, required: true },
     date: { type: Number, required: true },
     slots_booked: { type: Object, default: {} },
+<<<<<<< HEAD
+=======
+    slots: { type: [Object], default: [] },
+    availableSlots: { type: Object, of: { startTime: String, endTime: String }, default: {} }, // Correctly define availableSlots with types
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
     isBlocked: { type: Boolean, default: false },
   },
   { minimize: false }

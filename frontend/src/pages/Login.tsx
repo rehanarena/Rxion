@@ -82,7 +82,11 @@ const Login = () => {
     const storedToken = localStorage.getItem("accessToken");
     if (storedToken) {
       setToken(storedToken);
+<<<<<<< HEAD
       navigate("/", { replace: true });
+=======
+      navigate("/", { replace: true }); 
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
     }
   }, [setToken, navigate]);
 
@@ -90,6 +94,7 @@ const Login = () => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
+<<<<<<< HEAD
 
       const { data } = await axiosInstance.post(
         `${backendUrl}/api/user/google`,
@@ -100,6 +105,16 @@ const Login = () => {
         }
       );
 
+=======
+      
+      const { data } = await axios.post(`${backendUrl}/api/user/google`, {
+        name: result.user.displayName,
+        email: result.user.email,
+        photo: result.user.photoURL,
+      });
+      
+  
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
       if (data.success) {
         if (data.user?.isBlocked) {
           toast.error("Your account has been blocked by the admin.");

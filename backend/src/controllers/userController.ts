@@ -28,7 +28,11 @@ interface UpdateProfileRequestBody {
   userId: string;
   name: string;
   phone: string;
+<<<<<<< HEAD
   address: string;
+=======
+  address: string; 
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
   dob: string;
   gender: string;
 }
@@ -316,6 +320,7 @@ const google = async (req: Request, res: Response): Promise<void> => {
     let user = await userModel.findOne({ email });
 
     if (user) {
+<<<<<<< HEAD
       const token = jwt.sign(
         { id: user._id },
         process.env.JWT_SECRET as string,
@@ -327,6 +332,15 @@ const google = async (req: Request, res: Response): Promise<void> => {
       const userObject = user.toObject();
       const { password, ...rest } = userObject;
       const expiryDate = new Date(Date.now() + 3600000);
+=======
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
+        expiresIn: "45m",
+      });
+
+      const userObject = user.toObject();
+      const { password, ...rest } = userObject;
+      const expiryDate = new Date(Date.now() + 3600000); 
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
 
       res
         .cookie("access_token", token, {
@@ -378,6 +392,10 @@ const google = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
 /// Refresh Access Token ///
 const refreshAccessToken = (req: Request, res: Response): void => {
   const { refreshToken } = req.body;
@@ -510,9 +528,89 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+<<<<<<< HEAD
 const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.body;
+=======
+
+const getProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.body;
+    const userData = await userModel.findById(userId).select("-password");
+    res.json({ success: true, userData });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message || "An error occurred" });
+  }
+};
+
+// API to update user profile
+const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, name, phone, address, dob, gender }: UpdateProfileRequestBody = req.body;
+    const imageFile = req.file;
+    
+    if (!userId || !name || !phone || !address || !dob || !gender) {
+       res.json({
+        success: false,
+        message: "Enter details in all missing fields",
+      });
+      return
+    }
+
+    await userModel.findByIdAndUpdate(userId, {
+      name,
+      phone,
+      address: JSON.parse(address) as Address,
+      dob,
+      gender,
+    });
+
+    if (imageFile) {
+      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        resource_type: "image",
+      });
+      const imageURL = imageUpload.secure_url;
+
+      await userModel.findByIdAndUpdate(userId, { image: imageURL });
+    }
+
+    res.json({ success: true, message: "Profile updated" });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message || "An error occurred" });
+  }
+};
+
+
+
+/// book appoinment ///
+const bookAppointment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, docId, slotDate, slotTime } = req.body;
+
+    const docData = await doctorModel.findById(docId).select("-password");
+    if (!docData || !docData.available) {
+       res.json({ success: false, message: "Doctor not available" });
+       return
+    }
+
+
+
+    let slots_booked = docData.slots_booked || {};
+    if (slots_booked[slotDate]) {
+      if (slots_booked[slotDate].includes(slotTime)) {
+         res.json({ success: false, message: "Slot not available" });
+         return
+      } else {
+        slots_booked[slotDate].push(slotTime);
+      }
+    } else {
+      slots_booked[slotDate] = [slotTime];
+    }
+
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
     const userData = await userModel.findById(userId).select("-password");
     res.json({ success: true, userData });
   } catch (error: any) {

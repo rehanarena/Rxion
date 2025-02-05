@@ -14,7 +14,11 @@ userRouter.post("/refresh-token",refreshAccessToken);
 userRouter.post('/forgot-password', forgotPassword);
 userRouter.post('/reset-password', resetPassword);
 userRouter.get('/get-profile',authUser,getProfile)
+<<<<<<< HEAD
 userRouter.put('/update-profile',upload.single("image"),authUser,updateProfile)
+=======
+userRouter.post('/update-profile',upload.single("image"),authUser,updateProfile)
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
 userRouter.post('/book-appointment',authUser,bookAppointment);
 userRouter.get('/appointments',authUser,listAppointments);
 userRouter.post('/cancel-appointment',authUser,cancelAppointment);

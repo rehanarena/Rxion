@@ -1,3 +1,4 @@
+
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
@@ -49,6 +50,39 @@ const Appointment: React.FC = () => {
     setDocInfo(doc || null);
   };
 
+<<<<<<< HEAD
+=======
+  // console.log(doctors)
+
+  const getAvailableSlots = async (docId: string|undefined, date: string) => {
+    console.log(`Requesting available slots for doctor ${docId} on ${date}`);
+
+    try {
+      const response = await axios.get(`${backendUrl}/api/doctor/get-slots/${docId}?date=${date}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log(`Received request: /api/doctor/get-slots/${docId}?date=${date}`);
+
+  
+      if (response.data.success) {
+        const formattedSlots = response.data.slots.map((time: string) => ({
+          dateTime: new Date(date.replace(/_/g, "-")), // Convert "DD_MM_YYYY" to Date object
+          time,
+        }));
+  
+        setDocSlots([formattedSlots]); // Wrap in an array for UI handling
+      } else {
+        setDocSlots([]); // No slots available
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  
+  
+  
+
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
   const bookAppointment = async () => {
     if (!token) {
       toast.warn("Login to book appointment");
@@ -99,9 +133,16 @@ const Appointment: React.FC = () => {
     const start = new Date(startTime);
     const end = new Date(endTime);
 
+<<<<<<< HEAD
     while (start < end) {
       slots.push(new Date(start));
       start.setMinutes(start.getMinutes() + 30); 
+=======
+  useEffect(() => {
+    if (docInfo) {
+      const date = new Date().toISOString().split('T')[0];
+      getAvailableSlots(docId,date)
+>>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
     }
 
     return slots;
