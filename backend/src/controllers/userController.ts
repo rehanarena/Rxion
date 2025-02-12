@@ -4,7 +4,7 @@ import OTP from "../models/otpModel";
 import jwt from "jsonwebtoken";
 import validator from "validator";
 import userModel from "../models/userModel";
-import { RequestWithUser } from '../middlewares/authUser'
+import { RequestWithUser } from "../middlewares/authUser";
 import { v2 as cloudinary } from "cloudinary";
 import { sendOtpEmail } from "../helper/mailer";
 import { generateOTP } from "../utils/generateOTP";
@@ -462,26 +462,34 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
 };
 
 /// Change Password ///
-const changePassword = async (req: RequestWithUser, res: Response): Promise<void> => {
+const changePassword = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<void> => {
   try {
-    const { currentPassword, newPassword, confirmPassword } = req.body;
+    // Expect the client to send the userId in the request body since auth middleware is not used.
+    const { userId, currentPassword, newPassword, confirmPassword } = req.body;
 
-    if (!req.userId) {
-      res.status(401).json({ success: false, message: "Unauthorized access." });
+    if (!userId) {
+      res.status(401).json({ success: false, message: "User ID is required." });
       return;
     }
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      res.status(400).json({ success: false, message: "All fields are required." });
+      res
+        .status(400)
+        .json({ success: false, message: "All fields are required." });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      res.status(400).json({ success: false, message: "Passwords do not match." });
+      res
+        .status(400)
+        .json({ success: false, message: "Passwords do not match." });
       return;
     }
 
-    const user = await userModel.findById(req.userId);
+    const user = await userModel.findById(userId);
     if (!user) {
       res.status(404).json({ success: false, message: "User not found." });
       return;
@@ -489,7 +497,9 @@ const changePassword = async (req: RequestWithUser, res: Response): Promise<void
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      res.status(400).json({ success: false, message: "Current password is incorrect." });
+      res
+        .status(400)
+        .json({ success: false, message: "Current password is incorrect." });
       return;
     }
 
@@ -497,14 +507,14 @@ const changePassword = async (req: RequestWithUser, res: Response): Promise<void
     user.password = await bcrypt.hash(newPassword, salt);
     await user.save();
 
-    res.status(200).json({ success: true, message: "Password changed successfully." });
-
+    res
+      .status(200)
+      .json({ success: true, message: "Password changed successfully." });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Internal server error." });
   }
 };
-
 
 ///getProfile ///
 const getProfile = async (req: Request, res: Response): Promise<void> => {
@@ -563,12 +573,15 @@ const updateProfile = async (req: Request, res: Response): Promise<void> => {
   }
 };
 ///serach ///
-export const doctorSearch = async (req: Request, res: Response): Promise<void> => {
+export const doctorSearch = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { speciality, search, sortBy, page = "1", limit = "8" } = req.query;
 
     let query: any = {};
-    
+
     // Filtering by speciality
     if (speciality) {
       query.speciality = speciality;
@@ -610,7 +623,6 @@ export const doctorSearch = async (req: Request, res: Response): Promise<void> =
       totalDoctors,
       doctors,
     });
-
   } catch (error) {
     console.error("Error fetching doctors:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -643,7 +655,9 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
     }
 
     if (!docData.fees) {
-      res.status(400).json({ success: false, message: "Doctor fees not found" });
+      res
+        .status(400)
+        .json({ success: false, message: "Doctor fees not found" });
       return;
     }
     if (!docData.slots_booked) {
@@ -672,7 +686,7 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
 
     // console.log('After updating slots_booked:', docData.slots_booked);
 
-    await docData.save();  
+    await docData.save();
     const updatedDocData = await doctorModel.findById(docId);
     // console.log('Updated doctor data:', updatedDocData);
 
@@ -694,15 +708,16 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
 
     await appointmentData.save();
 
-    res.status(201).json({ success: true, message: "Appointment booked successfully" });
+    res
+      .status(201)
+      .json({ success: true, message: "Appointment booked successfully" });
   } catch (error: any) {
     console.error("Error booking appointment:", error);
-    res.status(500).json({ success: false, message: "An error occurred, please try again" });
+    res
+      .status(500)
+      .json({ success: false, message: "An error occurred, please try again" });
   }
 };
-
-
-
 
 /// appoinments list in my-appointments ///
 const listAppointments = async (req: Request, res: Response): Promise<void> => {

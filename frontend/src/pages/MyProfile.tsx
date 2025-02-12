@@ -1,77 +1,84 @@
-import { useContext, useState, useEffect } from "react"
-import { AppContext } from "../context/AppContext"
-import { assets } from "../assets/assets"
-import axios from "axios"
-import { toast } from "react-toastify"
-import { Lock, Eye, EyeOff } from "lucide-react"
+import { useContext, useState, useEffect } from "react";
+import { AppContext } from "../context/AppContext";
+import { assets } from "../assets/assets";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { Lock, Eye, EyeOff } from "lucide-react";
 
 interface UserData {
-  _id: string
-  name: string
-  email: string
-  phone: string
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
   address: {
-    line1: string
-    line2: string
-  }
-  gender: string
-  dob: string
-  image: string
+    line1: string;
+    line2: string;
+  };
+  gender: string;
+  dob: string;
+  image: string;
 }
 
 interface AppContextType {
-  backendUrl: string
-  token: string | false
-  userData: UserData | false
-  setUserData: React.Dispatch<React.SetStateAction<UserData | false>>
-  loadUserProfileData: () => void
+  backendUrl: string;
+  token: string | false;
+  userData: UserData | false;
+  setUserData: React.Dispatch<React.SetStateAction<UserData | false>>;
+  loadUserProfileData: () => void;
 }
 
 const MyProfile = () => {
-  const { userData, setUserData, token, backendUrl, loadUserProfileData } = useContext(AppContext) as AppContextType
+  const { userData, setUserData, token, backendUrl, loadUserProfileData } =
+    useContext(AppContext) as AppContextType;
 
-  const [isEdit, setIsEdit] = useState<boolean>(false)
-  const [image, setImage] = useState<File | false>(false)
-  const [showPasswordChange, setShowPasswordChange] = useState<boolean>(false)
-  const [currentPassword, setCurrentPassword] = useState<string>("")
-  const [newPassword, setNewPassword] = useState<string>("")
-  const [confirmPassword, setConfirmPassword] = useState<string>("")
-  const [showPassword, setShowPassword] = useState<boolean>(false)
+  const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [image, setImage] = useState<File | false>(false);
+  const [showPasswordChange, setShowPasswordChange] = useState<boolean>(false);
+  const [currentPassword, setCurrentPassword] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   useEffect(() => {
     if (token) {
-      loadUserProfileData()
+      loadUserProfileData();
     }
-  }, [token, loadUserProfileData]) // Added loadUserProfileData to dependencies
+  }, [token, loadUserProfileData]); // Added loadUserProfileData to dependencies
 
   const updateUserProfileData = async () => {
-    if (!userData) return
+    if (!userData) return;
 
     try {
-      const formData = new FormData()
-      formData.append("name", userData.name)
-      formData.append("phone", userData.phone)
-      formData.append("address", JSON.stringify(userData.address))
-      formData.append("gender", userData.gender)
-      formData.append("dob", userData.dob)
+      const formData = new FormData();
+      formData.append("name", userData.name);
+      formData.append("phone", userData.phone);
+      formData.append("address", JSON.stringify(userData.address));
+      formData.append("gender", userData.gender);
+      formData.append("dob", userData.dob);
 
-      if (image) formData.append("image", image)
+      if (image) formData.append("image", image);
 
-      const { data } = await axios.put(backendUrl + "/api/user/update-profile", formData, { headers: { token } })
+      const { data } = await axios.put(
+        backendUrl + "/api/user/update-profile",
+        formData,
+        { headers: { token } }
+      );
 
       if (data.success) {
-        toast.success(data.message)
-        await loadUserProfileData()
-        setIsEdit(false)
-        setImage(false)
+        toast.success(data.message);
+        await loadUserProfileData();
+        setIsEdit(false);
+        setImage(false);
       } else {
-        toast.error(data.message)
+        toast.error(data.message);
       }
     } catch (error) {
-      console.log(error)
-      toast.error(error instanceof Error ? error.message : "An unknown error occurred")
+      console.log(error);
+      toast.error(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
     }
-  }
+  };
 
   const changePassword = async () => {
     if (newPassword !== confirmPassword) {
@@ -79,26 +86,26 @@ const MyProfile = () => {
       return;
     }
 
-    console.log("Sending Token:", token); // Check if the token is available
-
-    if (!token) {
-      toast.error("You are not authenticated. Please log in again.");
+    if (!token || !userData) {
+      toast.error("User is not authenticated. Please log in again.");
       return;
     }
 
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-    
-
-    console.log("Sending Headers:", headers); // Debugging headers
-
     try {
       const { data } = await axios.put(
-        backendUrl + "/api/user/change-password",
-        { currentPassword, newPassword, confirmPassword },
-        { headers } // Use headers variable
+        `${backendUrl}/api/user/change-password`,
+        {
+          userId: userData._id, // Use the user ID from your userData object
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
 
       if (data.success) {
@@ -111,13 +118,14 @@ const MyProfile = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      console.log(error);
-      toast.error(error instanceof Error ? error.message : "An unknown error occurred");
+      console.error(error);
+      toast.error(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
     }
-};
+  };
 
-
-  if (!userData) return null
+  if (!userData) return null;
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-gradient-to-br from-purple-100 to-blue-200 rounded-3xl shadow-2xl backdrop-blur-lg border border-white/30">
@@ -132,11 +140,17 @@ const MyProfile = () => {
                 alt="Profile"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <img className="w-12" src={assets.upload_icon || "/placeholder.svg"} alt="Upload Icon" />
+                <img
+                  className="w-12"
+                  src={assets.upload_icon || "/placeholder.svg"}
+                  alt="Upload Icon"
+                />
               </div>
             </div>
             <input
-              onChange={(e) => setImage(e.target.files ? e.target.files[0] : false)}
+              onChange={(e) =>
+                setImage(e.target.files ? e.target.files[0] : false)
+              }
               type="file"
               id="image"
               hidden
@@ -159,7 +173,11 @@ const MyProfile = () => {
           <input
             className="w-full mt-4 p-3 text-2xl font-medium bg-white/50 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
             value={userData.name}
-            onChange={(e) => setUserData((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
+            onChange={(e) =>
+              setUserData((prev) =>
+                prev ? { ...prev, name: e.target.value } : prev
+              )
+            }
             type="text"
           />
         ) : (
@@ -171,7 +189,9 @@ const MyProfile = () => {
 
       {/* Contact Information Section */}
       <div className="bg-white/30 rounded-2xl p-6 mb-8 shadow-lg">
-        <p className="text-2xl font-bold text-purple-800 mb-4">Contact Information</p>
+        <p className="text-2xl font-bold text-purple-800 mb-4">
+          Contact Information
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
           <div>
             <p className="font-medium text-purple-600">Email:</p>
@@ -184,7 +204,11 @@ const MyProfile = () => {
               <input
                 className="w-full p-3 mt-2 bg-white/50 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 value={userData.phone}
-                onChange={(e) => setUserData((prev) => (prev ? { ...prev, phone: e.target.value } : prev))}
+                onChange={(e) =>
+                  setUserData((prev) =>
+                    prev ? { ...prev, phone: e.target.value } : prev
+                  )
+                }
                 type="text"
               />
             ) : (
@@ -200,7 +224,12 @@ const MyProfile = () => {
                   className="w-full p-3 bg-white/50 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   onChange={(e) =>
                     setUserData((prev) =>
-                      prev ? { ...prev, address: { ...prev.address, line1: e.target.value } } : prev,
+                      prev
+                        ? {
+                            ...prev,
+                            address: { ...prev.address, line1: e.target.value },
+                          }
+                        : prev
                     )
                   }
                   value={userData.address.line1}
@@ -211,7 +240,12 @@ const MyProfile = () => {
                   className="w-full p-3 bg-white/50 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   onChange={(e) =>
                     setUserData((prev) =>
-                      prev ? { ...prev, address: { ...prev.address, line2: e.target.value } } : prev,
+                      prev
+                        ? {
+                            ...prev,
+                            address: { ...prev.address, line2: e.target.value },
+                          }
+                        : prev
                     )
                   }
                   value={userData.address.line2}
@@ -232,14 +266,20 @@ const MyProfile = () => {
 
       {/* Basic Information Section */}
       <div className="bg-white/30 rounded-2xl p-6 mb-8 shadow-lg">
-        <p className="text-2xl font-bold text-purple-800 mb-4">Basic Information</p>
+        <p className="text-2xl font-bold text-purple-800 mb-4">
+          Basic Information
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
           <div>
             <p className="font-medium text-purple-600">Gender:</p>
             {isEdit ? (
               <select
                 className="w-full p-3 mt-2 bg-white/50 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                onChange={(e) => setUserData((prev) => (prev ? { ...prev, gender: e.target.value } : prev))}
+                onChange={(e) =>
+                  setUserData((prev) =>
+                    prev ? { ...prev, gender: e.target.value } : prev
+                  )
+                }
                 value={userData.gender}
               >
                 <option value="Male">Male</option>
@@ -256,7 +296,11 @@ const MyProfile = () => {
             {isEdit ? (
               <input
                 className="w-full p-3 mt-2 bg-white/50 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                onChange={(e) => setUserData((prev) => (prev ? { ...prev, dob: e.target.value } : prev))}
+                onChange={(e) =>
+                  setUserData((prev) =>
+                    prev ? { ...prev, dob: e.target.value } : prev
+                  )
+                }
                 value={userData.dob}
                 type="date"
               />
@@ -270,10 +314,15 @@ const MyProfile = () => {
       {/* Change Password Section */}
       {showPasswordChange && (
         <div className="bg-white/30 rounded-2xl p-6 mb-8 shadow-lg">
-          <p className="text-2xl font-bold text-purple-800 mb-4">Change Password</p>
+          <p className="text-2xl font-bold text-purple-800 mb-4">
+            Change Password
+          </p>
           <div className="space-y-4">
             <div>
-              <label htmlFor="currentPassword" className="block text-sm font-medium text-purple-600">
+              <label
+                htmlFor="currentPassword"
+                className="block text-sm font-medium text-purple-600"
+              >
                 Current Password
               </label>
               <div className="relative">
@@ -298,7 +347,10 @@ const MyProfile = () => {
               </div>
             </div>
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-purple-600">
+              <label
+                htmlFor="newPassword"
+                className="block text-sm font-medium text-purple-600"
+              >
                 New Password
               </label>
               <input
@@ -310,7 +362,10 @@ const MyProfile = () => {
               />
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-purple-600">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-purple-600"
+              >
                 Confirm New Password
               </label>
               <input
@@ -357,8 +412,7 @@ const MyProfile = () => {
         </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MyProfile
-
+export default MyProfile;

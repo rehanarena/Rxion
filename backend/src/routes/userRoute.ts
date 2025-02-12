@@ -12,7 +12,7 @@ userRouter.post("/login", loginUser);
 userRouter.post('/google',google)
 userRouter.post("/refresh-token",refreshAccessToken);
 userRouter.post('/forgot-password', forgotPassword);
-userRouter.put('/change-password',authUser, changePassword);
+userRouter.put('/change-password', changePassword);
 userRouter.get('/get-profile',authUser,getProfile)
 userRouter.put('/update-profile',upload.single("image"),authUser,updateProfile);
 userRouter.get('/doctors',doctorSearch)

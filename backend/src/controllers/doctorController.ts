@@ -5,7 +5,21 @@ import doctorModel from "../models/doctorModel";
 import appointmentModel from "../models/appoinmentModel";
 import Slot from "../models/slotModel";
 import { RRule } from "rrule";
-import moment from "moment-timezone";
+import moment from "moment";
+import DoctorSchedule from "../models/DoctorSlotModel"
+import { generateTimeSlots } from "../helper/timeHelpers";
+
+
+interface AddSlotsRequestBody {
+  doctorId: string;
+  startDate: string;
+  endDate: string;
+  daysOfWeek: string[];
+  startTime: string;
+  endTime: string;
+  breakStartTime?: string;
+  breakEndTime?: string;
+}
 
 interface Doctor {
   _id: string;
@@ -163,7 +177,13 @@ export const slot = async (req: Request, res: Response): Promise<void> => {
 };
 
 
-const addSlots = async (req: Request, res: Response): Promise<void> => {
+
+
+
+export const addSlots = async (
+  req: Request<{}, {}, AddSlotsRequestBody>,
+  res: Response
+): Promise<void> => {
   try {
     const { 
       doctorId, 
@@ -176,7 +196,6 @@ const addSlots = async (req: Request, res: Response): Promise<void> => {
       breakEndTime     // optional break end (e.g., "13:00")
     } = req.body;
 
-    // Validate required fields
     if (!daysOfWeek || daysOfWeek.length === 0) {
       throw new Error("Days of week are required.");
     }
@@ -184,7 +203,6 @@ const addSlots = async (req: Request, res: Response): Promise<void> => {
       throw new Error("Start and End times are required.");
     }
 
-    // If break times are provided, validate them
     const hasBreak = breakStartTime && breakEndTime;
     if (hasBreak) {
       if (breakStartTime <= startTime || breakEndTime >= endTime) {
@@ -192,12 +210,12 @@ const addSlots = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    // Create recurrence rule using RRule
+    // Create recurrence rule for dates.
     const rule = new RRule({
       freq: RRule.WEEKLY,
       dtstart: new Date(startDate),
       until: new Date(endDate),
-      byweekday: daysOfWeek.map((day: string) => {
+      byweekday: daysOfWeek.map((day) => {
         switch (day.toUpperCase()) {
           case 'MO': return RRule.MO;
           case 'TU': return RRule.TU;
@@ -212,92 +230,60 @@ const addSlots = async (req: Request, res: Response): Promise<void> => {
     });
 
     const slotDates = rule.all();
-    const slotsToSave: SlotData[] = [];
     const now = new Date();
+    let totalSlotsAdded = 0;
 
-    // Helper function to build IST formatted datetime string
-    const createISTDateTime = (baseDate: Date, timeStr: string): string => {
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      const newDate = new Date(baseDate);
-      newDate.setHours(hours, minutes, 0, 0);
-      return moment(newDate).utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
-    };
-
-    // Process each recurrence date
+    // Process each recurrence date.
     for (const date of slotDates) {
       const baseDate = new Date(date);
+      if (baseDate < now) continue; // Skip past dates
 
-      // If no break times are provided, create one slot per day
+      let sessionSlots: string[] = [];
+
+      // If no break is provided, generate one session.
       if (!hasBreak) {
-        const fullStart = createISTDateTime(baseDate, startTime);
-        const fullEnd = createISTDateTime(baseDate, endTime);
-
-        // Skip if the slot's start is in the past
-        if (new Date(fullStart) < now) continue;
-
-        // Only add if a slot with these times does not already exist
-        const existingSlot = await Slot.findOne({ doctorId, startTime: fullStart, endTime: fullEnd });
-        if (!existingSlot && new Date(fullStart) < new Date(fullEnd)) {
-          slotsToSave.push({
-            doctorId,
-            date: fullStart, // You may adjust how you store the date portion
-            startTime: fullStart,
-            endTime: fullEnd,
-            isBooked: false,
-          });
-        }
+        sessionSlots = generateTimeSlots(baseDate, startTime, endTime);
       } else {
-        // When break times are provided, create two sessions: morning and afternoon
+        // Generate morning session slots.
+        const morningSlots = generateTimeSlots(baseDate, startTime, breakStartTime!);
+        // Generate afternoon session slots.
+        const afternoonSlots = generateTimeSlots(baseDate, breakEndTime!, endTime);
+        sessionSlots = [...morningSlots, ...afternoonSlots];
+      }
 
-        // -- Morning Session: startTime -> breakStartTime
-        const morningStart = createISTDateTime(baseDate, startTime);
-        const morningEnd = createISTDateTime(baseDate, breakStartTime);
-        if (new Date(morningStart) < now) {
-          // If morning session is in the past, skip it.
-        } else if (new Date(morningStart) < new Date(morningEnd)) {
-          const existingMorningSlot = await Slot.findOne({ doctorId, startTime: morningStart, endTime: morningEnd });
-          if (!existingMorningSlot) {
-            slotsToSave.push({
-              doctorId,
-              date: morningStart,
-              startTime: morningStart,
-              endTime: morningEnd,
-              isBooked: false,
-            });
+      // Find if a schedule document for this doctor and date already exists.
+      let scheduleDoc = await DoctorSchedule.findOne({ doctorId, date: baseDate });
+      if (scheduleDoc) {
+        // Merge new slots into the existing array (avoid duplicates).
+        sessionSlots.forEach((time) => {
+          if (!scheduleDoc.timeSlots.some(slot => slot.time === time)) {
+            scheduleDoc.timeSlots.push({ time, status: "available" });
+            totalSlotsAdded++;
           }
-        }
-
-        // -- Afternoon Session: breakEndTime -> endTime
-        const afternoonStart = createISTDateTime(baseDate, breakEndTime);
-        const afternoonEnd = createISTDateTime(baseDate, endTime);
-        if (new Date(afternoonStart) < now) {
-          // If afternoon session is in the past, skip it.
-        } else if (new Date(afternoonStart) < new Date(afternoonEnd)) {
-          const existingAfternoonSlot = await Slot.findOne({ doctorId, startTime: afternoonStart, endTime: afternoonEnd });
-          if (!existingAfternoonSlot) {
-            slotsToSave.push({
-              doctorId,
-              date: afternoonStart,
-              startTime: afternoonStart,
-              endTime: afternoonEnd,
-              isBooked: false,
-            });
-          }
-        }
+        });
+        await scheduleDoc.save();
+      } else {
+        // Create a new schedule document.
+        const timeSlots = sessionSlots.map((time) => ({ time, status: "available" }));
+        await DoctorSchedule.create({
+          doctorId,
+          date: baseDate,
+          timeSlots,
+        });
+        totalSlotsAdded += timeSlots.length;
       }
     }
 
-    if (slotsToSave.length > 0) {
-      await Slot.insertMany(slotsToSave);
+    if (totalSlotsAdded > 0) {
       res.json({ 
         success: true, 
         message: 'Slots added successfully!',
-        slotsAdded: slotsToSave.length
+        slotsAdded: totalSlotsAdded
       });
     } else {
       res.json({ 
         success: false, 
-        message: 'No new slots were added. Either the slots already exist or the selected dates are in the past.' 
+        message: 'No new slots were added. Either they already exist or the selected dates are in the past.' 
       });
     }
   } catch (error: any) {
@@ -409,8 +395,6 @@ export {
   doctorDashboard,
   changeAvailability,
   doctorList,
-  addSlots,
-  // getAvailableSlots,
   appoinmentsDoctor,
   appoinmentComplete,
   appoinmentCancel,
