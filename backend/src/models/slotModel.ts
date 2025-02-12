@@ -1,3 +1,4 @@
+
 import mongoose, { Document, Model, Schema } from "mongoose";
 
 export interface ISlot extends Document {

@@ -4,6 +4,7 @@ import OTP from "../models/otpModel";
 import jwt from "jsonwebtoken";
 import validator from "validator";
 import userModel from "../models/userModel";
+import { RequestWithUser } from '../middlewares/authUser'
 import { v2 as cloudinary } from "cloudinary";
 import { sendOtpEmail } from "../helper/mailer";
 import { generateOTP } from "../utils/generateOTP";
@@ -28,11 +29,7 @@ interface UpdateProfileRequestBody {
   userId: string;
   name: string;
   phone: string;
-<<<<<<< HEAD
   address: string;
-=======
-  address: string; 
->>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
   dob: string;
   gender: string;
 }
@@ -320,7 +317,6 @@ const google = async (req: Request, res: Response): Promise<void> => {
     let user = await userModel.findOne({ email });
 
     if (user) {
-<<<<<<< HEAD
       const token = jwt.sign(
         { id: user._id },
         process.env.JWT_SECRET as string,
@@ -332,15 +328,6 @@ const google = async (req: Request, res: Response): Promise<void> => {
       const userObject = user.toObject();
       const { password, ...rest } = userObject;
       const expiryDate = new Date(Date.now() + 3600000);
-=======
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
-        expiresIn: "45m",
-      });
-
-      const userObject = user.toObject();
-      const { password, ...rest } = userObject;
-      const expiryDate = new Date(Date.now() + 3600000); 
->>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
 
       res
         .cookie("access_token", token, {
@@ -392,10 +379,6 @@ const google = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-<<<<<<< HEAD
-=======
-
->>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
 /// Refresh Access Token ///
 const refreshAccessToken = (req: Request, res: Response): void => {
   const { refreshToken } = req.body;
@@ -478,139 +461,55 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-/// Reset Password ///
-const resetPassword = async (req: Request, res: Response): Promise<void> => {
-  const { email, otp, newPassword, confirmPassword } = req.body;
-
-  if (!email || !otp || !newPassword || !confirmPassword) {
-    res.json({ success: false, message: "All fields are required." });
-    return;
-  }
-
-  if (newPassword !== confirmPassword) {
-    res.json({ success: false, message: "Passwords do not match" });
-    return;
-  }
-
+/// Change Password ///
+const changePassword = async (req: RequestWithUser, res: Response): Promise<void> => {
   try {
-    const user = await userModel.findOne({ email });
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!req.userId) {
+      res.status(401).json({ success: false, message: "Unauthorized access." });
+      return;
+    }
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      res.status(400).json({ success: false, message: "All fields are required." });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      res.status(400).json({ success: false, message: "Passwords do not match." });
+      return;
+    }
+
+    const user = await userModel.findById(req.userId);
     if (!user) {
-      res.json({ success: false, message: "User not found" });
+      res.status(404).json({ success: false, message: "User not found." });
       return;
     }
 
-    const otpData = await OTP.findOne({ userId: user._id, otp });
-    if (!otpData) {
-      res.json({ success: false, message: "Invalid OTP." });
-      return;
-    }
-
-    if (otpData.expiresAt < new Date()) {
-      res.json({ success: false, message: "OTP has expired." });
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      res.status(400).json({ success: false, message: "Current password is incorrect." });
       return;
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    user.password = hashedPassword;
+    user.password = await bcrypt.hash(newPassword, salt);
     await user.save();
 
-    await OTP.deleteOne({ userId: user._id });
+    res.status(200).json({ success: true, message: "Password changed successfully." });
 
-    res.json({
-      success: true,
-      message: "Password reset successfully. You can now log in.",
-    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 };
 
-<<<<<<< HEAD
+
+///getProfile ///
 const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.body;
-=======
-
-const getProfile = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { userId } = req.body;
-    const userData = await userModel.findById(userId).select("-password");
-    res.json({ success: true, userData });
-  } catch (error: any) {
-    console.error(error);
-    res.json({ success: false, message: error.message || "An error occurred" });
-  }
-};
-
-// API to update user profile
-const updateProfile = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { userId, name, phone, address, dob, gender }: UpdateProfileRequestBody = req.body;
-    const imageFile = req.file;
-    
-    if (!userId || !name || !phone || !address || !dob || !gender) {
-       res.json({
-        success: false,
-        message: "Enter details in all missing fields",
-      });
-      return
-    }
-
-    await userModel.findByIdAndUpdate(userId, {
-      name,
-      phone,
-      address: JSON.parse(address) as Address,
-      dob,
-      gender,
-    });
-
-    if (imageFile) {
-      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
-        resource_type: "image",
-      });
-      const imageURL = imageUpload.secure_url;
-
-      await userModel.findByIdAndUpdate(userId, { image: imageURL });
-    }
-
-    res.json({ success: true, message: "Profile updated" });
-  } catch (error: any) {
-    console.error(error);
-    res.json({ success: false, message: error.message || "An error occurred" });
-  }
-};
-
-
-
-/// book appoinment ///
-const bookAppointment = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { userId, docId, slotDate, slotTime } = req.body;
-
-    const docData = await doctorModel.findById(docId).select("-password");
-    if (!docData || !docData.available) {
-       res.json({ success: false, message: "Doctor not available" });
-       return
-    }
-
-
-
-    let slots_booked = docData.slots_booked || {};
-    if (slots_booked[slotDate]) {
-      if (slots_booked[slotDate].includes(slotTime)) {
-         res.json({ success: false, message: "Slot not available" });
-         return
-      } else {
-        slots_booked[slotDate].push(slotTime);
-      }
-    } else {
-      slots_booked[slotDate] = [slotTime];
-    }
-
->>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
     const userData = await userModel.findById(userId).select("-password");
     res.json({ success: true, userData });
   } catch (error: any) {
@@ -661,6 +560,60 @@ const updateProfile = async (req: Request, res: Response): Promise<void> => {
   } catch (error: any) {
     console.error(error);
     res.json({ success: false, message: error.message || "An error occurred" });
+  }
+};
+///serach ///
+export const doctorSearch = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { speciality, search, sortBy, page = "1", limit = "8" } = req.query;
+
+    let query: any = {};
+    
+    // Filtering by speciality
+    if (speciality) {
+      query.speciality = speciality;
+    }
+
+    // Searching by name (case-insensitive)
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    // Sorting logic
+    let sortOptions: any = {};
+    if (sortBy === "name") {
+      sortOptions.name = 1;
+    } else if (sortBy === "speciality") {
+      sortOptions.speciality = 1;
+    } else if (sortBy === "availability") {
+      sortOptions.available = -1;
+    }
+
+    // Pagination logic
+    const pageNum = parseInt(page as string, 10) || 1;
+    const limitNum = parseInt(limit as string, 10) || 8;
+    const skip = (pageNum - 1) * limitNum;
+
+    // Fetch doctors based on query
+    const doctors = await doctorModel
+      .find(query)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(limitNum);
+
+    // Total count for pagination
+    const totalDoctors = await doctorModel.countDocuments(query);
+
+    res.status(200).json({
+      totalPages: Math.ceil(totalDoctors / limitNum),
+      currentPage: pageNum,
+      totalDoctors,
+      doctors,
+    });
+
+  } catch (error) {
+    console.error("Error fetching doctors:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 /// book appoinment ///
@@ -875,7 +828,7 @@ export {
   google,
   refreshAccessToken,
   forgotPassword,
-  resetPassword,
+  changePassword,
   getProfile,
   updateProfile,
   bookAppointment,

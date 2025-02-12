@@ -1,10 +1,8 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 
-interface RequestWithUser extends Request {
-  body: {
+export interface RequestWithUser extends Request {
     userId?: string;
-  };
 }
 
 const authUser = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {

@@ -2,7 +2,7 @@ import { createContext, useState, ReactNode, useContext, useEffect } from "react
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-interface AppContextType {
+ export interface AppContextType {
   token: string | null;
   setToken: (token: string | null) => void;
   backendUrl: string;
@@ -11,6 +11,7 @@ interface AppContextType {
   setUserData: React.Dispatch<React.SetStateAction<UserData | false>>;
   loadUserProfileData: () => void;
   doctors: Doctor[];
+  setDoctors: React.Dispatch<React.SetStateAction<Doctor[]>>;
   getDoctorsData: () => void;
   currencySymbol: string;
 }
@@ -117,6 +118,7 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     setUserData,
     loadUserProfileData,
     doctors,
+    setDoctors,
     currencySymbol,
     getDoctorsData,
   };

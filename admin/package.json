@@ -11,10 +11,7 @@
   },
   "dependencies": {
     "axios": "^1.7.9",
-<<<<<<< HEAD
     "date-fns": "^4.1.0",
-=======
->>>>>>> bb0eecf5772da206ad1344f54a7bbf5e64d19b97
     "jwt-decode": "^4.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
