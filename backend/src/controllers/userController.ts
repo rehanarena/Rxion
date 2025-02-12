@@ -582,14 +582,17 @@ export const doctorSearch = async (
 
     let query: any = {};
 
-    // Filtering by speciality
+    // Filtering by speciality if provided
     if (speciality) {
       query.speciality = speciality;
     }
 
-    // Searching by name (case-insensitive)
+    // Searching by doctor's name or speciality (case-insensitive)
     if (search) {
-      query.name = { $regex: search, $options: "i" };
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { speciality: { $regex: search, $options: "i" } },
+      ];
     }
 
     // Sorting logic
@@ -599,6 +602,10 @@ export const doctorSearch = async (
     } else if (sortBy === "speciality") {
       sortOptions.speciality = 1;
     } else if (sortBy === "availability") {
+      // Filter to only available doctors
+      query.available = true;
+      // This sort is optional since now all returned doctors are available,
+      // but you can keep it if you plan to extend the logic.
       sortOptions.available = -1;
     }
 
@@ -628,6 +635,7 @@ export const doctorSearch = async (
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 /// book appoinment ///
 
 const bookAppointment = async (req: Request, res: Response): Promise<void> => {
