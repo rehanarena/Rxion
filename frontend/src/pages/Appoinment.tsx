@@ -109,15 +109,17 @@ const Appointment: React.FC = () => {
     const bookedSlots: string[] = [];
     if (docInfo?.slots_booked) {
       Object.values(docInfo.slots_booked).forEach((bookedDates) => {
-        bookedSlots.push(...bookedDates);
+        if (Array.isArray(bookedDates)) {
+          bookedSlots.push(...bookedDates);
+        } else {
+          // If it's not an array, push it directly (or handle it as needed)
+          bookedSlots.push(bookedDates);
+        }
       });
     }
     return bookedSlots;
   };
-
-  // -----------------------------
-  // Group available slots by date
-  // -----------------------------
+  
   const today = new Date();
   const sevenDaysLater = new Date();
   sevenDaysLater.setDate(today.getDate() + 7);

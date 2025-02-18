@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, verifyOtp, loginUser, resendOtp, forgotPassword, refreshAccessToken, bookAppointment, listAppointments, cancelAppointment, paymentRazorpay, verifyRazorpay, google, getProfile, updateProfile, doctorSearch, changePassword} from '../controllers/userController';
+import { registerUser, verifyOtp, loginUser, resendOtp, forgotPassword, refreshAccessToken, bookAppointment, listAppointments, cancelAppointment, paymentRazorpay, verifyRazorpay, google, getProfile, updateProfile, doctorSearch, changePassword, getWalletBalance} from '../controllers/userController';
 import authUser from '../middlewares/authUser';
 import upload from '../middlewares/multer';
 
@@ -19,8 +19,10 @@ userRouter.get('/doctors',doctorSearch)
 userRouter.post('/book-appointment',authUser,bookAppointment);
 userRouter.get('/appointments',authUser,listAppointments);
 userRouter.post('/cancel-appointment',authUser,cancelAppointment);
-userRouter.post('/payment-razorpay',authUser,paymentRazorpay)
-userRouter.post('/verify-razorpay',authUser,verifyRazorpay)
+userRouter.post('/payment-razorpay',authUser,paymentRazorpay);
+userRouter.post('/verify-razorpay',authUser,verifyRazorpay);
+userRouter.get('/wallet',authUser,getWalletBalance);
+
 
 
 

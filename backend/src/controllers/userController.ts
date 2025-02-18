@@ -64,6 +64,11 @@ export interface IBookedSlot {
   startTime: string;
   isBooked: boolean;
 }
+interface CustomRequest extends Request {
+  user?: {
+    id: string;
+  }
+}
 
 interface RazorpayOrderCreateRequestBody {
   amount: number;
@@ -732,10 +737,7 @@ const listAppointments = async (req: Request, res: Response): Promise<void> => {
 
 ///cancel appointment ///
 
-const cancelAppointment = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+const cancelAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId, appointmentId } = req.body;
 
@@ -745,32 +747,37 @@ const cancelAppointment = async (
       return;
     }
 
-    if (appointmentData.userId !== userId) {
+    // Make sure the logged-in user owns this appointment
+    if (appointmentData.userId.toString() !== userId) {
       res.json({ success: false, message: "Unauthorized action" });
       return;
     }
 
-    await appointmentModel.findByIdAndUpdate(appointmentId, {
-      cancelled: true,
-    });
+    // Mark appointment as cancelled
+    await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
 
+    // Refund: if appointment was paid, credit the amount to the user's wallet.
+    // (Assuming appointmentData.amount and appointmentData.payment indicate this.)
+    if (appointmentData.payment) {
+      await userModel.findByIdAndUpdate(userId, { $inc: { walletBalance: appointmentData.amount } });
+    }
+
+    // Remove the booked slot from the doctor’s schedule
     const { docId, slotDate, slotTime } = appointmentData;
-
     const doctorData = await doctorModel.findById(docId);
     if (!doctorData) {
       res.json({ success: false, message: "Doctor not found" });
       return;
     }
-
     let slots_booked = doctorData.slots_booked;
     if (slots_booked[slotDate]) {
       slots_booked[slotDate] = slots_booked[slotDate].filter(
-        (slot: IBookedSlot) => slot.startTime !== slotTime
+        (slot: any) => slot.startTime !== slotTime
       );
       await doctorModel.findByIdAndUpdate(docId, { slots_booked });
     }
 
-    res.json({ success: true, message: "Appointment Cancelled" });
+    res.json({ success: true, message: "Appointment Cancelled and amount refunded to wallet" });
   } catch (error: any) {
     console.error(error);
     res.json({ success: false, message: error.message });
@@ -782,27 +789,57 @@ const paymentRazorpay = async (req: Request, res: Response): Promise<void> => {
   try {
     const { appointmentId } = req.body;
     const appointmentData = await appointmentModel.findById(appointmentId);
-
     if (!appointmentData || appointmentData.cancelled) {
-      res.json({
-        success: false,
-        message: "Appointment Cancelled or not found",
-      });
+      res.json({ success: false, message: "Appointment Cancelled or not found" });
       return;
     }
 
-    ///payment order using razorpay api ///
-    const currency = process.env.CURRENCY || "INR";
+    // Get the user who booked this appointment
+    const user = await userModel.findById(appointmentData.userId);
+    if (!user) {
+      res.json({ success: false, message: "User not found" });
+      return;
+    }
 
-    const options: RazorpayOrderCreateRequestBody = {
-      amount: appointmentData.amount * 100,
-      currency: currency,
-      receipt: appointmentId.toString(),
-      payment_capture: 1,
-    };
+    let walletUsed = 0;
+    let remainingAmount = appointmentData.amount; // total fee for the appointment
 
-    const order = await razorpayInstance.orders.create(options);
-    res.json({ success: true, order });
+    // Check if user has any wallet balance
+    if (user.walletBalance > 0) {
+      if (user.walletBalance >= appointmentData.amount) {
+        // Wallet covers full amount
+        walletUsed = appointmentData.amount;
+        remainingAmount = 0;
+        // Deduct the full amount from wallet
+        await userModel.findByIdAndUpdate(user._id, { $inc: { walletBalance: -appointmentData.amount } });
+        // Mark appointment as paid (using wallet only)
+        await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true, walletUsed });
+        res.json({ success: true, message: "Payment completed using wallet" });
+        return 
+      } else {
+        // Partial wallet balance available
+        walletUsed = user.walletBalance;
+        remainingAmount = appointmentData.amount - user.walletBalance;
+        // Deduct all wallet balance (set to 0)
+        await userModel.findByIdAndUpdate(user._id, { walletBalance: 0 });
+        // Optionally, update appointment record with walletUsed
+        await appointmentModel.findByIdAndUpdate(appointmentId, { walletUsed });
+      }
+    }
+
+    // If remainingAmount is greater than 0, proceed to create a Razorpay order
+    if (remainingAmount > 0) {
+      const currency = process.env.CURRENCY || "INR";
+      const options: RazorpayOrderCreateRequestBody = {
+        amount: remainingAmount * 100, // convert to smallest currency unit
+        currency: currency,
+        receipt: appointmentId.toString(),
+        payment_capture: 1,
+      };
+
+      const order = await razorpayInstance.orders.create(options);
+      res.json({ success: true, order });
+    }
   } catch (error: any) {
     console.error(error);
     res.json({ success: false, message: error.message });
@@ -828,6 +865,30 @@ const verifyRazorpay = async (req: Request, res: Response): Promise<void> => {
     res.json({ success: false, message: error.message });
   }
 };
+///getWallet ///
+export const getWalletBalance = async (req: CustomRequest, res: Response): Promise<void> => {
+  try {
+    // Assume you have middleware that decodes the token and adds userId to req.user
+    // Alternatively, you can extract the user ID from req.body if provided
+    const userId = req.user?.id || req.body.userId;
+    if (!userId) {
+      res.json({ success: false, message: "User not authenticated" });
+      return;
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      res.json({ success: false, message: "User not found" });
+      return;
+    }
+
+    res.json({ success: true, walletBalance: user.walletBalance });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 
 export {
   registerUser,

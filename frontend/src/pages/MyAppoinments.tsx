@@ -47,11 +47,11 @@ interface Order {
   receipt: string;
 }
 
-interface RazorpayResponse {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-}
+// interface RazorpayResponse {
+//   razorpay_payment_id: string;
+//   razorpay_order_id: string;
+//   razorpay_signature: string;
+// }
 const MyAppointments = () => {
   const { backendUrl, token,getDoctorsData } = useContext(AppContext) as AppContextType;
   const navigate = useNavigate()
@@ -155,8 +155,14 @@ const MyAppointments = () => {
     try {
       const {data} = await axios.post(backendUrl+ '/api/user/payment-razorpay',{appointmentId},{headers:{token}})
       if (data.success) {
-        initPay(data.order)
+      if (data.order) {
+        initPay(data.order);
+      } else {
+        toast.success(data.message);
+        getUsersAppointments();
+        navigate('/my-appointments');
       }
+    }
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error(error);

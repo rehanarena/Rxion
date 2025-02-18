@@ -7,6 +7,7 @@ import Contact from "./pages/Contact";
 import MyProfile from "./pages/MyProfile";
 import Appointment from "./pages/Appoinment";
 import MyAppointments from "./pages/MyAppoinments";
+import Wallet from "./pages/MyWallet";
 import Navbar from "./components/Navbar";
 import OtpVerify from './pages/VerifyOtp'
 import Footer from "./components/Footer";
@@ -35,6 +36,7 @@ const App = () => {
         <Route path="/my-profile" element={<MyProfile />} />
         <Route path="/my-appointments" element={<MyAppointments />} />
         <Route path="/appointment/:docId" element={<Appointment />} />
+        <Route path="/my-wallet" element={<Wallet />} />
       </Routes>
       <Footer />
     </div>
