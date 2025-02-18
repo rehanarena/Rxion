@@ -11,6 +11,9 @@ import {
   // getAvailableSlots,
   slot,
   doctorProfile,
+  getSlotsByDoctor,
+  deleteSlot,
+  editSlot,
 } from "../controllers/doctorController";
 import authDoctor from "../middlewares/authDoctor";
 // import authUser from "../middlewares/authUser";
@@ -20,6 +23,9 @@ doctorRouter.post("/login", loginDoctor);
 doctorRouter.get("/dashboard", doctorDashboard);
 doctorRouter.get("/list", doctorList);
 doctorRouter.get("/slot/:docId", slot);
+doctorRouter.get("/:doctorId/slots", getSlotsByDoctor);
+doctorRouter.delete("/slots/:slotId", deleteSlot);
+doctorRouter.put("/slots/:slotId/edit",editSlot)
 
 
 

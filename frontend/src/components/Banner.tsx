@@ -1,27 +1,53 @@
 import { useNavigate } from "react-router-dom"
 import { assets } from "../assets/assets"
 
-
 const Banner = () => {
+  const navigate = useNavigate()
 
-  const navigate = useNavigate()  
   return (
-    <div className="flex bg-primary rounded-lg px-6 sm:px-10 md:px-14 lg:px-12 my-20 md:mx-10">
-      {/* Left side */}
-      <div className="flex-1 py-8 sm:py-10 md:py-16 lg:py-24 lg:pl-5">
-        <div className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-semibold text-white">
-            <p>Book Appointment</p>
-            <p>With 100+ Trusted Doctors</p>
-        </div>
-        <button onClick={()=>{navigate('/login'); scrollTo(0,0)}} className="bg-white text-sm sm:text-base text-gray-600 px-8 py-3 rounded-full mt-6 hover:scale-105 transition-all">Create account</button>
+    <div className="relative bg-indigo-800 my-16">
+      <div className="absolute inset-0">
+        <img
+          className="w-full h-full object-cover"
+          src={assets.appointment_img || "/placeholder.svg"}
+          alt="Doctor appointment"
+        />
+        <div className="absolute inset-0 bg-indigo-800 mix-blend-multiply" aria-hidden="true"></div>
       </div>
-
-      {/* Right side */}
-      <div className="hidden md:block md:w-1/2 lg:w-[-370px] relative">
-        <img className="w-full absolute bottom-0 right-0 max-w-md" src={assets.appointment_img} alt="" />
+      <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
+        <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+          Book Appointments with 100+ Trusted Doctors
+        </h2>
+        <p className="mt-6 max-w-3xl text-xl text-indigo-100">
+          Join Rxion today and take control of your health journey with our network of expert doctors. Experience
+          healthcare reimagined.
+        </p>
+        <div className="mt-10 max-w-sm sm:flex sm:max-w-none">
+          <div className="space-y-4 sm:space-y-0 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5">
+            <button
+              onClick={() => {
+                navigate("/login")
+                scrollTo(0, 0)
+              }}
+              className="flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-indigo-700 bg-white hover:bg-indigo-50 sm:px-8"
+            >
+              Create Account
+            </button>
+            <button
+              onClick={() => {
+                navigate("/about")
+                scrollTo(0, 0)
+              }}
+              className="flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-500 bg-opacity-60 hover:bg-opacity-70 sm:px-8"
+            >
+              Learn More
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
 export default Banner
+

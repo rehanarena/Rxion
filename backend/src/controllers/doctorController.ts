@@ -6,8 +6,6 @@ import appointmentModel from "../models/appoinmentModel";
 import Slot from "../models/slotModel";
 import { RRule } from "rrule";
 import moment from "moment";
-import DoctorSchedule from "../models/DoctorSlotModel"
-import { generateTimeSlots } from "../helper/timeHelpers";
 
 
 interface AddSlotsRequestBody {
@@ -175,47 +173,24 @@ export const slot = async (req: Request, res: Response): Promise<void> => {
     });
   }
 };
-
-
-
-
-
-export const addSlots = async (
-  req: Request<{}, {}, AddSlotsRequestBody>,
-  res: Response
-): Promise<void> => {
+/// ADD Slots ///
+export const addSlots = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { 
-      doctorId, 
-      startDate, 
-      endDate, 
-      daysOfWeek, 
-      startTime, 
-      endTime,
-      breakStartTime,  // optional break start (e.g., "12:00")
-      breakEndTime     // optional break end (e.g., "13:00")
-    } = req.body;
+    const { doctorId, startDate, endDate, daysOfWeek, startTime, endTime } = req.body;
 
     if (!daysOfWeek || daysOfWeek.length === 0) {
       throw new Error("Days of week are required.");
     }
+
     if (!startTime || !endTime) {
       throw new Error("Start and End times are required.");
     }
 
-    const hasBreak = breakStartTime && breakEndTime;
-    if (hasBreak) {
-      if (breakStartTime <= startTime || breakEndTime >= endTime) {
-        throw new Error("Break times must be between start time and end time.");
-      }
-    }
-
-    // Create recurrence rule for dates.
     const rule = new RRule({
       freq: RRule.WEEKLY,
       dtstart: new Date(startDate),
       until: new Date(endDate),
-      byweekday: daysOfWeek.map((day) => {
+      byweekday: daysOfWeek.map((day: string) => {
         switch (day.toUpperCase()) {
           case 'MO': return RRule.MO;
           case 'TU': return RRule.TU;
@@ -230,94 +205,113 @@ export const addSlots = async (
     });
 
     const slotDates = rule.all();
-    const now = new Date();
-    let totalSlotsAdded = 0;
 
-    // Process each recurrence date.
+    const slotsToSave: SlotData[] = [];
+
     for (const date of slotDates) {
-      const baseDate = new Date(date);
-      if (baseDate < now) continue; // Skip past dates
+      const startSlotTime = new Date(date);
+      const endSlotTime = new Date(date);
 
-      let sessionSlots: string[] = [];
+      startSlotTime.setHours(parseInt(startTime.split(':')[0]));
+      startSlotTime.setMinutes(parseInt(startTime.split(':')[1]));
 
-      // If no break is provided, generate one session.
-      if (!hasBreak) {
-        sessionSlots = generateTimeSlots(baseDate, startTime, endTime);
-      } else {
-        // Generate morning session slots.
-        const morningSlots = generateTimeSlots(baseDate, startTime, breakStartTime!);
-        // Generate afternoon session slots.
-        const afternoonSlots = generateTimeSlots(baseDate, breakEndTime!, endTime);
-        sessionSlots = [...morningSlots, ...afternoonSlots];
+      endSlotTime.setHours(parseInt(endTime.split(':')[0]));
+      endSlotTime.setMinutes(parseInt(endTime.split(':')[1]));
+
+      // Ensure valid date
+      if (isNaN(startSlotTime.getTime()) || isNaN(endSlotTime.getTime())) {
+        throw new Error("Invalid time values.");
       }
 
-      // Find if a schedule document for this doctor and date already exists.
-      let scheduleDoc = await DoctorSchedule.findOne({ doctorId, date: baseDate });
-      if (scheduleDoc) {
-        // Merge new slots into the existing array (avoid duplicates).
-        sessionSlots.forEach((time) => {
-          if (!scheduleDoc.timeSlots.some(slot => slot.time === time)) {
-            scheduleDoc.timeSlots.push({ time, status: "available" });
-            totalSlotsAdded++;
-          }
-        });
-        await scheduleDoc.save();
-      } else {
-        // Create a new schedule document.
-        const timeSlots = sessionSlots.map((time) => ({ time, status: "available" }));
-        await DoctorSchedule.create({
-          doctorId,
-          date: baseDate,
-          timeSlots,
-        });
-        totalSlotsAdded += timeSlots.length;
+      const istStartTime = moment(startSlotTime).utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
+      const istEndTime = moment(endSlotTime).utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
+
+      // Check if slot already exists
+      const existingSlot = await Slot.findOne({ doctorId, date: istStartTime });
+      if (existingSlot) {
+        continue; // Skip this slot if it already exists
       }
+
+      slotsToSave.push({
+        doctorId,
+        date: istStartTime,
+        startTime: istStartTime,
+        endTime: istEndTime,
+        isBooked: false,
+      });
     }
 
-    if (totalSlotsAdded > 0) {
-      res.json({ 
-        success: true, 
-        message: 'Slots added successfully!',
-        slotsAdded: totalSlotsAdded
-      });
+    if (slotsToSave.length > 0) {
+      await Slot.insertMany(slotsToSave);
+      res.json({ success: true, message: 'Slots added successfully!' });
     } else {
-      res.json({ 
-        success: false, 
-        message: 'No new slots were added. Either they already exist or the selected dates are in the past.' 
-      });
+      res.json({ success: false, message: 'No new slots to add (they may already exist).' });
     }
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message || 'Server Error' });
+  }
+};
+
+
+/// getSlots ///
+export const getSlotsByDoctor = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { doctorId } = req.params; // Get doctorId from the URL params
+
+    const slots = await Slot.find({ doctorId });
+
+    res.json({ success: true, slots });
   } catch (error: any) {
     console.error(error);
     res.json({ success: false, message: error.message });
   }
 };
+/// delete Slot ///
+export const deleteSlot = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { slotId } = req.params;
 
+    const deletedSlot = await Slot.findByIdAndDelete(slotId);
 
+    if (!deletedSlot) {
+      throw new Error("Slot not found");
+    }
 
-/// get slots ///
-// const getAvailableSlots = async (req: Request, res: Response): Promise<void> => {
-//   try {
-//     const { doctorId } = req.params;
+    res.json({ success: true, message: 'Slot deleted successfully' });
+  } catch (error: any) {
+    console.error(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+/// edit slot ///
+export const editSlot = async(req:Request, res:Response): Promise<void> =>{
+  const { startTime, endTime } = req.body;
+  const { slotId } = req.params;
 
-//     // Fetch the available slots for the doctor using the doctorId
-//     const slots = await Slot.find({ doctorId: doctorId, isBooked: false });  // Assuming isBooked indicates available slots
+  try {
+    // Find the slot by ID and update it
+    const updatedSlot = await Slot.findByIdAndUpdate(
+      slotId,
+      { startTime, endTime },
+      { new: true }  // Return the updated slot
+    );
 
-//     if (!slots || slots.length === 0) {
-//       res.status(404).json({ message: "No available slots found for this doctor" });
-//       return
-//     }
+    if (!updatedSlot) {
+       res.status(404).json({ message: 'Slot not found' });
+       return
+    }
 
-//     // Return the available slots
-//     res.status(200).json({
-//       message: "Available slots fetched successfully",
-//       doctorId: doctorId,
-//       slots: slots,  // Send the actual slots data
-//     });
-//   } catch (error:any) {
-//     console.error(error);
-//     res.status(500).json({ message: "Error fetching available slots", error: error.message });
-//   }
-// };
+    // Return the updated slot
+    res.json({
+      message: 'Slot updated successfully',
+      slot: updatedSlot,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Something went wrong' });
+  }
+}
 
 /// appoinments ///
 const appoinmentsDoctor = async (

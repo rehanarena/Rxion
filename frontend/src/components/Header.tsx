@@ -1,28 +1,44 @@
-import { assets } from "../assets/assets"
-
+import { assets } from "../assets/assets";
 
 const Header = () => {
   return (
-    <div  className="flex flex-col md:flex-row flex-wrap bg-primary rounded-lg px-6 md:px-10 lg:px-20">
-        {/* ----Left side---- */}
-        <div className="md:w-1/2 flex flex-col items-start justify-center gap-4 py-10 m-auto md:py-[10vw] md:mb-[-30px]" >
-            <p className="text-3xl md:text-4xl lg:text-5xl text-white font-semibold leading-tight md:leading-tight lg:leading-tight">
-                Book Appointment <br /> With Trusted Doctors
+    <div className="relative overflow-hidden bg-white">
+      <div className="max-w-7xl mx-auto flex flex-col-reverse lg:flex-row items-center">
+        <div className="relative z-10 w-full px-6 py-12 sm:py-16 lg:w-1/2">
+          <main className="text-center lg:text-left">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+              <span className="block">Book Appointments with</span>{" "}
+              <span className="block text-indigo-600">Trusted Doctors</span>
+            </h1>
+            <p className="mt-4 text-lg text-gray-600 sm:mt-6 sm:text-xl">
+              Rxion connects you with top specialists. Your health journey starts here.
             </p>
-            <div className="flex flex-col md:flex-row items-center gap-3 text-white text-sm font-light">
-                <img className="w-28" src={assets.group_profiles} alt="" />
-                <p>Simply browse through our extensive list of trusted doctors, <br className="hidden sm:block" />schedule your appointment hassle-free</p>
+            <div className="mt-6 flex flex-col sm:flex-row sm:justify-center lg:justify-start gap-4">
+              <a
+                href="#speciality"
+                className="px-8 py-3 text-lg font-medium text-white bg-indigo-600 rounded-md shadow-md hover:bg-indigo-700 transition"
+              >
+                Book Appointments
+              </a>
+              <a
+                href="/about"
+                className="px-8 py-3 text-lg font-medium text-indigo-700 bg-indigo-100 rounded-md shadow-md hover:bg-indigo-200 transition"
+              >
+                Learn More
+              </a>
             </div>
-            <a className="flex items-center gap-2 bg-white px-8 py-3 rounded-full text-gray-600 text-sm m-auto md:m-0 hover:scale-105 transition-all duration-300" href="#speciality">
-             Book appointments <img className="w-3" src={assets.arrow_icon} alt="" />
-            </a>
+          </main>
         </div>
-        {/* ----Right side---- */}
-        <div className="md:w-1/2 relative">
-            <img className="w-full md:absolute bottom-0 h-auto rounded-lg" src={assets.header_img} alt="" />
+        <div className="w-full lg:w-1/2">
+          <img
+            className="w-full h-64 object-cover sm:h-80 md:h-96 lg:h-full rounded-lg shadow-lg"
+            src={assets.header_img || "/placeholder.svg"}
+            alt="Doctor consultation"
+          />
         </div>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;

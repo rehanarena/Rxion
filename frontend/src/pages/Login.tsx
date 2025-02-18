@@ -23,9 +23,7 @@ const Login = () => {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [name, setName] = useState<string>("");
 
-  const onSubmitHandler = async (
-    event: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
@@ -83,7 +81,6 @@ const Login = () => {
     if (storedToken) {
       setToken(storedToken);
       navigate("/", { replace: true });
-
     }
   }, [setToken, navigate]);
 
@@ -118,139 +115,168 @@ const Login = () => {
     }
   };
 
+  // -------------------------
+  // NEW UI RETURN STATEMENT
+  // -------------------------
   return (
-    <form onSubmit={onSubmitHandler} className="min-h-[80vh] flex items-center">
-      <div className="flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-96 border rounded-xl text-zinc-600 text-sm shadow-lg">
-        <p className="text-2xl font-semibold">
-          {state === "Sign Up" ? "Create Account" : "Login"}
-        </p>
-        <p>
-          Please {state === "Sign Up" ? "sign up" : "login"} to book an
-          appointment.
-        </p>
-        {state === "Sign Up" && (
-          <div className="w-full">
-            <label className="block">
-              Full Name
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-gray-700 px-4">
+      {/* Main container */}
+      <div className="bg-white w-full max-w-4xl rounded-md shadow-2xl overflow-hidden flex flex-col md:flex-row">
+        {/* Left Side (Form) */}
+        <div className="w-full md:w-1/2 p-8 flex flex-col justify-center">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+            {state === "Sign Up" ? "Create Account" : "Sign In"}
+          </h2>
+          <p className="text-sm text-gray-500 mb-6">
+            {state === "Sign Up"
+              ? "Please fill in your details to create an account."
+              : "Please sign in to continue."}
+          </p>
+
+          {/* The same form logic */}
+          <form onSubmit={onSubmitHandler} className="flex flex-col gap-4">
+            {state === "Sign Up" && (
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                  onChange={(e) => setName(e.target.value)}
+                  value={name}
+                  required
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-gray-600 text-sm mb-1">Email</label>
               <input
-                className="border border-zinc-300 rounded w-full p-2 mt-1"
-                type="text"
-                onChange={(e) => setName(e.target.value)}
-                value={name}
+                type="email"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                onChange={(e) => setEmail(e.target.value)}
+                value={email}
                 required
               />
-            </label>
-          </div>
-        )}
-        <div className="w-full">
-          <label className="block">
-            Email
-            <input
-              className="border border-zinc-300 rounded w-full p-2 mt-1"
-              type="email"
-              onChange={(e) => setEmail(e.target.value)}
-              value={email}
-              required
-            />
-          </label>
-        </div>
-        <div className="w-full">
-          <label className="block">
-            Password
-            <input
-              className="border border-zinc-300 rounded w-full p-2 mt-1"
-              type="password"
-              onChange={(e) => setPassword(e.target.value)}
-              value={password}
-              required
-            />
-          </label>
-        </div>
-        {state === "Sign Up" && (
-          <div className="w-full">
-            <label className="block">
-              Confirm Password
+            </div>
+
+            <div>
+              <label className="block text-gray-600 text-sm mb-1">
+                Password
+              </label>
               <input
-                className="border border-zinc-300 rounded w-full p-2 mt-1"
                 type="password"
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                value={confirmPassword}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                onChange={(e) => setPassword(e.target.value)}
+                value={password}
                 required
               />
-            </label>
-          </div>
-        )}
-        <button
-          type="submit"
-          className="bg-primary text-white w-full py-2 rounded-md text-base"
-        >
-          {state === "Sign Up" ? "Create Account" : "Login"}
-        </button>
-        {state === "Sign Up" ? (
-          <p>
-            Already have an account?{" "}
-            <span
-              onClick={() => setState("Login")}
-              className="text-primary underline cursor-pointer"
+            </div>
+
+            {state === "Sign Up" && (
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  value={confirmPassword}
+                  required
+                />
+              </div>
+            )}
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              className="bg-blue-600 text-white rounded py-2 text-sm font-medium hover:bg-blue-700 transition-colors"
             >
-              Login here
-            </span>
-          </p>
-        ) : (
-          <p>
-            Create a new account?{" "}
-            <span
-              onClick={() => setState("Sign Up")}
-              className="text-primary underline cursor-pointer"
-            >
-              Click here
-            </span>
-          </p>
-        )}
-        {state === "Login" && (
-          <p>
-            Forgot your password?{" "}
-            <span
-              onClick={() => navigate("/forgot-password")}
-              className="text-primary underline cursor-pointer"
-            >
-              Click here
-            </span>
-          </p>
-        )}
-        <button
-          onClick={handleGoogle}
-          type="button"
-          className="w-full py-2 mt-3 rounded-md text-base border border-gray-300 flex items-center justify-center gap-3 text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 48 48"
-            width="24"
-            height="24"
-            className="text-gray-700"
+              {state === "Sign Up" ? "Sign Up" : "Login"}
+            </button>
+
+            {/* Forgot password link (only shows on Login) */}
+            {state === "Login" && (
+              <div className="text-sm text-center mt-2">
+                Forgot your password?{" "}
+                <span
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-blue-600 hover:underline cursor-pointer"
+                >
+                  Click here
+                </span>
+              </div>
+            )}
+          </form>
+
+          {/* Google button */}
+          <button
+            onClick={handleGoogle}
+            type="button"
+            className="mt-4 w-full flex items-center justify-center gap-2 py-2 border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm"
           >
-            <path
-              fill="#4285F4"
-              d="M23.49 12.3c0-.73-.06-1.43-.18-2.1H12v4.1h6.18c-0.26 1.44-1.02 2.66-2.14 3.29v2.74h3.44c2.02-1.87 3.18-4.66 3.18-8.03z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 6.2c1.12 0 2.08.38 2.83 1.02L16.96 4.02C15.39 2.57 13.22 1.5 11 1.5 7.25 1.5 4.12 3.35 3.03 6.3l3.92 2.89C7.78 7.61 9.3 6.2 12 6.2z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M3.03 6.3c-0.26-0.75-0.41-1.56-0.41-2.4s0.15-1.65 0.41-2.4l-3.92-2.89C0.15 1.15 0 2.57 0 4s0.15 2.85 0.41 4.1l3.92-2.89z"
-            />
-            <path
-              fill="#EA4335"
-              d="M11 1.5c-0.92 0-1.79.31-2.47.86L7.12 3.73C6.28 2.79 5.16 2.16 4 2.16 2.9 2.16 1.03 3.49 0.16 5.25l3.92 2.89C5.19 6.2 7.25 4.66 11 4.66c2.39 0 4.44-1.06 5.88-2.9l-3.89-2.91C14.88 1.88 12 1.5 11 1.5z"
-            />
-          </svg>
-          Sign in with Google
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 48 48"
+              width="20"
+              height="20"
+            >
+              <path
+                fill="#EA4335"
+                d="M24 9.5c3.94 0 6.57 1.69 8.09 3.11l5.91-5.91C34.09 3.97 29.62 2 24 2 14.86 2 7.15 7.04 3.06 14.02l6.95 5.39C11.39 14.08 17.16 9.5 24 9.5z"
+              />
+              <path
+                fill="#4285F4"
+                d="M46.5 24c0-1.61-.14-3.17-.4-4.68H24v9.18h12.7c-.55 2.98-2.17 5.51-4.61 7.2l7.31 5.67C43.69 36.62 46.5 30.8 46.5 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M10.01 28.61A14.48 14.48 0 0 1 9 24c0-1.61.26-3.17.74-4.61l-6.95-5.39A22.998 22.998 0 0 0 2 24c0 3.83.9 7.45 2.49 10.61l6.95-6z"
+              />
+              <path
+                fill="#34A853"
+                d="M24 46c6.21 0 11.43-2.05 15.24-5.56l-7.31-5.67c-2.04 1.4-4.67 2.23-7.93 2.23-6.84 0-12.61-4.58-14.66-10.89l-6.95 5.39C7.15 40.96 14.86 46 24 46z"
+              />
+              <path fill="none" d="M2 2h44v44H2z" />
+            </svg>
+            Sign in with Google
+          </button>
+        </div>
+
+        {/* Right Side (Overlay / Info) */}
+        <div className="w-full md:w-1/2 flex items-center justify-center bg-blue-600 text-white p-8">
+          {state === "Sign Up" ? (
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">Welcome Back!</h2>
+              <p className="text-sm text-white/90">
+                Enter your personal info to sign in and start your journey
+              </p>
+              <button
+                onClick={() => setState("Login")}
+                className="mt-4 border border-white px-5 py-2 rounded hover:bg-white hover:text-blue-600 transition-colors text-sm"
+              >
+                Sign In
+              </button>
+            </div>
+          ) : (
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">Hello, Friend!</h2>
+              <p className="text-sm text-white/90">
+                New here? Enter your details to create an account with us
+              </p>
+              <button
+                onClick={() => setState("Sign Up")}
+                className="mt-4 border border-white px-5 py-2 rounded hover:bg-white hover:text-blue-600 transition-colors text-sm"
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </form>
+    </div>
   );
 };
 

@@ -17,6 +17,7 @@ import DoctorProfile from './pages/Doctor/DoctorProfile';
 import UserList from './pages/Admin/UserList';
 import AllDoctors from './pages/Admin/AllDoctors';
 import SlotManagement from './pages/Doctor/slotManagement'
+import AddSlots from './pages/Doctor/AddSlots'
 import NotFound from './components/NotFound';
 
 interface AdminContextType {
@@ -52,7 +53,8 @@ const App = () => {
           <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
           <Route path='/doctor-appoinments' element={<DoctorAppoinments />} />
           <Route path='/doctor-profile' element={<DoctorProfile />} />
-          <Route path='/doctor-slots' element={<SlotManagement />} />
+          <Route path='/doctor-slots' element={<AddSlots />} />
+          <Route path='/doctor-slot-manage' element={<SlotManagement />} />
         </Routes>
       </div>
     </div>

@@ -2,12 +2,13 @@ import { createContext, useState, ReactNode, useContext, useEffect } from "react
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
- export interface AppContextType {
+export interface AppContextType {
   token: string | null;
   setToken: (token: string | null) => void;
   backendUrl: string;
   userId: string | null;
-  setUserId: (userId: string | null) => void;userData: UserData | false;
+  setUserId: (userId: string | null) => void;
+  userData: UserData | false;
   setUserData: React.Dispatch<React.SetStateAction<UserData | false>>;
   loadUserProfileData: () => void;
   doctors: Doctor[];
@@ -55,10 +56,9 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     if (storedToken) {
       setToken(storedToken);
     }
-  }, []); 
+  }, []);
 
   useEffect(() => {
-    // console.log("Token updated:", token);
     if (token) {
       localStorage.setItem("accessToken", token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -66,7 +66,7 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
       localStorage.removeItem("accessToken");
       delete axios.defaults.headers.common['Authorization'];
     }
-  }, [token]); 
+  }, [token]);
 
   const loadUserProfileData = async (): Promise<void> => {
     try {
@@ -75,8 +75,12 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
         { headers: { token } }
       );
       
+      console.log("Response from backend:", data); // Log the data received
+  
       if (data.success) {
         setUserData(data.userData || false);
+        setUserId(data.userData?._id || null); 
+        console.log("userId set to:", data.userData?._id);
       } else {
         toast.error(data.message || 'An error occurred');
       }
@@ -107,7 +111,8 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
 
   useEffect(() => {
     getDoctorsData();
-  }, []); 
+  }, []);
+
   const value = {
     token,
     setToken,

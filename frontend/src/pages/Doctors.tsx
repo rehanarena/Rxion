@@ -6,6 +6,8 @@ interface Doctor {
   name: string;
   speciality: string;
   image: string;
+  fees: number;
+  experience: string;
   available: boolean;
   address?: {
     line1: string;
@@ -18,7 +20,7 @@ const Doctors: React.FC = () => {
   const { speciality } = useParams<{ speciality: string }>();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "speciality" | "availability">("name");
+  const [sortBy, setSortBy] = useState<"name" | "availability" | "fees" | "popularity"|"experience" >("name");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [doctorsPerPage] = useState(8);
@@ -81,14 +83,14 @@ const Doctors: React.FC = () => {
         <select
           value={sortBy}
           onChange={(e) => {
-            setSortBy(e.target.value as "name" | "speciality" | "availability");
+            setSortBy(e.target.value as | "availability" | "fees" |"experience");
             setCurrentPage(1);
           }}
           className="border border-gray-300 rounded px-4 py-2 bg-white focus:ring-2 focus:ring-indigo-500"
         >
-          <option value="name">Sort by Name</option>
-          <option value="speciality">Sort by Speciality</option>
           <option value="availability">Sort by Availability</option>
+          <option value="fees">Sort by Fees</option>
+          <option value="experience">Sort by experience</option>
         </select>
       </div>
 
@@ -183,3 +185,5 @@ const Doctors: React.FC = () => {
 };
 
 export default Doctors;
+
+

@@ -47,6 +47,7 @@ interface Doctor {
   available: boolean;
   slots_booked?: { [key: string]: string[] };
   fees: number;
+  expirience: number;
   _id: string;
 }
 
@@ -579,15 +580,12 @@ export const doctorSearch = async (
 ): Promise<void> => {
   try {
     const { speciality, search, sortBy, page = "1", limit = "8" } = req.query;
-
     let query: any = {};
 
-    // Filtering by speciality if provided
     if (speciality) {
       query.speciality = speciality;
     }
 
-    // Searching by doctor's name or speciality (case-insensitive)
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -595,33 +593,20 @@ export const doctorSearch = async (
       ];
     }
 
-    // Sorting logic
     let sortOptions: any = {};
-    if (sortBy === "name") {
-      sortOptions.name = 1;
-    } else if (sortBy === "speciality") {
-      sortOptions.speciality = 1;
-    } else if (sortBy === "availability") {
-      // Filter to only available doctors
+    if (sortBy === "availability") {
       query.available = true;
-      // This sort is optional since now all returned doctors are available,
-      // but you can keep it if you plan to extend the logic.
-      sortOptions.available = -1;
+    } else if (sortBy === "fees") {
+      sortOptions.fees = 1;
+    } else if (sortBy === "experience") {
+      sortOptions.experience = -1;
     }
 
-    // Pagination logic
     const pageNum = parseInt(page as string, 10) || 1;
     const limitNum = parseInt(limit as string, 10) || 8;
     const skip = (pageNum - 1) * limitNum;
 
-    // Fetch doctors based on query
-    const doctors = await doctorModel
-      .find(query)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(limitNum);
-
-    // Total count for pagination
+    const doctors = await doctorModel.find(query).sort(sortOptions).skip(skip).limit(limitNum);
     const totalDoctors = await doctorModel.countDocuments(query);
 
     res.status(200).json({
@@ -635,6 +620,7 @@ export const doctorSearch = async (
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 
 /// book appoinment ///
 
