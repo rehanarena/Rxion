@@ -43,7 +43,7 @@ const MyProfile = () => {
     if (token) {
       loadUserProfileData();
     }
-  }, [token, loadUserProfileData]); // Added loadUserProfileData to dependencies
+  }, [token, loadUserProfileData]); 
 
   const updateUserProfileData = async () => {
     if (!userData) return;
@@ -95,7 +95,7 @@ const MyProfile = () => {
       const { data } = await axios.put(
         `${backendUrl}/api/user/change-password`,
         {
-          userId: userData._id, // Use the user ID from your userData object
+          userId: userData._id, 
           currentPassword,
           newPassword,
           confirmPassword,
@@ -129,7 +129,6 @@ const MyProfile = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-gradient-to-br from-purple-100 to-blue-200 rounded-3xl shadow-2xl backdrop-blur-lg border border-white/30">
-      {/* Profile Picture Section */}
       <div className="flex justify-center mb-8">
         {isEdit ? (
           <label htmlFor="image" className="cursor-pointer">
@@ -167,7 +166,6 @@ const MyProfile = () => {
         )}
       </div>
 
-      {/* Name Section */}
       <div className="text-center">
         {isEdit ? (
           <input
@@ -187,7 +185,6 @@ const MyProfile = () => {
 
       <hr className="my-8 border-t-2 border-purple-200/50" />
 
-      {/* Contact Information Section */}
       <div className="bg-white/30 rounded-2xl p-6 mb-8 shadow-lg">
         <p className="text-2xl font-bold text-purple-800 mb-4">
           Contact Information
@@ -264,7 +261,6 @@ const MyProfile = () => {
         </div>
       </div>
 
-      {/* Basic Information Section */}
       <div className="bg-white/30 rounded-2xl p-6 mb-8 shadow-lg">
         <p className="text-2xl font-bold text-purple-800 mb-4">
           Basic Information
@@ -311,7 +307,6 @@ const MyProfile = () => {
         </div>
       </div>
 
-      {/* Change Password Section */}
       {showPasswordChange && (
         <div className="bg-white/30 rounded-2xl p-6 mb-8 shadow-lg">
           <p className="text-2xl font-bold text-purple-800 mb-4">
@@ -386,7 +381,6 @@ const MyProfile = () => {
         </div>
       )}
 
-      {/* Action Buttons */}
       <div className="mt-8 space-y-4">
         {isEdit ? (
           <button

@@ -30,7 +30,7 @@ interface DoctorContextType {
 
 interface AppContextType {
   currencySymbol: string;
-  slotDateFormat: (date: string) => string;
+  slotDateFormat: (date: string, time: string) => string;
   calculateAge: (dob: string) => number;
 }
 const DoctorAppointments = () => {
@@ -78,10 +78,12 @@ const DoctorAppointments = () => {
               <p className="font-medium text-gray-800">{item.userData.name}</p>
             </div>
             <div className="text-xs border border-primary text-primary px-3 py-1 rounded-full">
-              <p>{item.payment ? "Online" : "Cash"}</p>
+            <p>{item.payment ? "Online" : "Pending"}</p>
             </div>
             <p className="text-gray-800">
-              {slotDateFormat(item.slotDate)}, {item.slotTime}
+              <p className="text-gray-800">
+                {slotDateFormat(item.slotDate, item.slotTime)}
+              </p>
             </p>
             <p className="font-medium">
               {currencySymbol} {item.amount}

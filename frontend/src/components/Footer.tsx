@@ -2,49 +2,50 @@ import logo from '../assets/Rxion_logo.png';
 
 const Footer = () => {
   return (
-    <div className="bg-gray-900 text-white py-16 mt-40">
-      <div className="container mx-auto px-6">
-        <div className="grid sm:grid-cols-1 md:grid-cols-3 gap-14">
-          {/* Left section */}
-          <div className="flex flex-col items-start">
-            <img className="mb-6 w-36" src={logo} alt="Company logo" />
-            <p className="text-gray-400 text-lg leading-8">
-              Your health, our priority. Book doctor appointments easily and manage your medical care from the comfort of your home. For assistance, please contact our support team.
+    <footer className="bg-indigo-600 text-white">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Company Info */}
+          <div>
+            <img src={logo} alt="Company logo" className="w-16 mb-4" />
+            <p className="text-indigo-100 text-sm">
+              Your health, our priority. Book appointments easily and manage your care from home.
             </p>
           </div>
 
-          {/* Center section */}
-          <div className="flex flex-col items-start">
-            <p className="text-lg font-medium text-indigo-400 mb-6">COMPANY</p>
-            <ul className="space-y-4 text-gray-400">
-              <li className="hover:text-indigo-400 cursor-pointer">Home</li>
-              <li className="hover:text-indigo-400 cursor-pointer">About Us</li>
-              <li className="hover:text-indigo-400 cursor-pointer">Contact Us</li>
-              <li className="hover:text-indigo-400 cursor-pointer">Privacy and Policy</li>
+          {/* Navigation Links */}
+          <div>
+            <h4 className="text-lg font-semibold text-white mb-4">Company</h4>
+            <ul className="space-y-2">
+              <li className="hover:text-indigo-300 cursor-pointer text-sm transition-all">Home</li>
+              <li className="hover:text-indigo-300 cursor-pointer text-sm transition-all">About Us</li>
+              <li className="hover:text-indigo-300 cursor-pointer text-sm transition-all">Contact Us</li>
+              <li className="hover:text-indigo-300 cursor-pointer text-sm transition-all">Privacy & Policy</li>
             </ul>
           </div>
 
-          {/* Right section */}
-          <div className="flex flex-col items-start">
-            <p className="text-lg font-medium text-indigo-400 mb-6">GET IN TOUCH</p>
-            <ul className="space-y-4 text-gray-400">
-              <li className="flex items-center gap-2">
-                <span className="text-indigo-400">📞</span> +91 7306127672
+          {/* Contact Information */}
+          <div>
+            <h4 className="text-lg font-semibold text-white mb-4">Get in Touch</h4>
+            <ul className="space-y-2">
+              <li className="flex items-center gap-2 text-sm transition-all">
+                <span className="text-indigo-300">📞</span> +91 7306127672
               </li>
-              <li className="flex items-center gap-2">
-                <span className="text-indigo-400">📧</span> Rxion@gmail.com
+              <li className="flex items-center gap-2 text-sm transition-all">
+                <span className="text-indigo-300">📧</span> Rxion@gmail.com
               </li>
             </ul>
           </div>
-        </div>
-
-        {/* Copyright Text */}
-        <div className="mt-12 text-center">
-          <hr className="border-gray-700 mb-6" />
-          <p className="text-gray-500 text-sm py-6">© 2024 All Rights Reserved.</p>
         </div>
       </div>
-    </div>
+
+      {/* Bottom Bar */}
+      <div className="bg-indigo-700 py-4">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-indigo-200 text-xs">© 2024 All Rights Reserved.</p>
+        </div>
+      </div>
+    </footer>
   );
 };
 

@@ -273,12 +273,14 @@ const cancelAppointment = async (req: Request, res: Response): Promise<void> => 
     console.log("Slots booked: ", slots_booked);
 
     if (slots_booked[slotDate]) {
-      console.log("Filtered: ", slots_booked[slotDate].filter((slot: IBookedSlot) => slot.startTime !== slotTime));
-      slots_booked[slotDate] = slots_booked[slotDate].filter((slot: IBookedSlot) => slot.startTime !== slotTime);
-      console.log("After filtering: ", slots_booked[slotDate]);
-
+      // Cast slots_booked[slotDate] to the new shape
+      const updatedSlots = (slots_booked[slotDate] as Array<{ date: string; time: string }>).filter(
+        (slot) => `${slot.date} ${slot.time}` !== slotTime
+      );
+      slots_booked[slotDate] = updatedSlots;
       await doctorModel.findByIdAndUpdate(docId, { slots_booked });
     }
+    
 
     res.json({ success: true, message: "Appointment cancelled successfully" });
   } catch (error: any) {

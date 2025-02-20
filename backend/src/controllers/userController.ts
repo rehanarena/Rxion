@@ -33,33 +33,8 @@ interface UpdateProfileRequestBody {
   dob: string;
   gender: string;
 }
-interface AppointmentData {
-  userId: string;
-  docId: string;
-  userData: Record<string, any>;
-  doctData: Record<string, any>;
-  amount: number;
-  slotTime: string;
-  slotDate: string;
-  date: number;
-}
-interface Doctor {
-  available: boolean;
-  slots_booked?: { [key: string]: string[] };
-  fees: number;
-  expirience: number;
-  _id: string;
-}
 
-interface User {
-  _id: string;
-}
-interface Slot {
-  startTime: string;
-  isBooked?: boolean;
-}
 
-// Define the IBookedSlot interface before usage
 export interface IBookedSlot {
   startTime: string;
   isBooked: boolean;
@@ -473,7 +448,6 @@ const changePassword = async (
   res: Response
 ): Promise<void> => {
   try {
-    // Expect the client to send the userId in the request body since auth middleware is not used.
     const { userId, currentPassword, newPassword, confirmPassword } = req.body;
 
     if (!userId) {
@@ -534,7 +508,6 @@ const getProfile = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// API to update user profile
 const updateProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
@@ -654,12 +627,11 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
     }
 
     if (!docData.fees) {
-      res
-        .status(400)
-        .json({ success: false, message: "Doctor fees not found" });
+      res.status(400).json({ success: false, message: "Doctor fees not found" });
       return;
     }
-    if (!docData.slots_booked) {
+
+    if (!docData.slots_booked || Array.isArray(docData.slots_booked)) {
       docData.slots_booked = {};
     }
     if (!docData.slots_booked[slotDate]) {
@@ -667,9 +639,15 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
     }
 
     const formattedSlotTime = new Date(slotTime).toISOString();
+    const slotDatePart = formattedSlotTime.split("T")[0]; 
+    const slotTimePart = new Date(formattedSlotTime).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
 
     const isSlotBooked = docData.slots_booked[slotDate].some(
-      (slot: any) => slot.startTime === formattedSlotTime && slot.isBooked
+      (slot) => slot.date === slotDatePart && slot.time === slotTimePart
     );
 
     if (isSlotBooked) {
@@ -677,17 +655,14 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // console.log('Before updating slots_booked:', docData.slots_booked);
     docData.slots_booked[slotDate].push({
-      startTime: formattedSlotTime,
-      isBooked: true,
+      date: slotDatePart,
+      time: slotTimePart,
     });
 
-    // console.log('After updating slots_booked:', docData.slots_booked);
+    docData.markModified("slots_booked");
 
     await docData.save();
-    const updatedDocData = await doctorModel.findById(docId);
-    // console.log('Updated doctor data:', updatedDocData);
 
     const userData = await userModel.findById(userId).select("-password");
     if (!userData) {
@@ -712,11 +687,10 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
       .json({ success: true, message: "Appointment booked successfully" });
   } catch (error: any) {
     console.error("Error booking appointment:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "An error occurred, please try again" });
+    res.status(500).json({ success: false, message: "An error occurred, please try again" });
   }
 };
+
 
 /// appoinments list in my-appointments ///
 const listAppointments = async (req: Request, res: Response): Promise<void> => {
@@ -746,23 +720,17 @@ const cancelAppointment = async (req: Request, res: Response): Promise<void> => 
       res.json({ success: false, message: "Appointment not found" });
       return;
     }
-
-    // Make sure the logged-in user owns this appointment
     if (appointmentData.userId.toString() !== userId) {
       res.json({ success: false, message: "Unauthorized action" });
       return;
     }
 
-    // Mark appointment as cancelled
     await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
 
-    // Refund: if appointment was paid, credit the amount to the user's wallet.
-    // (Assuming appointmentData.amount and appointmentData.payment indicate this.)
     if (appointmentData.payment) {
       await userModel.findByIdAndUpdate(userId, { $inc: { walletBalance: appointmentData.amount } });
     }
 
-    // Remove the booked slot from the doctor’s schedule
     const { docId, slotDate, slotTime } = appointmentData;
     const doctorData = await doctorModel.findById(docId);
     if (!doctorData) {
@@ -794,7 +762,6 @@ const paymentRazorpay = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Get the user who booked this appointment
     const user = await userModel.findById(appointmentData.userId);
     if (!user) {
       res.json({ success: false, message: "User not found" });
@@ -802,36 +769,27 @@ const paymentRazorpay = async (req: Request, res: Response): Promise<void> => {
     }
 
     let walletUsed = 0;
-    let remainingAmount = appointmentData.amount; // total fee for the appointment
+    let remainingAmount = appointmentData.amount; 
 
-    // Check if user has any wallet balance
     if (user.walletBalance > 0) {
       if (user.walletBalance >= appointmentData.amount) {
-        // Wallet covers full amount
         walletUsed = appointmentData.amount;
         remainingAmount = 0;
-        // Deduct the full amount from wallet
         await userModel.findByIdAndUpdate(user._id, { $inc: { walletBalance: -appointmentData.amount } });
-        // Mark appointment as paid (using wallet only)
         await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true, walletUsed });
         res.json({ success: true, message: "Payment completed using wallet" });
         return 
       } else {
-        // Partial wallet balance available
         walletUsed = user.walletBalance;
         remainingAmount = appointmentData.amount - user.walletBalance;
-        // Deduct all wallet balance (set to 0)
         await userModel.findByIdAndUpdate(user._id, { walletBalance: 0 });
-        // Optionally, update appointment record with walletUsed
         await appointmentModel.findByIdAndUpdate(appointmentId, { walletUsed });
       }
     }
-
-    // If remainingAmount is greater than 0, proceed to create a Razorpay order
     if (remainingAmount > 0) {
       const currency = process.env.CURRENCY || "INR";
       const options: RazorpayOrderCreateRequestBody = {
-        amount: remainingAmount * 100, // convert to smallest currency unit
+        amount: remainingAmount * 100, 
         currency: currency,
         receipt: appointmentId.toString(),
         payment_capture: 1,
@@ -868,8 +826,6 @@ const verifyRazorpay = async (req: Request, res: Response): Promise<void> => {
 ///getWallet ///
 export const getWalletBalance = async (req: CustomRequest, res: Response): Promise<void> => {
   try {
-    // Assume you have middleware that decodes the token and adds userId to req.user
-    // Alternatively, you can extract the user ID from req.body if provided
     const userId = req.user?.id || req.body.userId;
     if (!userId) {
       res.json({ success: false, message: "User not authenticated" });

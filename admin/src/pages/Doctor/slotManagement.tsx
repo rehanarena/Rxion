@@ -94,10 +94,9 @@ const SlotManagement = () => {
     }
   };
 
-  // Format date to local format
   const formatDate = (date: string) => {
     const newDate = new Date(date);
-    return newDate.toLocaleString(); // This will format it in the user's local format
+    return newDate.toLocaleString(); 
   };
 
   return (

@@ -1,4 +1,4 @@
-import { createContext, useState, ReactNode, useContext, useEffect } from "react";
+import { createContext, useState, ReactNode, useContext, useEffect, useCallback } from "react";
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -40,6 +40,7 @@ interface UserData {
   _id: string;
   name: string;
   email: string;
+  image?: string;
 }
 
 const AppContextProvider = ({ children }: AppContextProviderProps) => {
@@ -68,19 +69,18 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     }
   }, [token]);
 
-  const loadUserProfileData = async (): Promise<void> => {
+  const loadUserProfileData = useCallback(async (): Promise<void> => {
     try {
       const { data } = await axios.get<{ success: boolean; message?: string; userData?: UserData }>(
         backendUrl + '/api/user/get-profile',
         { headers: { token } }
       );
       
-      console.log("Response from backend:", data); // Log the data received
+      console.log("Response from backend:", data);
   
       if (data.success) {
         setUserData(data.userData || false);
-        setUserId(data.userData?._id || null); 
-        console.log("userId set to:", data.userData?._id);
+        setUserId(data.userData?._id || null);
       } else {
         toast.error(data.message || 'An error occurred');
       }
@@ -88,7 +88,7 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
       console.log(error);
       toast.error(error instanceof Error ? error.message : 'An unknown error occurred');
     }
-  };
+  }, [token, backendUrl]); 
   
 
   const getDoctorsData = async (): Promise<void> => {

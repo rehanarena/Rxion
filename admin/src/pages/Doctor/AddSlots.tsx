@@ -61,8 +61,6 @@ const SlotForm = () => {
       toast.error('Something went wrong');
     }
   };
-  
-  // Get today's date to set as the minimum date in the calendar input fields
   const today = new Date().toISOString().split('T')[0];
 
   return (

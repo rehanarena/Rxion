@@ -33,8 +33,8 @@ interface SlotRequestBody {
   endDate: string;
   daysOfWeek: string[];
   timeSlots: string[];
-  startTime: string;  // Add startTime
-  endTime: string;    // Add endTime
+  startTime: string;  
+  endTime: string;  
 }
 
 interface SlotData {
@@ -154,13 +154,11 @@ export const slot = async (req: Request, res: Response): Promise<void> => {
     const { docId } = req.params;
     const currentTime = new Date();
     currentTime.setMinutes(currentTime.getMinutes() + 30); 
-    // console.log('Current Time:', currentTime.toISOString()); 
-    // console.log('docId:', docId);
 
     const slots = await Slot.find({
-      doctorId: docId, // Use doctorId instead of docId
+      doctorId: docId, 
       isBooked: false,
-      startTime: { $gte: currentTime.toISOString() }, // Ensure toISOString() format is used
+      startTime: { $gte: currentTime.toISOString() }, 
     }).sort({ startTime: 1 });
 
     // console.log('Fetched slots:', slots);
@@ -205,8 +203,8 @@ export const addSlots = async (req: Request, res: Response): Promise<void> => {
     });
 
     const slotDates = rule.all();
-
     const slotsToSave: SlotData[] = [];
+    const now = new Date();
 
     for (const date of slotDates) {
       const startSlotTime = new Date(date);
@@ -218,18 +216,21 @@ export const addSlots = async (req: Request, res: Response): Promise<void> => {
       endSlotTime.setHours(parseInt(endTime.split(':')[0]));
       endSlotTime.setMinutes(parseInt(endTime.split(':')[1]));
 
-      // Ensure valid date
       if (isNaN(startSlotTime.getTime()) || isNaN(endSlotTime.getTime())) {
         throw new Error("Invalid time values.");
+      }
+
+      // Skip slots that have already started (or finished)
+      if (startSlotTime < now) {
+        continue;
       }
 
       const istStartTime = moment(startSlotTime).utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
       const istEndTime = moment(endSlotTime).utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
 
-      // Check if slot already exists
       const existingSlot = await Slot.findOne({ doctorId, date: istStartTime });
       if (existingSlot) {
-        continue; // Skip this slot if it already exists
+        continue; 
       }
 
       slotsToSave.push({
@@ -245,7 +246,7 @@ export const addSlots = async (req: Request, res: Response): Promise<void> => {
       await Slot.insertMany(slotsToSave);
       res.json({ success: true, message: 'Slots added successfully!' });
     } else {
-      res.json({ success: false, message: 'No new slots to add (they may already exist).' });
+      res.json({ success: false, message: 'Already exist or Past Time cannot be add' });   
     }
   } catch (error: any) {
     console.error(error);
@@ -254,10 +255,12 @@ export const addSlots = async (req: Request, res: Response): Promise<void> => {
 };
 
 
+
+
 /// getSlots ///
 export const getSlotsByDoctor = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { doctorId } = req.params; // Get doctorId from the URL params
+    const { doctorId } = req.params; 
 
     const slots = await Slot.find({ doctorId });
 
@@ -290,11 +293,10 @@ export const editSlot = async(req:Request, res:Response): Promise<void> =>{
   const { slotId } = req.params;
 
   try {
-    // Find the slot by ID and update it
     const updatedSlot = await Slot.findByIdAndUpdate(
       slotId,
       { startTime, endTime },
-      { new: true }  // Return the updated slot
+      { new: true } 
     );
 
     if (!updatedSlot) {
@@ -302,7 +304,6 @@ export const editSlot = async(req:Request, res:Response): Promise<void> =>{
        return
     }
 
-    // Return the updated slot
     res.json({
       message: 'Slot updated successfully',
       slot: updatedSlot,

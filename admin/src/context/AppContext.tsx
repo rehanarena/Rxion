@@ -32,7 +32,7 @@ interface AppContextType {
   setUserData: React.Dispatch<React.SetStateAction<UserData | false>>;
   loadUserProfileData: () => void;
   calculateAge: (dob: string) => number;
-  slotDateFormat: (slotDate: string) => string;
+  slotDateFormat: (slotDate: string, slotTime: string) => string;
   logout: () => void;
 }
 
@@ -62,19 +62,25 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
     return isNaN(age) ? 0 : age;
   };
 
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  const slotDateFormat = (slotDate: string): string => {
+  const slotDateFormat = (slotDate: string, slotTime: string): string => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
     const dateArray = slotDate.split('_');
     if (dateArray.length === 3) {
       const day = dateArray[0];
       const month = months[Number(dateArray[1]) - 1];
       const year = dateArray[2];
-      return `${day} ${month} ${year}`;
+  
+      
+      const timeArray = slotTime.split(':');
+      const hours = timeArray[0];
+      const minutes = timeArray[1];
+      
+      return `${day} ${month} ${year} at ${hours}:${minutes}`;
     }
     return "Invalid date";
   };
-
+  
   const loadUserProfileData = async () => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/user/get-profile`, {

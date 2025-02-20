@@ -1,8 +1,8 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
 export interface IBookedSlot {
-  startTime: string;
-  isBooked: boolean;
+  date: string;
+  time: string;
 }
 
 export interface IDoctor extends Document {
