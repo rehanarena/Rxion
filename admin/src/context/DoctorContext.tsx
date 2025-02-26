@@ -7,6 +7,7 @@ interface DashDataType {
   earnings: number;
   patients: number;
 }
+
 interface Doctor {
   _id: string;
   name: string;
@@ -19,6 +20,36 @@ interface Doctor {
   slots_booked: Record<string, string[]> | null;
 }
 
+interface Address {
+  line1: string;
+  line2: string;
+}
+
+export interface ProfileData {
+  _id: string;
+  name: string;
+  degree: string;
+  speciality: string;
+  experience: string;
+  about: string;
+  fees: number;
+  address: Address;
+  available: boolean;
+  image: string | null;
+}
+interface Appointment {
+  _id: string;
+  userId: string;
+  docId: string;
+  slotDate: string;
+  slotTime: string;
+  docData: Doctor;
+  amount: number;
+  date: number;
+  cancelled?: boolean;
+  payment?: boolean;
+  isCompleted?: boolean;
+}
 interface DoctorContextType {
   doctors: Doctor[];
   getDoctorsData: () => void;
@@ -27,9 +58,14 @@ interface DoctorContextType {
   setDToken: React.Dispatch<React.SetStateAction<string>>;
   dashData: DashDataType | boolean;
   getDashData: () => Promise<void>;
+  profileData: ProfileData | null;
+  setProfileData: React.Dispatch<React.SetStateAction<ProfileData | null>>;
+  getLoggedInDoctor: () => void;
   getAppointments: () => Promise<void>;
-  loggedInDoctor?: Doctor | null;
-  
+  appointments: Appointment[];
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>;
+  completeAppointment: (appointmentId: string) => Promise<void>;
+  cancelAppointment: (appointmentId: string) => Promise<void>;
 }
 
 export const DoctorContext = createContext<DoctorContextType | undefined>(
@@ -42,15 +78,13 @@ interface DoctorContextProviderProps {
 
 const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    const [doctors, setDoctors] = useState<Doctor[]>([]);
-    const [loggedInDoctor, setLoggedInDoctor] = useState<Doctor | null>(null);
-
-
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [dToken, setDToken] = useState<string>(
     localStorage.getItem("dToken") ?? ""
   );
   const [dashData, setDashData] = useState<DashDataType | boolean>(false);
-  const [appointments,setAppointments] = useState([])
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   const getDashData = async (): Promise<void> => {
     if (dashData !== false) {
@@ -60,7 +94,6 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
       const { data } = await axios.get(`${backendUrl}/api/doctor/dashboard`, {
         headers: { dToken },
       });
-
       if (data.success) {
         setDashData(data.dashData);
         console.log(data.dashData);
@@ -93,18 +126,16 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
       }
     }
   };
+
   const getLoggedInDoctor = async () => {
     if (!dToken) return;
     try {
       const { data } = await axios.get(`${backendUrl}/api/doctor/profile`, {
         headers: { dToken },
       });
-  
       if (data.success && data.profileData) {
-        console.log("Doctor Data BEFORE state update:", loggedInDoctor);
-        
-        setLoggedInDoctor(data.profileData); 
-  
+        console.log("Doctor Data BEFORE state update:", profileData);
+        setProfileData(data.profileData); 
         console.log("Doctor Data AFTER state update:", data.profileData);
       } else {
         toast.error(data.message || "Failed to fetch doctor profile");
@@ -114,23 +145,21 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
       toast.error("Failed to fetch doctor profile");
     }
   };
-  
-  
+
   useEffect(() => {
     if (dToken) {
       getLoggedInDoctor();
     }
   }, [dToken]); 
-  
-  
-  const getAppointments = async()=>{
+
+  const getAppointments = async () => {
     try {
-      const {data} = await axios.get(backendUrl+ '/api/doctor/appointments',{headers:{dToken}})
+      const { data } = await axios.get(backendUrl + '/api/doctor/appointments', { headers: { dToken } });
       if (data.success) {
-        setAppointments(data.appointments)
-        console.log(data.appointments)
-      }else{
-        toast.error(data.message)
+        setAppointments(data.appointments);
+        console.log(data.appointments);
+      } else {
+        toast.error(data.message);
       }
     } catch (error: unknown) {
       console.log(error);
@@ -140,16 +169,20 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
         toast.error("An unexpected error occurred");
       }
     }
-  }
+  };
 
-  const completeAppointment = async(appointmentId: string) =>{
+  const completeAppointment = async (appointmentId: string) => {
     try {
-      const {data} = await axios.post(backendUrl + '/api/doctor/complete-appointment',{appointmentId},{headers:{dToken}})
-      if(data.success){
-        toast.success(data.message)
-        getAppointments()
-      }else{
-        toast.error(data.message)
+      const { data } = await axios.post(
+        backendUrl + '/api/doctor/complete-appointment',
+        { appointmentId },
+        { headers: { dToken } }
+      );
+      if (data.success) {
+        toast.success(data.message);
+        getAppointments();
+      } else {
+        toast.error(data.message);
       }
     } catch (error: unknown) {
       console.log(error);
@@ -159,16 +192,20 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
         toast.error("An unexpected error occurred");
       }
     }
-  }
+  };
 
-  const cancelAppointment = async(appointmentId: string) =>{
+  const cancelAppointment = async (appointmentId: string) => {
     try {
-      const {data} = await axios.post(backendUrl + '/api/doctor/cancel-appointment',{appointmentId},{headers:{dToken}})
-      if(data.success){
-        toast.success(data.message)
-        getAppointments()
-      }else{
-        toast.error(data.message)
+      const { data } = await axios.post(
+        backendUrl + '/api/doctor/cancel-appointment',
+        { appointmentId },
+        { headers: { dToken } }
+      );
+      if (data.success) {
+        toast.success(data.message);
+        getAppointments();
+      } else {
+        toast.error(data.message);
       }
     } catch (error: unknown) {
       console.log(error);
@@ -178,9 +215,9 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
         toast.error("An unexpected error occurred");
       }
     }
-  }
+  };
 
-useEffect(() => {
+  useEffect(() => {
     getDoctorsData();
   }, []);
 
@@ -192,7 +229,9 @@ useEffect(() => {
     getDoctorsData,
     dashData,
     getDashData,
-    loggedInDoctor,
+    profileData,
+    setProfileData,
+    getLoggedInDoctor,
     getAppointments,
     appointments,
     setAppointments,

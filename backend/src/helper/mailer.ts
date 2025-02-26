@@ -37,3 +37,4 @@ export const sendPasswordEmail = async (email: string, password: string) => {
 
   await transporter.sendMail(mailOptions);
 };
+

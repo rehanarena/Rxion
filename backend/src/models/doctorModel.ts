@@ -20,6 +20,10 @@ export interface IDoctor extends Document {
   date: number;
   slots_booked: { [slotDate: string]: IBookedSlot[] };  
   isBlocked: boolean;
+  otp: string | null; 
+  otpExpires: Date | null; 
+  resetPasswordToken: string | null;
+  resetPasswordExpire: Date | null;
 }
 
 
@@ -40,6 +44,11 @@ const doctorSchema: Schema<IDoctor> = new mongoose.Schema(
     date: { type: Number, required: true },
     slots_booked: { type: Object, default: {} },
     isBlocked: { type: Boolean, default: false },
+    otp: { type: String, default: null }, 
+    otpExpires: { type: Date, default: null },
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpire: { type: Date, default: null },
+    
   },
   { minimize: false }
 );

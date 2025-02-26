@@ -1,6 +1,6 @@
 import { createContext, useState, ReactNode, useContext, useEffect, useCallback } from "react";
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export interface AppContextType {
   token: string | null;
@@ -8,8 +8,8 @@ export interface AppContextType {
   backendUrl: string;
   userId: string | null;
   setUserId: (userId: string | null) => void;
-  userData: UserData | false;
-  setUserData: React.Dispatch<React.SetStateAction<UserData | false>>;
+  userData: UserData | null;
+  setUserData: React.Dispatch<React.SetStateAction<UserData | null>>;
   loadUserProfileData: () => void;
   doctors: Doctor[];
   setDoctors: React.Dispatch<React.SetStateAction<Doctor[]>>;
@@ -23,7 +23,7 @@ interface AppContextProviderProps {
   children: ReactNode;
 }
 
-interface Doctor {
+export interface Doctor {
   _id: string;
   name: string;
   email: string;
@@ -36,7 +36,7 @@ interface Doctor {
   fees: number;
 }
 
-interface UserData {
+export interface UserData {
   _id: string;
   name: string;
   email: string;
@@ -46,12 +46,15 @@ interface UserData {
 const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  const [token, setToken] = useState<string | null>(localStorage.getItem("accessToken") || null);
+  const [token, setToken] = useState<string | null>(
+    localStorage.getItem("accessToken") || null
+  );
   const [userId, setUserId] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [userData, setUserData] = useState<UserData | false>(false);
-  const currencySymbol = '₹';
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const currencySymbol = "₹";
 
+  // Load token from local storage on mount
   useEffect(() => {
     const storedToken = localStorage.getItem("accessToken");
     if (storedToken) {
@@ -59,38 +62,45 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     }
   }, []);
 
+  // Update axios default headers and localStorage when token changes
   useEffect(() => {
     if (token) {
       localStorage.setItem("accessToken", token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     } else {
       localStorage.removeItem("accessToken");
-      delete axios.defaults.headers.common['Authorization'];
+      delete axios.defaults.headers.common["Authorization"];
     }
   }, [token]);
 
+  // Function to load/update user profile data
   const loadUserProfileData = useCallback(async (): Promise<void> => {
     try {
-      const { data } = await axios.get<{ success: boolean; message?: string; userData?: UserData }>(
-        backendUrl + '/api/user/get-profile',
-        { headers: { token } }
-      );
-      
+      const { data } = await axios.get<{
+        success: boolean;
+        message?: string;
+        userData?: UserData;
+      }>(`${backendUrl}/api/user/get-profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       console.log("Response from backend:", data);
-  
+
       if (data.success) {
-        setUserData(data.userData || false);
+        setUserData(data.userData || null);
         setUserId(data.userData?._id || null);
       } else {
-        toast.error(data.message || 'An error occurred');
+        toast.error(data.message || "An error occurred");
       }
     } catch (error) {
-      console.log(error);
-      toast.error(error instanceof Error ? error.message : 'An unknown error occurred');
+      console.error(error);
+      toast.error(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
     }
-  }, [token, backendUrl]); 
-  
+  }, [token, backendUrl]);
 
+  // Function to load doctors data
   const getDoctorsData = async (): Promise<void> => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/doctor/list`);
@@ -100,7 +110,7 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
         toast.error(data.message);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
@@ -128,11 +138,7 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     getDoctorsData,
   };
 
-  return (
-    <AppContext.Provider value={value}>
-      {children}
-    </AppContext.Provider>
-  );
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
 export const useAppContext = (): AppContextType => {

@@ -18,77 +18,80 @@ interface ProfileData {
   fees: number;
   address: Address;
   available: boolean;
-  image: string | null; 
-}
-
-interface DoctorContextType {
-  backendUrl: string;
-  dToken: string;
-  profileData: ProfileData | null; // profileData can be null initially
-  setProfileData: React.Dispatch<React.SetStateAction<ProfileData | null>>;
-  getLoggedInDoctor: () => void;
+  image: string | null;
 }
 
 const DoctorProfile = () => {
-  const { backendUrl, dToken, profileData, setProfileData, getLoggedInDoctor } =
-    useContext(DoctorContext) as DoctorContextType;
+  const { backendUrl, dToken, profileData, setProfileData } =
+    useContext(DoctorContext) as any; // Replace 'any' with your DoctorContextType if desired
 
   const [isEdit, setIsEdit] = useState<boolean>(false);
 
-  // Fetch logged-in doctor's profile data
   const getProfileData = async () => {
-    if (!dToken) return;
+    if (!dToken) {
+      console.log("No dToken found, skipping profile fetch.");
+      return;
+    }
     try {
+      console.log("Fetching doctor profile...");
       const { data } = await axios.get(`${backendUrl}/api/doctor/profile`, {
         headers: { dToken },
       });
-
+      console.log("API Response:", data);
       if (data.success && data.profileData) {
-        setProfileData(data.profileData); // Update profile data
+        console.log("Fetched Doctor ID:", data.profileData._id);
+        setProfileData(data.profileData);
       } else {
+        console.log("Profile data missing in response.");
         toast.error(data.message || "Failed to fetch doctor profile");
       }
     } catch (error) {
+      console.error("API request failed:", error);
       toast.error("Failed to fetch doctor profile");
     }
   };
 
+  useEffect(() => {
+    getProfileData();
+  }, [dToken]);
+
+  useEffect(() => {
+    console.log("Doctor Data AFTER state update:", profileData);
+    if (profileData) {
+      console.log("Current Logged-in Doctor ID:", profileData._id);
+    }
+  }, [profileData]);
+
   const updateProfile = async () => {
+    if (!profileData) return;
     try {
-      if (!profileData) return;
-  
       const updateData = {
-        docId: profileData._id, // Include the doctor's ID
+        docId: profileData._id,
         address: profileData.address,
         fees: profileData.fees,
         available: profileData.available,
       };
-  
       const { data } = await axios.post(
         `${backendUrl}/api/doctor/update-profile`,
         updateData,
         { headers: { dToken } }
       );
-  
       if (data.success) {
         toast.success(data.message);
         setIsEdit(false);
-        getProfileData(); // Re-fetch profile after updating
+        getProfileData();
       } else {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "An unknown error occurred");
+      toast.error(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
     }
   };
-  
-
-  useEffect(() => {
-    console.log("Doctor Data AFTER state update:", profileData);
-  }, [profileData]);
 
   if (!profileData) {
-    return <div>Loading...</div>; // Add loading state
+    return <div>Loading...</div>;
   }
 
   return (
@@ -136,12 +139,9 @@ const DoctorProfile = () => {
                 className="px-2 py-1 w-20 ml-5"
                 type="number"
                 onChange={(e) =>
-                  setProfileData((prev) => {
-                    if (prev) {
-                      return { ...prev, fees: +e.target.value };
-                    }
-                    return prev; // Avoid modifying profileData if it's null
-                  })
+                  setProfileData((prev: ProfileData | null) =>
+                    prev ? { ...prev, fees: +e.target.value } : prev
+                  )
                 }
                 value={profileData.fees}
               />
@@ -157,15 +157,14 @@ const DoctorProfile = () => {
                 <input
                   type="text"
                   onChange={(e) =>
-                    setProfileData((prev) => {
-                      if (prev) {
-                        return {
-                          ...prev,
-                          address: { ...prev.address, line1: e.target.value },
-                        };
-                      }
-                      return prev; // Avoid modifying profileData if it's null
-                    })
+                    setProfileData((prev: ProfileData | null) =>
+                      prev
+                        ? {
+                            ...prev,
+                            address: { ...prev.address, line1: e.target.value },
+                          }
+                        : prev
+                    )
                   }
                   value={profileData.address.line1}
                 />
@@ -177,15 +176,14 @@ const DoctorProfile = () => {
                 <input
                   type="text"
                   onChange={(e) =>
-                    setProfileData((prev) => {
-                      if (prev) {
-                        return {
-                          ...prev,
-                          address: { ...prev.address, line2: e.target.value },
-                        };
-                      }
-                      return prev; // Avoid modifying profileData if it's null
-                    })
+                    setProfileData((prev: ProfileData | null) =>
+                      prev
+                        ? {
+                            ...prev,
+                            address: { ...prev.address, line2: e.target.value },
+                          }
+                        : prev
+                    )
                   }
                   value={profileData.address.line2}
                 />
@@ -198,22 +196,14 @@ const DoctorProfile = () => {
             <input
               onChange={() =>
                 isEdit &&
-                setProfileData((prev) => {
-                  if (prev) {
-                    return {
-                      ...prev,
-                      available: !prev.available,
-                    };
-                  }
-                  return prev; // Avoid modifying profileData if it's null
-                })
+                setProfileData((prev: ProfileData | null) =>
+                  prev ? { ...prev, available: !prev.available } : prev
+                )
               }
               checked={profileData.available}
               type="checkbox"
-              name=""
-              id=""
             />
-            <label htmlFor="">Available</label>
+            <label>Available</label>
           </div>
 
           {isEdit ? (

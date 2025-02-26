@@ -38,12 +38,13 @@ const MyProfile = () => {
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (token) {
       loadUserProfileData();
     }
-  }, [token, loadUserProfileData]); 
+  }, [token, loadUserProfileData]);
 
   const updateUserProfileData = async () => {
     if (!userData) return;
@@ -81,6 +82,10 @@ const MyProfile = () => {
   };
 
   const changePassword = async () => {
+    if (!currentPassword && !newPassword && !confirmPassword) {
+      toast.error("Please fill out all the password fields.");
+      return;
+    }
     if (newPassword !== confirmPassword) {
       toast.error("New passwords do not match");
       return;
@@ -90,12 +95,12 @@ const MyProfile = () => {
       toast.error("User is not authenticated. Please log in again.");
       return;
     }
-
+    setIsPasswordLoading(true);
     try {
       const { data } = await axios.put(
         `${backendUrl}/api/user/change-password`,
         {
-          userId: userData._id, 
+          userId: userData._id,
           currentPassword,
           newPassword,
           confirmPassword,
@@ -123,6 +128,7 @@ const MyProfile = () => {
         error instanceof Error ? error.message : "An unknown error occurred"
       );
     }
+    setIsPasswordLoading(false);
   };
 
   if (!userData) return null;
@@ -373,9 +379,10 @@ const MyProfile = () => {
             </div>
             <button
               onClick={changePassword}
+              disabled={isPasswordLoading}
               className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold rounded-full hover:from-purple-600 hover:to-blue-600 transition-all shadow-lg hover:shadow-xl"
             >
-              Change Password
+              {isPasswordLoading ? "Changing Password..." : "Change Password"}
             </button>
           </div>
         </div>

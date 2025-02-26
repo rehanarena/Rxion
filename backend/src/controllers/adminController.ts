@@ -230,6 +230,21 @@ const allDoctors = async(req: Request, res: Response): Promise<void> =>{
   }
 }
 
+export const getDoctors = async(req: Request, res: Response):Promise<void>=>{
+  const { doctorId } = req.params;
+  try {
+    const doctor = await doctorModel.findById(doctorId);
+    if (!doctor) {
+       res.status(404).json({ success: false, message: "Doctor not found" });
+       return
+    }
+    res.json({ success: true, doctor });
+  } catch (error) {
+    console.error("Error fetching doctor details:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
 /// All appointment list ///
 const appointmentsAdmin = async(req: Request, res: Response): Promise<void> =>{
 

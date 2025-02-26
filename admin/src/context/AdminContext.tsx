@@ -50,16 +50,27 @@ interface AdminContextType {
   setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>;
   getAllAppointments: () => Promise<void>;
   cancelAppointment: (appointmentId: string) => Promise<void>;
+  getDoctorDetails: (doctorId: string) => Promise<Doctor | null>;
+  updateDoctorPassword: (
+    doctorId: string,
+    newPassword: string
+  ) => Promise<{ success: boolean; message: string }>;
 }
 
-export const AdminContext = createContext<AdminContextType | undefined>(undefined);
+export const AdminContext = createContext<AdminContextType | undefined>(
+  undefined
+);
 
 interface AdminContextProviderProps {
   children: ReactNode;
 }
 
-const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children }) => {
-  const [aToken, setAToken] = useState<string>(localStorage.getItem("aToken") ?? "");
+const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
+  children,
+}) => {
+  const [aToken, setAToken] = useState<string>(
+    localStorage.getItem("aToken") ?? ""
+  );
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -77,10 +88,11 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
   const getDashData = async (): Promise<void> => {
     if (dashData !== false) return;
     try {
-      const { data } = await axios.get<{ success: boolean, dashData: DashDataType, message: string }>(
-        `${backendUrl}/api/admin/dashboard`,
-        { headers: { aToken } }
-      );
+      const { data } = await axios.get<{
+        success: boolean;
+        dashData: DashDataType;
+        message: string;
+      }>(`${backendUrl}/api/admin/dashboard`, { headers: { aToken } });
 
       if (data.success) {
         setDashData(data.dashData);
@@ -94,7 +106,11 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
 
   const getAllDoctors = async (): Promise<void> => {
     try {
-      const { data } = await axios.post<{ success: boolean, doctors: Doctor[], message: string }>(
+      const { data } = await axios.post<{
+        success: boolean;
+        doctors: Doctor[];
+        message: string;
+      }>(
         `${backendUrl}/api/admin/all-doctors`,
         {},
         { headers: { aToken } }
@@ -112,7 +128,11 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
 
   const changeAvailability = async (docId: string): Promise<void> => {
     try {
-      const { data } = await axios.post(`${backendUrl}/api/admin/change-availability`, { docId }, { headers: { aToken } });
+      const { data } = await axios.post(
+        `${backendUrl}/api/admin/change-availability`,
+        { docId },
+        { headers: { aToken } }
+      );
       if (data.success) {
         toast.success(data.message);
         getAllDoctors();
@@ -126,7 +146,10 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
 
   const getAllAppointments = async () => {
     try {
-      const { data } = await axios.get(`${backendUrl}/api/admin/appointments`, { headers: { aToken } });
+      const { data } = await axios.get(
+        `${backendUrl}/api/admin/appointments`,
+        { headers: { aToken } }
+      );
       if (data.success) {
         setAppointments(data.appointments);
       } else {
@@ -140,11 +163,11 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
   const cancelAppointment = async (appointmentId: string): Promise<void> => {
     try {
       const { data } = await axios.post(
-        backendUrl + '/api/admin/cancel-appointment',
+        `${backendUrl}/api/admin/cancel-appointment`,
         { appointmentId },
         { headers: { aToken } }
       );
-  
+
       if (data.success) {
         toast.success(data.message);
         getAllAppointments();
@@ -155,6 +178,57 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
       handleError(error);
     }
   };
+
+  // New function: Get single doctor's details
+  const getDoctorDetails = async (
+    doctorId: string
+  ): Promise<Doctor | null> => {
+    try {
+      const { data } = await axios.get<{
+        success: boolean;
+        doctor: Doctor;
+        message: string;
+      }>(`${backendUrl}/api/admin/doctor/${doctorId}`, {
+        headers: { aToken },
+      });
+      if (data.success) {
+        return data.doctor;
+      } else {
+        toast.error(data.message);
+        return null;
+      }
+    } catch (error) {
+      handleError(error);
+      return null;
+    }
+  };
+
+  // New function: Update doctor's password (and send email)
+  const updateDoctorPassword = async (
+    doctorId: string,
+    newPassword: string
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      const { data } = await axios.post<{
+        success: boolean;
+        message: string;
+      }>(
+        `${backendUrl}/api/doctors/${doctorId}/update-password`,
+        { newPassword },
+        { headers: { aToken } }
+      );
+      if (data.success) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+      }
+      return data;
+    } catch (error) {
+      handleError(error);
+      return { success: false, message: "Error updating password" };
+    }
+  };
+
   useEffect(() => {
     if (aToken) {
       getDashData();
@@ -176,6 +250,9 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
     setAppointments,
     getAllAppointments,
     cancelAppointment,
+    // Added functions:
+    getDoctorDetails,
+    updateDoctorPassword,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;

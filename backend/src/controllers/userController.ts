@@ -455,7 +455,7 @@ const changePassword = async (
       return;
     }
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    if (!currentPassword && !newPassword && !confirmPassword) {
       res
         .status(400)
         .json({ success: false, message: "All fields are required." });
@@ -710,11 +710,9 @@ const listAppointments = async (req: Request, res: Response): Promise<void> => {
 };
 
 ///cancel appointment ///
-
 const cancelAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId, appointmentId } = req.body;
-
     const appointmentData = await appointmentModel.findById(appointmentId);
     if (!appointmentData) {
       res.json({ success: false, message: "Appointment not found" });
@@ -737,20 +735,30 @@ const cancelAppointment = async (req: Request, res: Response): Promise<void> => 
       res.json({ success: false, message: "Doctor not found" });
       return;
     }
+
     let slots_booked = doctorData.slots_booked;
+
+    const formattedSlotTime = new Date(slotTime).toISOString();
+    const slotTimePart = new Date(formattedSlotTime).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
     if (slots_booked[slotDate]) {
       slots_booked[slotDate] = slots_booked[slotDate].filter(
-        (slot: any) => slot.startTime !== slotTime
+        (slot: any) => slot.time !== slotTimePart
       );
       await doctorModel.findByIdAndUpdate(docId, { slots_booked });
     }
 
-    res.json({ success: true, message: "Appointment Cancelled and amount refunded to wallet" });
+    res.json({ success: true, message: "Appointment cancelled and amount refunded to wallet" });
   } catch (error: any) {
     console.error(error);
     res.json({ success: false, message: error.message });
   }
 };
+
 
 /// payment razorpay ///
 const paymentRazorpay = async (req: Request, res: Response): Promise<void> => {

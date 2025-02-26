@@ -135,13 +135,18 @@ const Appointment: React.FC = () => {
   const getBookedSlots = (): BookedSlot[] => {
     const booked: BookedSlot[] = []
     if (docInfo?.slots_booked) {
-      Object.values(docInfo.slots_booked).forEach((slotArray: BookedSlot[]) => {
-        slotArray.forEach((slot: BookedSlot) => {
-          if (slot.date && slot.time) {
-            booked.push(slot)
-          }
-        })
+      Object.values(docInfo.slots_booked).forEach((slotArray) => {
+        if (Array.isArray(slotArray)) {
+          slotArray.forEach((slot: BookedSlot) => {
+            if (slot.date && slot.time) {
+              booked.push(slot)
+            }
+          })
+        } else {
+          console.warn('Expected an array but got:', slotArray)
+        }
       })
+      
     }
     return booked
   }

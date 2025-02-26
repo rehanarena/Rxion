@@ -3,17 +3,21 @@ import { AdminContext } from "../context/AdminContext";
 import { DoctorContext } from "../context/DoctorContext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { Link } from "react-router-dom"; // Import Link for routing
 
 const Login = () => {
   const [state, setState] = useState<"Admin" | "Doctor">("Admin");
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   const { setAToken, backendUrl } = useContext(AdminContext)!;
   const { setDToken } = useContext(DoctorContext)!;
 
   const onSubmitHandler = async (event: FormEvent) => {
     event.preventDefault();
+    if (loading) return; 
+    setLoading(true);
     try {
       if (state === "Admin") {
         const { data } = await axios.post(`${backendUrl}/api/admin/login`, { email, password });
@@ -21,7 +25,6 @@ const Login = () => {
           localStorage.setItem("aToken", data.token);
           setAToken(data.token);
           toast.success('Admin logged in successfully');
-          // console.log("Admin Token:", data.token);
         } else {
           toast.error(data.message);
         }
@@ -45,6 +48,8 @@ const Login = () => {
       } else {
         toast.error('An unknown error occurred');
       }
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -74,29 +79,43 @@ const Login = () => {
             required
           />
         </div>
-        <button className="bg-primary text-white w-full py-2 rounded-md text-base">
-          Login
+        {/* Show Forgot Password link only for Doctor login */}
+        {state === "Doctor" && (
+          <div className="w-full text-right">
+            <Link to="/doctor/forgot-password-otp" className="text-primary underline text-sm">
+              Forgot Password?
+            </Link>
+          </div>
+        )}
+        <button disabled={loading} className="bg-primary text-white w-full py-2 rounded-md text-base"
+         type="submit">
+          {loading ? "Logging in..." : "Login"}
         </button>
+
         {state === "Admin" ? (
-          <p>
-            Doctor Login?{" "}
-            <span
-              className="text-primary underline cursor-pointer"
-              onClick={() => setState("Doctor")}
-            >
-              Click here
-            </span>
-          </p>
+          <>
+            <p>
+              Doctor Login?{" "}
+              <span
+                className="text-primary underline cursor-pointer"
+                onClick={() => setState("Doctor")}
+              >
+                Click here
+              </span>
+            </p>
+          </>
         ) : (
-          <p>
-            Admin Login?{" "}
-            <span
-              className="text-primary underline cursor-pointer"
-              onClick={() => setState("Admin")}
-            >
-              Click here
-            </span>
-          </p>
+          <>
+            <p>
+              Admin Login?{" "}
+              <span
+                className="text-primary underline cursor-pointer"
+                onClick={() => setState("Admin")}
+              >
+                Click here
+              </span>
+            </p>
+          </>
         )}
       </div>
     </form>

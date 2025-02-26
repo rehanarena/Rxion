@@ -1,5 +1,5 @@
 import express from "express";
-import { addDoctor,loginAdmin, adminDashboard, userList, blockUnblockUser, doctorList, allDoctors, blockUnblockDoctor, appointmentsAdmin, cancelAppointment } from  "../controllers/adminController";
+import { addDoctor,loginAdmin, adminDashboard, userList, blockUnblockUser, doctorList, allDoctors, blockUnblockDoctor, appointmentsAdmin, cancelAppointment, getDoctors } from  "../controllers/adminController";
 import upload from "../middlewares/multer";
 import authAdmin from "../middlewares/authAdmin";
 import { changeAvailability } from "../controllers/doctorController";
@@ -14,6 +14,7 @@ adminRouter.patch("/users/block-unblock/:id",authAdmin, blockUnblockUser);
 adminRouter.patch("/doctors/block-unblock/:id",authAdmin, blockUnblockDoctor);
 adminRouter.get("/doctors",authAdmin, doctorList);
 adminRouter.post("/all-doctors",authAdmin,allDoctors);
+adminRouter.get("/doctor/:doctorId",authAdmin,getDoctors);
 adminRouter.post("/change-availability",authAdmin,changeAvailability);
 adminRouter.get("/appointments",authAdmin,appointmentsAdmin);
 adminRouter.post("/cancel-appointment", authAdmin, cancelAppointment);

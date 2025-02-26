@@ -15,24 +15,39 @@ interface Doctor {
   };
 }
 
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 const Doctors: React.FC = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const { speciality } = useParams<{ speciality: string }>();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "availability" | "fees" | "popularity"|"experience" >("name");
+  const [sortBy, setSortBy] = useState<"name" | "availability" | "fees" | "popularity" | "experience">("name");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [doctorsPerPage] = useState(8);
 
   const navigate = useNavigate();
 
+  // Use the debounced value of searchTerm
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   // Build query string with the filters
   const fetchDoctors = async () => {
     try {
       const queryParams = new URLSearchParams({
         speciality: speciality || "",
-        search: searchTerm,
+        search: debouncedSearchTerm,
         sortBy,
         page: currentPage.toString(),
         limit: doctorsPerPage.toString(),
@@ -50,7 +65,7 @@ const Doctors: React.FC = () => {
   useEffect(() => {
     fetchDoctors();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [speciality, searchTerm, sortBy, currentPage]);
+  }, [speciality, debouncedSearchTerm, sortBy, currentPage]);
 
   // List of specialties to filter by
   const specialtyList = [
@@ -83,14 +98,14 @@ const Doctors: React.FC = () => {
         <select
           value={sortBy}
           onChange={(e) => {
-            setSortBy(e.target.value as | "availability" | "fees" |"experience");
+            setSortBy(e.target.value as "availability" | "fees" | "experience");
             setCurrentPage(1);
           }}
           className="border border-gray-300 rounded px-4 py-2 bg-white focus:ring-2 focus:ring-indigo-500"
         >
           <option value="availability">Sort by Availability</option>
           <option value="fees">Sort by Fees</option>
-          <option value="experience">Sort by experience</option>
+          <option value="experience">Sort by Experience</option>
         </select>
       </div>
 
@@ -185,5 +200,3 @@ const Doctors: React.FC = () => {
 };
 
 export default Doctors;
-
-
