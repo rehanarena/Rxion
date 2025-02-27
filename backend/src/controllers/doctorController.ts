@@ -88,7 +88,49 @@ const loginDoctor = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Verify OTP endpoint
+
+export const doctorForgotPasswordOTP = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    const doctor = await doctorModel.findOne({ email });
+    if (!doctor) {
+       res.status(404).json({ success: false, message: "Doctor not found" });
+       return
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log("Generated OTP:", otp);
+
+    const otpRecord = await DoctorOTP.create({
+      otp,
+      doctorId: doctor._id,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000), 
+    });
+
+    const message = `Your OTP for password reset is: ${otp}. It is valid for 10 minutes.`;
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: doctor.email,
+      subject: "Doctor Password Reset OTP",
+      text: message,
+    });
+
+    res.status(200).json({ success: true, message: "OTP sent to your email.", doctorId: doctor._id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+/// Verify OTP endpoint ///
 export const verifyDoctorOtp = async (req: Request, res: Response): Promise<void> => {
   const { otp, doctorId } = req.body;
 
@@ -111,13 +153,11 @@ export const verifyDoctorOtp = async (req: Request, res: Response): Promise<void
 
     const doctor = await doctorModel.findById(doctorId);
     if (doctor) {
-      // Remove OTP record once verified
       await DoctorOTP.deleteOne({ otp, doctorId });
       
-      // Generate a reset token and set its expiration (e.g., 10 minutes)
       const resetToken = crypto.randomBytes(20).toString("hex");
       doctor.resetPasswordToken = resetToken;
-      doctor.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      doctor.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000); 
       await doctor.save();
 
       res.json({
@@ -125,8 +165,8 @@ export const verifyDoctorOtp = async (req: Request, res: Response): Promise<void
         message: "Doctor verified successfully. You can reset your password now.",
         isForPasswordReset: true,
         doctorId,
-        email: doctor.email,  // Include doctor's email
-        token: resetToken,    // Include the generated reset token
+        email: doctor.email,  
+        token: resetToken,   
       });
       return;
     } else {
@@ -138,7 +178,7 @@ export const verifyDoctorOtp = async (req: Request, res: Response): Promise<void
     res.status(500).json({ success: false, message: "Something went wrong." });
   }
 };
-// Resend OTP endpoint
+/// Resend OTP endpoint ///
 export const resendDoctorOtp = async (req: Request, res: Response): Promise<void> => {
   const { doctorId } = req.body;
 
@@ -154,10 +194,8 @@ export const resendDoctorOtp = async (req: Request, res: Response): Promise<void
        return
     }
 
-    // Generate a new OTP
     const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Update (or create) the OTP record using DoctorOTP model
     const otpData = await DoctorOTP.findOneAndUpdate(
       { doctorId },
       {
@@ -167,7 +205,6 @@ export const resendDoctorOtp = async (req: Request, res: Response): Promise<void
       { upsert: true, new: true }
     );
 
-    // Construct email body
     const emailBody = `
       Hello ${doctor.name || "Doctor"},
       
@@ -192,59 +229,11 @@ export const resendDoctorOtp = async (req: Request, res: Response): Promise<void
   }
 };
 
-
-export const doctorForgotPasswordOTP = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { email } = req.body;
-    const doctor = await doctorModel.findOne({ email });
-    if (!doctor) {
-       res.status(404).json({ success: false, message: "Doctor not found" });
-       return
-    }
-
-    // Generate a 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Save the OTP in the DoctorOTP collection
-    const otpRecord = await DoctorOTP.create({
-      otp,
-      doctorId: doctor._id,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // OTP valid for 10 minutes
-    });
-
-    // Prepare email message with OTP
-    const message = `Your OTP for password reset is: ${otp}. It is valid for 10 minutes.`;
-
-    // Configure nodemailer (example using Gmail)
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: doctor.email,
-      subject: "Doctor Password Reset OTP",
-      text: message,
-    });
-
-    res.status(200).json({ success: true, message: "OTP sent to your email.", doctorId: doctor._id });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-};
-
-
-// Reset password using OTP
+/// Reset password ///
 export const doctorResetPassword = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, token, password } = req.body;
 
-    // Find the doctor by email and verify the token and its expiration
     const doctor = await doctorModel.findOne({
       email,
       resetPasswordToken: token,
@@ -255,10 +244,7 @@ export const doctorResetPassword = async (req: Request, res: Response): Promise<
       res.status(400).json({ success: false, message: "Invalid or expired reset token" });
       return;
     }
-
-    // Hash the new password and update the doctor record
     doctor.password = await bcrypt.hash(password, 10);
-    // Clear the reset token fields
     doctor.resetPasswordToken = null;
     doctor.resetPasswordExpire = null;
     await doctor.save();

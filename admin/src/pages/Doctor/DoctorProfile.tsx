@@ -23,8 +23,7 @@ interface ProfileData {
 
 const DoctorProfile = () => {
   const { backendUrl, dToken, profileData, setProfileData } =
-    useContext(DoctorContext) as any; // Replace 'any' with your DoctorContextType if desired
-
+    useContext(DoctorContext) as any; 
   const [isEdit, setIsEdit] = useState<boolean>(false);
 
   const getProfileData = async () => {

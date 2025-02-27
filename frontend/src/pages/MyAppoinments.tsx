@@ -1,11 +1,9 @@
-"use client"
-
 import { useContext, useEffect, useState } from "react"
 import { AppContext } from "../context/AppContext"
 import axios from "axios"
 import { toast } from "react-toastify"
 import { useNavigate } from "react-router-dom"
-import { Calendar, Clock, MapPin, CreditCard, X } from "lucide-react"
+import { Calendar, Clock, MapPin, CreditCard, X, Video } from "lucide-react"
 
 interface DoctorData {
   image: string
@@ -59,14 +57,13 @@ const MyAppointments = () => {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
   const slotDateFormat = (slotDate: string): string => {
-    const dateObj = new Date(slotDate);
-    if (isNaN(dateObj.getTime())) return "Invalid date";
-    const day = dateObj.getDate();
-    const month = months[dateObj.getMonth()];
-    const year = dateObj.getFullYear();
-    return `${day} ${month} ${year}`;
-  };
-  
+    const dateObj = new Date(slotDate)
+    if (isNaN(dateObj.getTime())) return "Invalid date"
+    const day = dateObj.getDate()
+    const month = months[dateObj.getMonth()]
+    const year = dateObj.getFullYear()
+    return `${day} ${month} ${year}`
+  }
 
   const getUsersAppointments = async () => {
     try {
@@ -174,11 +171,17 @@ const MyAppointments = () => {
     }
   }
 
+  const handleVideoChat = (appointment: Appointment) => {
+    // Implement your video chat logic here.
+    // For example, navigate to a video chat page with the appointment ID:
+    navigate(`/video-chat/${appointment._id}`)
+  }
+
   useEffect(() => {
     if (token) {
       getUsersAppointments()
     }
-  }, [token]) // Removed getUsersAppointments from dependencies
+  }, [token])
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -230,6 +233,15 @@ const MyAppointments = () => {
                   Pay Online
                 </button>
               )}
+              {!appointment.cancelled && appointment.payment && (
+                <button
+                  onClick={() => handleVideoChat(appointment)}
+                  className="w-full mt-2 bg-green-500 text-white py-1 px-2 rounded text-sm hover:bg-green-600 transition duration-300 flex items-center justify-center"
+                >
+                  <Video className="w-4 h-4 mr-2" />
+                  Video Chat
+                </button>
+              )}
               {!appointment.cancelled && (
                 <button
                   onClick={() => cancelAppointment(appointment._id)}
@@ -253,4 +265,3 @@ const MyAppointments = () => {
 }
 
 export default MyAppointments
-

@@ -1,118 +1,159 @@
-import { useContext, useEffect } from "react";
-import { DoctorContext } from "../../context/DoctorContext";
-import { AppContext } from "../../context/AppContext";
-import cancel_icon from "../../assets/cancel_icon.svg";
-import tick_icon from "../../assets/tick_icon.svg";
+"use client"
+
+import { useContext, useEffect } from "react"
+import { DoctorContext } from "../../context/DoctorContext"
+import { AppContext } from "../../context/AppContext"
+import { Check, Video, X } from "lucide-react"
 
 interface userData {
-  name: string;
-  image: string;
-  dob: string;
+  name: string
+  image: string
+  dob: string
 }
 interface Appointment {
-  _id: string;
-  userData: userData;
-  amount: number;
-  slotDate: string;
-  slotTime: string;
-  cancelled: boolean;
-  payment: boolean;
-  isCompleted: boolean;
+  _id: string
+  userData: userData
+  amount: number
+  slotDate: string
+  slotTime: string
+  cancelled: boolean
+  payment: boolean
+  isCompleted: boolean
 }
-// Define types for the context
+
 interface DoctorContextType {
-  dToken: string | null;
-  appointments: Appointment[];
-  getAppointments: () => void;
-  completeAppointment: (id: string) => void;
-  cancelAppointment: (id: string) => void;
+  dToken: string | null
+  appointments: Appointment[]
+  getAppointments: () => void
+  completeAppointment: (id: string) => void
+  cancelAppointment: (id: string) => void
 }
 
 interface AppContextType {
-  currencySymbol: string;
-  slotDateFormat: (date: string, time: string) => string;
-  calculateAge: (dob: string) => number;
+  currencySymbol: string
+  slotDateFormat: (date: string, time: string) => string
+  calculateAge: (dob: string) => number
 }
+
 const DoctorAppointments = () => {
-  const {
-    dToken,
-    appointments,
-    getAppointments,
-    completeAppointment,
-    cancelAppointment,
-  } = useContext(DoctorContext) as DoctorContextType;
-  const { calculateAge, slotDateFormat, currencySymbol } = useContext(
-    AppContext
-  ) as AppContextType;
+  const { dToken, appointments, getAppointments, completeAppointment, cancelAppointment } = useContext(
+    DoctorContext,
+  ) as DoctorContextType
+  const { calculateAge, slotDateFormat, currencySymbol } = useContext(AppContext) as AppContextType
 
   useEffect(() => {
     if (dToken) {
-      getAppointments();
+      getAppointments()
     }
-  }, [dToken, getAppointments]);
+  }, [dToken, getAppointments])
+
+  const handleVideoChat = (appointment: Appointment) => {
+    // Implement your video chat logic for the doctor here.
+    // For example, navigate to a video chat room specific for the appointment:
+    // navigate(`/doctor-video-chat/${appointment._id}`)
+    console.log("Initiate video chat for appointment:", appointment._id)
+  }
 
   return (
     <div className="w-full max-w-6xl mx-auto p-5">
-      <p className="mb-4 text-xl font-semibold">All Appointments</p>
-      <div className="bg-white border rounded-md shadow-md text-sm max-h-[80vh] min-h-[50vh] overflow-y-auto">
-        <div className="hidden sm:grid grid-cols-[0.5fr_2fr_1fr_2fr_1fr_1fr] gap-4 py-4 px-6 border-b bg-gray-100 text-gray-700">
-          <p>#</p>
-          <p>Patient</p>
-          <p>Payment</p>
-          <p>Date & Time</p>
-          <p>Fees</p>
-          <p>Action</p>
-        </div>
-        {appointments.reverse().map((item, index) => (
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">Appointments</h2>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 max-h-[80vh] overflow-y-auto pr-2">
+        {appointments.reverse().map((appointment, index) => (
           <div
-            className="flex flex-col sm:grid grid-cols-[0.5fr_2fr_1fr_2fr_1fr_1fr] gap-4 items-center text-gray-600 py-4 px-6 border-b hover:bg-gray-50"
-            key={index}
+            key={appointment._id}
+            className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-lg"
           >
-            <p className="hidden sm:block font-medium">{index + 1}</p>
-            <div className="flex items-center gap-3">
-              <img
-                className="w-10 h-10 rounded-full object-cover"
-                src={item.userData.image}
-                alt="Patient"
-              />
-              <p className="font-medium text-gray-800">{item.userData.name}</p>
-            </div>
-            <div className="text-xs border border-primary text-primary px-3 py-1 rounded-full">
-            <p>{item.payment ? "Online" : "Pending"}</p>
-            </div>
-            <p className="text-gray-800">
-              <p className="text-gray-800">
-                {slotDateFormat(item.slotDate, item.slotTime)}
-              </p>
-            </p>
-            <p className="font-medium">
-              {currencySymbol} {item.amount}
-            </p>
-            {item.cancelled ? (
-              <p className="text-red-500 text-sm font-medium">Cancelled</p>
-            ) : item.isCompleted ? (
-              <p className="text-green-500 text-sm font-medium">Completed</p>
+            {/* Status Banner */}
+            {appointment.cancelled ? (
+              <div className="bg-red-500 text-white text-center py-1 text-sm font-medium">Cancelled</div>
+            ) : appointment.isCompleted ? (
+              <div className="bg-green-500 text-white text-center py-1 text-sm font-medium">Completed</div>
             ) : (
-              <div className="flex gap-2">
-                <img
-                  onClick={() => cancelAppointment(item._id)}
-                  className="w-8 h-8 cursor-pointer hover:opacity-80"
-                  src={cancel_icon}
-                  alt="Cancel Appointment"
-                />
-                <img
-                  onClick={() => completeAppointment(item._id)}
-                  className="w-8 h-8 cursor-pointer hover:opacity-80"
-                  src={tick_icon}
-                  alt="Complete Appointment"
-                />
+              <div className="bg-blue-500 text-white text-center py-1 text-sm font-medium">Upcoming</div>
+            )}
+
+            {/* Patient Info */}
+            <div className="p-4 flex items-center gap-3 border-b border-gray-100">
+              <img
+                src={appointment.userData.image || "/placeholder.svg"}
+                alt={appointment.userData.name}
+                className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+              />
+              <div>
+                <h3 className="font-semibold text-gray-800">{appointment.userData.name}</h3>
+                <p className="text-sm text-gray-500">Age: {calculateAge(appointment.userData.dob)}</p>
+              </div>
+            </div>
+
+            {/* Appointment Details */}
+            <div className="p-4 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">Date & Time</span>
+                <span className="text-sm font-medium text-gray-800">
+                  {slotDateFormat(appointment.slotDate, appointment.slotTime)}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">Payment</span>
+                <span
+                  className={`text-sm font-medium px-2 py-1 rounded-full ${
+                    appointment.payment ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                  }`}
+                >
+                  {appointment.payment ? "Paid" : "Pending"}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">Fees</span>
+                <span className="text-sm font-medium text-gray-800">
+                  {currencySymbol} {appointment.amount}
+                </span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            {!appointment.cancelled && !appointment.isCompleted && (
+              <div className="p-4 pt-0 flex justify-between gap-2">
+                <button
+                  onClick={() => cancelAppointment(appointment._id)}
+                  className="flex-1 py-2 rounded-md bg-red-50 text-red-600 font-medium text-sm flex items-center justify-center gap-1 transition-colors hover:bg-red-100"
+                >
+                  <X size={16} />
+                  <span>Cancel</span>
+                </button>
+
+                <button
+                  onClick={() => completeAppointment(appointment._id)}
+                  className="flex-1 py-2 rounded-md bg-green-50 text-green-600 font-medium text-sm flex items-center justify-center gap-1 transition-colors hover:bg-green-100"
+                >
+                  <Check size={16} />
+                  <span>Complete</span>
+                </button>
+
+                <button
+                  onClick={() => handleVideoChat(appointment)}
+                  className="flex-1 py-2 rounded-md bg-blue-50 text-blue-600 font-medium text-sm flex items-center justify-center gap-1 transition-colors hover:bg-blue-100"
+                >
+                  <Video size={16} />
+                  <span>Call</span>
+                </button>
               </div>
             )}
           </div>
         ))}
       </div>
-    </div>
-  );
-};
 
-export default DoctorAppointments;
+      {appointments.length === 0 && (
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <p className="text-gray-500">No appointments found</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default DoctorAppointments
+

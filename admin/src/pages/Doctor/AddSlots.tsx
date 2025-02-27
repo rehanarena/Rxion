@@ -9,14 +9,14 @@ const SlotForm = () => {
     throw new Error("DoctorContext must be used within a DoctorContextProvider");
   }
 
-  const { backendUrl, loggedInDoctor } = doctorContext;
-  console.log("Logged in Doctor:", loggedInDoctor);
+  const { backendUrl, profileData  } = doctorContext;
+  console.log("Logged in Doctor:", profileData );
 
   useEffect(() => {
-    console.log("Updated loggedInDoctor:", loggedInDoctor);
-  }, [loggedInDoctor]);
+    console.log("Updated loggedInDoctor:", profileData );
+  }, [profileData ]);
 
-  const doctorId = loggedInDoctor?._id || "";
+  const doctorId = profileData ?._id || "";
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
