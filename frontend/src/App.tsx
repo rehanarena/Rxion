@@ -18,6 +18,9 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./components/NotFound";
 import { useAppContext } from "./context/AppContext";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFailure from "./pages/PaymentFailure";
+import PatientVideoCallPage from "./pages/PatientVideoCallPage";
 
 const App = () => {
   const { token, loadUserProfileData } = useAppContext();
@@ -45,7 +48,11 @@ const App = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/my-profile" element={<MyProfile />} />
         <Route path="/my-appointments" element={<MyAppointments />} />
+        <Route path="/payment-success" element={<PaymentSuccess/>} />
+        <Route path="/payment-failure" element={<PaymentFailure/>} />
         <Route path="/appointment/:docId" element={<Appointment />} />
+        <Route path="/patient/video-call/:appointmentId" element={<PatientVideoCallPage />} />
+
         <Route path="/my-wallet" element={<Wallet />} />
       </Routes>
       <Footer />

@@ -1,4 +1,3 @@
-// DoctorResetPassword.tsx
 import { useState, FormEvent, useContext, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
@@ -11,7 +10,6 @@ const DoctorResetPassword = () => {
   const { backendUrl } = useContext(AdminContext)!;
   const [loading, setLoading] = useState(false);
 
-  // Use useLocation to get state passed from navigation
   const { state } = useLocation();
   const { email, token } = state || {};
 

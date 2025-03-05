@@ -17,8 +17,6 @@ const AllDoctors = () => {
   const handleImageClick = (doctorId: string) => {
     navigate(`/doctor-details/${doctorId}`);
   };
-
-  // Calculate pagination values
   const totalPages = Math.ceil(doctors.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;

@@ -3,7 +3,7 @@ import { AdminContext } from "../context/AdminContext";
 import { DoctorContext } from "../context/DoctorContext";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { Link } from "react-router-dom"; // Import Link for routing
+import { Link } from "react-router-dom"; 
 
 const Login = () => {
   const [state, setState] = useState<"Admin" | "Doctor">("Admin");
@@ -79,7 +79,7 @@ const Login = () => {
             required
           />
         </div>
-        {/* Show Forgot Password link only for Doctor login */}
+        
         {state === "Doctor" && (
           <div className="w-full text-right">
             <Link to="/doctor/forgot-password-otp" className="text-primary underline text-sm">

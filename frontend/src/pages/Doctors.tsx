@@ -15,7 +15,6 @@ interface Doctor {
   };
 }
 
-// Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -39,10 +38,8 @@ const Doctors: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // Use the debounced value of searchTerm
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // Build query string with the filters
   const fetchDoctors = async () => {
     try {
       const queryParams = new URLSearchParams({
@@ -64,10 +61,8 @@ const Doctors: React.FC = () => {
 
   useEffect(() => {
     fetchDoctors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speciality, debouncedSearchTerm, sortBy, currentPage]);
 
-  // List of specialties to filter by
   const specialtyList = [
     "General Physician",
     "Gynecologist",
@@ -82,7 +77,6 @@ const Doctors: React.FC = () => {
         Browse through the doctors' specialties.
       </p>
 
-      {/* Top filters */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <input
           type="text"
@@ -109,9 +103,7 @@ const Doctors: React.FC = () => {
         </select>
       </div>
 
-      {/* Main content with sidebar filter */}
       <div className="flex flex-col sm:flex-row gap-6">
-        {/* Sidebar for specialist filter */}
         <div className="flex flex-col gap-4 text-sm text-gray-600 w-full sm:w-[20%]">
           {specialtyList.map((spec) => (
             <p
@@ -133,7 +125,6 @@ const Doctors: React.FC = () => {
           ))}
         </div>
 
-        {/* Doctors grid */}
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {doctors.map((item) => (
             <div

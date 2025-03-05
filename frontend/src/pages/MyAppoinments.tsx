@@ -1,90 +1,121 @@
-import { useContext, useEffect, useState } from "react"
-import { AppContext } from "../context/AppContext"
-import axios from "axios"
-import { toast } from "react-toastify"
-import { useNavigate } from "react-router-dom"
-import { Calendar, Clock, MapPin, CreditCard, X, Video } from "lucide-react"
+import { useContext, useEffect, useState } from "react";
+import { AppContext } from "../context/AppContext";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { Calendar, Clock, MapPin, CreditCard, X} from "lucide-react";
+import io from "socket.io-client";
+
+// Define the interface for incoming call data.
+// Note: We’ve added a "room" property so that the incoming call carries the room ID.
+interface IncomingCallData {
+  callerId: string;
+  room: string;
+  callType?: string;
+}
 
 interface DoctorData {
-  image: string
-  name: string
-  speciality: string
-  degree: string
-  experience: string
-  about: string
-  fees: number
+  image: string;
+  name: string;
+  speciality: string;
+  degree: string;
+  experience: string;
+  about: string;
+  fees: number;
   address: {
-    line1: string
-    line2: string
-  }
-  date: number
-  time: string
+    line1: string;
+    line2: string;
+  };
+  date: number;
+  time: string;
 }
 
 interface Appointment {
-  _id: string
-  doctData: DoctorData
-  slotDate: string
-  slotTime: string
-  cancelled: boolean
-  payment: boolean
+  _id: string;
+  doctData: DoctorData;
+  slotDate: string;
+  slotTime: string;
+  cancelled: boolean;
+  payment: boolean;
+}
+
+export interface RazorpaySuccessResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+export interface RazorpayErrorResponse {
+  error: {
+    code: string;             // e.g. "BAD_REQUEST_ERROR"
+    description: string;      // e.g. "Payment failed"
+    source: string;           // e.g. "customer"
+    step: string;             // e.g. "payment_authorization"
+    reason: string;           // e.g. "user declined the payment"
+    metadata: {
+      order_id?: string;
+      payment_id?: string;
+    };
+  };
 }
 
 interface AppContextType {
-  backendUrl: string
-  token: string | false
-  getDoctorsData: () => void
+  backendUrl: string;
+  token: string | false;
+  getDoctorsData: () => void;
 }
 
 declare global {
   interface Window {
-    Razorpay: any
+    Razorpay: any;
   }
 }
 
 interface Order {
-  id: string
-  amount: number
-  currency: string
-  receipt: string
+  id: string;
+  amount: number;
+  currency: string;
+  receipt: string;
 }
 
-const MyAppointments = () => {
-  const { backendUrl, token, getDoctorsData } = useContext(AppContext) as AppContextType
-  const navigate = useNavigate()
+// Initialize the socket (consider moving this to a global context for production)
+const socket = io("http://localhost:4000");
 
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const MyAppointments = () => {
+  const { backendUrl, token, getDoctorsData } = useContext(AppContext) as AppContextType;
+  const navigate = useNavigate();
+
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [incomingCall, setIncomingCall] = useState<IncomingCallData | null>(null);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const slotDateFormat = (slotDate: string): string => {
-    const dateObj = new Date(slotDate)
-    if (isNaN(dateObj.getTime())) return "Invalid date"
-    const day = dateObj.getDate()
-    const month = months[dateObj.getMonth()]
-    const year = dateObj.getFullYear()
-    return `${day} ${month} ${year}`
-  }
+    const dateObj = new Date(slotDate);
+    if (isNaN(dateObj.getTime())) return "Invalid date";
+    const day = dateObj.getDate();
+    const month = months[dateObj.getMonth()];
+    const year = dateObj.getFullYear();
+    return `${day} ${month} ${year}`;
+  };
 
   const getUsersAppointments = async () => {
     try {
       const { data } = await axios.get(backendUrl + "/api/user/appointments", {
         headers: { token },
-      })
-
+      });
       if (data.success) {
-        setAppointments(data.appointments.reverse())
-        console.log(data.appointments)
+        setAppointments(data.appointments.reverse());
+        console.log(data.appointments);
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        console.error(error)
-        toast.error(error.message || "An error occurred while fetching appointments")
+        console.error(error);
+        toast.error(error.message || "An error occurred while fetching appointments");
       } else {
-        console.error("An unexpected error occurred:", error)
-        toast.error("An unexpected error occurred while fetching appointments")
+        console.error("An unexpected error occurred:", error);
+        toast.error("An unexpected error occurred while fetching appointments");
       }
     }
-  }
+  };
 
   const cancelAppointment = async (appointmentId: string) => {
     try {
@@ -92,26 +123,26 @@ const MyAppointments = () => {
         backendUrl + "/api/user/cancel-appointment",
         { appointmentId },
         { headers: { token } },
-      )
+      );
       if (data.success) {
-        toast.success(data.message)
-        getUsersAppointments()
-        getDoctorsData()
+        toast.success(data.message);
+        getUsersAppointments();
+        getDoctorsData();
       } else {
-        toast.error(data.message)
+        toast.error(data.message);
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        console.error(error)
-        toast.error(error.message || "An error occurred while cancelling appointment")
+        console.error(error);
+        toast.error(error.message || "An error occurred while cancelling appointment");
       } else {
-        console.error("An unexpected error occurred:", error)
-        toast.error("An unexpected error occurred while cancelling appointment")
+        console.error("An unexpected error occurred:", error);
+        toast.error("An unexpected error occurred while cancelling appointment");
       }
     }
-  }
+  };
 
-  const initPay = (order: Order): void => {
+  const initPay = (order: Order, appointmentId: string): void => {
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: order.amount,
@@ -120,71 +151,135 @@ const MyAppointments = () => {
       description: "Appointment Payment",
       order_id: order.id,
       receipt: order.receipt,
-      handler: async (response: string) => {
-        console.log(response)
+      handler: async (response: RazorpaySuccessResponse) => {
         try {
-          const { data } = await axios.post(backendUrl + "/api/user/verify-razorpay", response, { headers: { token } })
+          const { data } = await axios.post(
+            backendUrl + "/api/user/verify-razorpay",
+            response,
+            { headers: { token } }
+          );
           if (data.success) {
-            getUsersAppointments()
-            navigate("/my-appointments")
+            navigate("/payment-success", { state: { appointmentId } });
+          } else {
+            navigate("/payment-failure", { state: { errorMessage: data.message } });
           }
         } catch (error: unknown) {
           if (error instanceof Error) {
-            console.error(error)
-            toast.error(error.message || "An error occurred during payment")
+            navigate("/payment-failure", { state: { errorMessage: error.message || "Payment verification failed." } });
           } else {
-            console.error("An unexpected error occurred:", error)
-            toast.error("An unexpected error occurred during payment")
+            navigate("/payment-failure", { state: { errorMessage: "Payment verification failed." } });
           }
         }
       },
-    }
-
-    const rzp = new window.Razorpay(options)
-    rzp.open()
-  }
-
+      modal: {
+        ondismiss: () => {
+          // Delay navigation to ensure modal is fully closed
+          setTimeout(() => {
+            navigate("/payment-failure", { state: { errorMessage: "Payment cancelled by user." } });
+          }, 300);
+        }
+      }
+    };
+  
+    const rzp = new window.Razorpay(options);
+  
+    // Listen for payment failure event
+    rzp.on('payment.failed', function(response: RazorpayErrorResponse) {
+      // Ensure the modal is closed before redirecting
+      rzp.close();
+      setTimeout(() => {
+        navigate("/payment-failure", { state: { errorMessage: response.error.description || "Payment failed." } });
+      }, 900);
+    });
+  
+    rzp.open();
+  };
+  
   const appointmentRazorpay = async (appointmentId: string) => {
     try {
       const { data } = await axios.post(
         backendUrl + "/api/user/payment-razorpay",
         { appointmentId },
         { headers: { token } },
-      )
+      );
       if (data.success) {
         if (data.order) {
-          initPay(data.order)
+          initPay(data.order, appointmentId);
         } else {
-          toast.success(data.message)
-          getUsersAppointments()
-          navigate("/my-appointments")
+          // In case wallet payment was sufficient.
+          navigate("/payment-success", { state: { appointmentId } });
         }
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        console.error(error)
-        toast.error(error.message || "An error occurred during payment")
+        console.error(error);
+        toast.error(error.message || "An error occurred during payment");
       } else {
-        console.error("An unexpected error occurred:", error)
-        toast.error("An unexpected error occurred during payment")
+        console.error("An unexpected error occurred", error);
+        toast.error("An unexpected error occurred during payment");
       }
     }
-  }
+  };
+  
+ 
 
-  const handleVideoChat = (appointment: Appointment) => {
-    // Implement your video chat logic here.
-    // For example, navigate to a video chat page with the appointment ID:
-    navigate(`/video-chat/${appointment._id}`)
-  }
+  // Incoming call socket functionality
+  useEffect(() => {
+    // Listen for the incoming call event from the server.
+    socket.on("call-made", (data: IncomingCallData) => {
+      console.log("Incoming call received:", data);
+      setIncomingCall(data);
+    });
+
+    return () => {
+      socket.off("call-made");
+    };
+  }, []);
+  useEffect(() => {
+    appointments.forEach((appointment) => {
+      socket.emit("join-room", appointment._id);
+    });
+  }, [appointments]);
+
+  const acceptCall = () => {
+    if (incomingCall) {
+      // Navigate to the patient video call page using the room from the incoming call data.
+      navigate(`/patient/video-call/${incomingCall.room}`);
+      setIncomingCall(null);
+    }
+  };
+
+  const rejectCall = () => {
+    if (incomingCall) {
+      socket.emit("reject-call", { room: incomingCall.room });
+      setIncomingCall(null);
+    }
+  };
 
   useEffect(() => {
     if (token) {
-      getUsersAppointments()
+      getUsersAppointments();
     }
-  }, [token])
+  }, [token]);
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Incoming Call Modal */}
+      {incomingCall && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <p className="mb-4 text-xl">Incoming call from Doctor</p>
+            <div className="flex gap-4">
+              <button onClick={acceptCall} className="py-2 px-4 bg-green-500 text-white rounded">
+                Accept
+              </button>
+              <button onClick={rejectCall} className="py-2 px-4 bg-red-500 text-white rounded">
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <h1 className="text-2xl font-bold text-gray-800 mb-6">My Appointments</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {appointments.map((appointment, index) => (
@@ -233,15 +328,6 @@ const MyAppointments = () => {
                   Pay Online
                 </button>
               )}
-              {!appointment.cancelled && appointment.payment && (
-                <button
-                  onClick={() => handleVideoChat(appointment)}
-                  className="w-full mt-2 bg-green-500 text-white py-1 px-2 rounded text-sm hover:bg-green-600 transition duration-300 flex items-center justify-center"
-                >
-                  <Video className="w-4 h-4 mr-2" />
-                  Video Chat
-                </button>
-              )}
               {!appointment.cancelled && (
                 <button
                   onClick={() => cancelAppointment(appointment._id)}
@@ -261,7 +347,7 @@ const MyAppointments = () => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MyAppointments
+export default MyAppointments;

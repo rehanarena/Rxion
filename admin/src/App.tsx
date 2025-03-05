@@ -23,6 +23,7 @@ import NotFound from './components/NotFound';
 import DoctorForgotPasswordOTP from './pages/DoctorForgotPassword';
 import DoctorResetPasswordOTP from './pages/DoctorResetPassword';
 import VerifyOtp from './pages/verifyOtp';
+import DoctorVideoCallPage from './pages/Doctor/DoctorVideoCallPage';
 
 
 interface AdminContextType {
@@ -59,6 +60,7 @@ const App = () => {
               {/* Doctor Routes */}
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appoinments' element={<DoctorAppoinments />} />
+              <Route path="/doctor/video-call/:appointmentId" element={<DoctorVideoCallPage />} />
               <Route path='/doctor-profile' element={<DoctorProfile />} />
               <Route path='/doctor-slots' element={<AddSlots />} />
               <Route path='/doctor-slot-manage' element={<SlotManagement />} />

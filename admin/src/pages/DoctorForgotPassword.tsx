@@ -11,7 +11,6 @@ const DoctorForgotPasswordOTP = () => {
   const navigate = useNavigate();
 
   const handleClick = async () => {
-    // Prevent further clicks if a request is already in progress
     if (loading) return;
     setLoading(true);
     try {

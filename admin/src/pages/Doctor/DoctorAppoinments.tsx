@@ -4,6 +4,7 @@ import { useContext, useEffect } from "react"
 import { DoctorContext } from "../../context/DoctorContext"
 import { AppContext } from "../../context/AppContext"
 import { Check, Video, X } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 interface userData {
   name: string
@@ -40,6 +41,7 @@ const DoctorAppointments = () => {
     DoctorContext,
   ) as DoctorContextType
   const { calculateAge, slotDateFormat, currencySymbol } = useContext(AppContext) as AppContextType
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (dToken) {
@@ -48,10 +50,7 @@ const DoctorAppointments = () => {
   }, [dToken, getAppointments])
 
   const handleVideoChat = (appointment: Appointment) => {
-    // Implement your video chat logic for the doctor here.
-    // For example, navigate to a video chat room specific for the appointment:
-    // navigate(`/doctor-video-chat/${appointment._id}`)
-    console.log("Initiate video chat for appointment:", appointment._id)
+    navigate(`/doctor/video-call/${appointment._id}`);
   }
 
   return (
@@ -59,7 +58,7 @@ const DoctorAppointments = () => {
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Appointments</h2>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 max-h-[80vh] overflow-y-auto pr-2">
-        {appointments.reverse().map((appointment, index) => (
+        {appointments.reverse().map((appointment) => (
           <div
             key={appointment._id}
             className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-lg"

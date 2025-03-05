@@ -1,4 +1,3 @@
-// VerifyOtp.tsx
 import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -20,7 +19,6 @@ const VerifyOtp = () => {
   const [isResendActive, setIsResendActive] = useState(false);
 
   const { state } = useLocation();
-  // Expecting doctorId (and optionally email if passed earlier)
   const { doctorId, isForPasswordReset } = state || {};
 
   useEffect(() => {
@@ -68,7 +66,6 @@ const VerifyOtp = () => {
     }
     setIsLoading(true);
     try {
-      // Use doctor-specific endpoint for verifying OTP
       const { data } = await axios.post(`${backendUrl}/api/doctor/verify-otp`, {
         otp,
         doctorId,
@@ -76,7 +73,6 @@ const VerifyOtp = () => {
       if (data.success) {
         toast.success(data.message);
         if (isForPasswordReset) {
-          // Navigate to reset password page with doctorId, email, and token
           navigate("/doctor/reset-password-otp", { 
             state: { doctorId, email: data.email, token: data.token } 
           });
@@ -101,7 +97,6 @@ const VerifyOtp = () => {
     try {
       setIsResendActive(false);
       setTimer(30);
-      // Use doctor-specific endpoint for resending OTP
       const { data } = await axios.post(`${backendUrl}/api/doctor/resend-otp`, {
         doctorId,
       });

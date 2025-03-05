@@ -29,7 +29,8 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.0.2",
     "react-toastify": "^10.0.6",
-    "rrule": "^2.8.1"
+    "rrule": "^2.8.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",

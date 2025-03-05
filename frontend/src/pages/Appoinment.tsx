@@ -38,11 +38,12 @@ const Appointment: React.FC = () => {
   const [slotTime, setSlotTime] = useState<string>("")
 
   useEffect(() => {
-    if (docId) {
-      fetchDocInfo()
-      fetchSlots(docId)
+    if (docId && doctors.length > 0) {
+      fetchDocInfo();
+      fetchSlots(docId);
     }
-  }, [docId, fetchSlots])
+  }, [docId, doctors, fetchSlots]);
+  
 
   const fetchDocInfo = () => {
     const doc = doctors.find((doctor: Doctor) => doctor._id === docId)

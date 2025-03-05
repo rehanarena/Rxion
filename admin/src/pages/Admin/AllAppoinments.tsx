@@ -46,7 +46,6 @@ const AllAppointments = () => {
     useContext(AdminContext) as AdminContextType;
   const { calculateAge, currencySymbol } = useContext(AppContext) as AppContextType;
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -60,7 +59,6 @@ const AllAppointments = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentAppointments = appointments.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Handle page change
   const handlePrevPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
@@ -71,7 +69,6 @@ const AllAppointments = () => {
     }
   };
 
-  // Human readable date & time formatting
   const formatDateTime = (dateString: string, timeString: string) => {
     const dateObj = new Date(dateString);
     if (isNaN(dateObj.getTime())) {

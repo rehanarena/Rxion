@@ -7,7 +7,7 @@ import Slot from "../models/slotModel";
 import { RRule } from "rrule";
 import moment from "moment";
 import DoctorOTP from "../models/docOtpModel";
-import { sendOtpEmail } from "../helper/mailer"; 
+import { sendAppointmentCancelledEmail, sendAppointmentCompletedEmail, sendOtpEmail } from "../helper/mailer"; 
 import crypto from 'crypto'
 import { ObjectId } from "mongodb";
 import mongoose from "mongoose";
@@ -548,6 +548,13 @@ const appoinmentComplete = async (
       await appointmentModel.findByIdAndUpdate(appointmentId, {
         isCompleted: true,
       });
+
+      if (appointmentData.userData) {
+        const userData = appointmentData.userData as { email: string; name: string };
+        if (userData.email && userData.name) {
+          await sendAppointmentCompletedEmail(userData.email, userData.name);
+        }
+      }
       res.json({ success: true, message: "Appointment Completed" });
       return;
     } else {
@@ -573,6 +580,13 @@ const appoinmentCancel = async (req: Request, res: Response): Promise<void> => {
       await appointmentModel.findByIdAndUpdate(appointmentId, {
         cancelled: true,
       });
+      if (appointmentData.userData) {
+        const userData = appointmentData.userData as { email: string; name: string };
+        if (userData.email && userData.name) {
+          await sendAppointmentCancelledEmail(userData.email, userData.name);
+        }
+      }
+
       res.json({ success: true, message: "Appointment Cancelled" });
       return;
     } else {
