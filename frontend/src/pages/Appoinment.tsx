@@ -208,7 +208,28 @@ const Appointment: React.FC = () => {
             <img src={docInfo.image || "/placeholder.svg"} alt={docInfo.name} className="w-full h-full object-cover" />
           </div>
           <div className="p-6 md:w-2/3">
-            <h2 className="text-2xl font-semibold mb-2">{docInfo.name}</h2>
+            <div className="flex items-center">
+              <h2 className="text-2xl font-semibold mb-2">{docInfo.name}</h2>
+              <button
+                onClick={() => navigate("/chat")}
+                className="ml-4 p-2 rounded-full hover:bg-gray-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.97-4.03 9-9 9a9.93 9.93 0 01-4.465-1.026L3 21l1.026-4.465A9.93 9.93 0 013 12c0-4.97 4.03-9 9-9s9 4.03 9 9z"
+                  />
+                </svg>
+              </button>
+            </div>
             <p className="text-gray-600 mb-4">
               {docInfo.degree} - {docInfo.speciality}
             </p>
@@ -302,4 +323,3 @@ const Appointment: React.FC = () => {
 }
 
 export default Appointment
-

@@ -8,6 +8,7 @@ interface PatientVideoCallProps {
   roomId: string;
 }
 
+
 const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
   const [incomingCall, setIncomingCall] = useState<any>(null);
   const [callAccepted, setCallAccepted] = useState(false);
@@ -32,7 +33,6 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
       })
       .catch(err => console.error('Error accessing media devices', err));
 
-    // Listen for incoming call from doctor
     socket.on('call-made', (data) => {
       if (!callAccepted) {
         console.log("Incoming call:", data);
@@ -40,7 +40,6 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
       }
     });
 
-    // Listen for ICE candidates from doctor
     socket.on('ice-candidate', async (candidate) => {
       try {
         if (candidate && pc.current) {
@@ -50,8 +49,6 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
         console.error(err);
       }
     });
-
-    // Listen for call end
     socket.on('call-ended', () => {
       alert('Call has been ended.');
       endCall();

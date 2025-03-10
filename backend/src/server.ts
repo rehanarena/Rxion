@@ -41,21 +41,22 @@ if (!fs.existsSync(uploadDir)) {
 // Create HTTP server and attach Socket.IO
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: "*" } // In production, restrict to your app URLs
+  cors: { origin: "*" } 
 });
 
-// Global store for active calls
+// Store active call details
 const activeCalls: { [room: string]: any } = {};
 
-// Socket.IO events for call signaling
+// Declare a global in-memory store for chat histories per room
+const chatHistory: { [room: string]: Array<{ sender: string; message: string; timestamp: Date }> } = {};
+
 io.on('connection', (socket) => {
   console.log("Client connected:", socket.id);
 
+  // --- Call Signaling Events ---
   socket.on('join-room', (roomId: string) => {
     socket.join(roomId);
     console.log(`Socket ${socket.id} joined room ${roomId}`);
-    
-    // If there's an active call in this room, immediately send it to the new socket.
     if (activeCalls[roomId]) {
       socket.emit('call-made', activeCalls[roomId]);
     }
@@ -68,7 +69,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('make-answer', (data) => {
-    // console.log("Make-answer event:", data);
     delete activeCalls[data.room];
     io.to(data.room).emit('answer-made', data);
   });
@@ -87,6 +87,42 @@ io.on('connection', (socket) => {
 
   socket.on('ice-candidate', (data) => {
     io.to(data.room).emit('ice-candidate', data.candidate);
+  });
+
+  // --- Chat Messaging Events ---
+  socket.on('join-chat', (room: string) => {
+    socket.join(room);
+    console.log(`Socket ${socket.id} joined chat room ${room}`);
+    // Initialize chat history if not available
+    if (!chatHistory[room]) {
+      chatHistory[room] = [];
+    }
+    // Send the existing chat history to the new client
+    socket.emit('chat-history', chatHistory[room]);
+  });
+
+  socket.on('send-message', (data: { room: string; message: string; sender: string }) => {
+    const { room, message, sender } = data;
+    const msg = { sender, message, timestamp: new Date() };
+    // Save the message to history
+    if (!chatHistory[room]) {
+      chatHistory[room] = [];
+    }
+    chatHistory[room].push(msg);
+    // Emit the new message to everyone in the room
+    io.to(room).emit('receive-message', msg);
+  });
+
+  socket.on('typing', (data: { room: string; sender: string }) => {
+    const { room, sender } = data;
+    // Inform all other clients in the room that this user is typing
+    socket.to(room).emit('typing', { sender });
+  });
+
+  socket.on('stop-typing', (data: { room: string; sender: string }) => {
+    const { room, sender } = data;
+    // Inform all other clients in the room that this user stopped typing
+    socket.to(room).emit('stop-typing', { sender });
   });
 
   socket.on('disconnect', () => {

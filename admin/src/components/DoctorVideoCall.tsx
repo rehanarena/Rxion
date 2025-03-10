@@ -1,18 +1,16 @@
-"use client"
-
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import io from "socket.io-client"
 
-const socket = io("http://localhost:4000") // Adjust to your backend URL
+const socket = io("http://localhost:4000") 
 
 interface DoctorVideoCallProps {
   roomId: string
 }
 
 const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
-  const navigate = useNavigate() // Initialize navigation
+  const navigate = useNavigate()
   const [callStatus, setCallStatus] = useState<"idle" | "calling" | "in-call" | "declined" | "ended">("idle")
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOff, setIsVideoOff] = useState(false)
@@ -37,7 +35,6 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
       })
       .catch((err) => console.error("Error accessing media devices", err))
 
-    // Listen for ICE candidates from the patient
     socket.on("ice-candidate", async (candidate) => {
       try {
         if (candidate && pc.current) {
@@ -48,25 +45,20 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
       }
     })
 
-    // Listen for answer from patient
     socket.on("answer-made", async (data) => {
       if (pc.current) {
         await pc.current.setRemoteDescription(data.signalData)
         setCallStatus("in-call")
-
-        // Start call timer
         startCallTimer()
       }
     })
 
-    // Listen for call rejection
     socket.on("call-declined", () => {
       setCallStatus("declined")
       alert("Call was declined by the patient.")
       endCall()
     })
 
-    // Listen for call end
     socket.on("call-ended", () => {
       setCallStatus("ended")
       alert("Call has been ended.")
@@ -79,7 +71,6 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
       socket.off("call-declined")
       socket.off("call-ended")
 
-      // Clear timer on unmount
       if (timerRef.current) {
         clearInterval(timerRef.current)
       }
@@ -138,12 +129,11 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
     socket.emit("end-call", { room: roomId })
     setCallStatus("ended")
 
-    // Clear timer
     if (timerRef.current) {
       clearInterval(timerRef.current)
     }
 
-    navigate("/doctor-appoinments") // Adjust the route path if needed
+    navigate("/doctor-appoinments")
   }
 
   const toggleMute = () => {
@@ -176,8 +166,6 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
           </h2>
           <p className="text-sm opacity-80">Room ID: {roomId}</p>
         </div>
-
-        {/* Call Status Area */}
         {callStatus === "idle" && (
           <div className="flex flex-col items-center justify-center p-12 space-y-4">
             <div className="w-24 h-24 rounded-full bg-teal-100 flex items-center justify-center">
@@ -223,7 +211,7 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
           </div>
         )}
 
-        {/* Calling Status */}
+
         {callStatus === "calling" && (
           <div className="flex flex-col items-center justify-center p-12 space-y-4">
             <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center animate-pulse">
@@ -263,7 +251,7 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
           </div>
         )}
 
-        {/* Call Declined or Ended Status */}
+  
         {(callStatus === "declined" || callStatus === "ended") && (
           <div className="flex flex-col items-center justify-center p-12 space-y-4">
             <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center">
@@ -334,7 +322,6 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
               </div>
             </div>
 
-            {/* Call Controls */}
             <div className="mt-4 flex justify-center space-x-4">
               <button
                 onClick={toggleMute}

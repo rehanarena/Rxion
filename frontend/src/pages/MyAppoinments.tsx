@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { Calendar, Clock, MapPin, CreditCard, X} from "lucide-react";
 import io from "socket.io-client";
 
-// Define the interface for incoming call data.
-// Note: We’ve added a "room" property so that the incoming call carries the room ID.
 interface IncomingCallData {
   callerId: string;
   room: string;
@@ -46,11 +44,11 @@ export interface RazorpaySuccessResponse {
 }
 export interface RazorpayErrorResponse {
   error: {
-    code: string;             // e.g. "BAD_REQUEST_ERROR"
-    description: string;      // e.g. "Payment failed"
-    source: string;           // e.g. "customer"
-    step: string;             // e.g. "payment_authorization"
-    reason: string;           // e.g. "user declined the payment"
+    code: string;             
+    description: string;      
+    source: string;           
+    step: string;            
+    reason: string;           
     metadata: {
       order_id?: string;
       payment_id?: string;
@@ -76,8 +74,6 @@ interface Order {
   currency: string;
   receipt: string;
 }
-
-// Initialize the socket (consider moving this to a global context for production)
 const socket = io("http://localhost:4000");
 
 const MyAppointments = () => {
@@ -173,7 +169,6 @@ const MyAppointments = () => {
       },
       modal: {
         ondismiss: () => {
-          // Delay navigation to ensure modal is fully closed
           setTimeout(() => {
             navigate("/payment-failure", { state: { errorMessage: "Payment cancelled by user." } });
           }, 300);
@@ -183,9 +178,7 @@ const MyAppointments = () => {
   
     const rzp = new window.Razorpay(options);
   
-    // Listen for payment failure event
     rzp.on('payment.failed', function(response: RazorpayErrorResponse) {
-      // Ensure the modal is closed before redirecting
       rzp.close();
       setTimeout(() => {
         navigate("/payment-failure", { state: { errorMessage: response.error.description || "Payment failed." } });
@@ -206,7 +199,6 @@ const MyAppointments = () => {
         if (data.order) {
           initPay(data.order, appointmentId);
         } else {
-          // In case wallet payment was sufficient.
           navigate("/payment-success", { state: { appointmentId } });
         }
       }
@@ -221,11 +213,8 @@ const MyAppointments = () => {
     }
   };
   
- 
 
-  // Incoming call socket functionality
   useEffect(() => {
-    // Listen for the incoming call event from the server.
     socket.on("call-made", (data: IncomingCallData) => {
       console.log("Incoming call received:", data);
       setIncomingCall(data);
@@ -243,7 +232,6 @@ const MyAppointments = () => {
 
   const acceptCall = () => {
     if (incomingCall) {
-      // Navigate to the patient video call page using the room from the incoming call data.
       navigate(`/patient/video-call/${incomingCall.room}`);
       setIncomingCall(null);
     }

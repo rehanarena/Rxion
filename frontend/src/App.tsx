@@ -7,6 +7,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import MyProfile from "./pages/MyProfile";
 import Appointment from "./pages/Appoinment";
+import  ChatMessage  from "./pages/chat";
 import MyAppointments from "./pages/MyAppoinments";
 import Wallet from "./pages/MyWallet";
 import Navbar from "./components/Navbar";
@@ -51,6 +52,7 @@ const App = () => {
         <Route path="/payment-success" element={<PaymentSuccess/>} />
         <Route path="/payment-failure" element={<PaymentFailure/>} />
         <Route path="/appointment/:docId" element={<Appointment />} />
+        <Route path="/chat" element={< ChatMessage/>} />
         <Route path="/patient/video-call/:appointmentId" element={<PatientVideoCallPage />} />
 
         <Route path="/my-wallet" element={<Wallet />} />
