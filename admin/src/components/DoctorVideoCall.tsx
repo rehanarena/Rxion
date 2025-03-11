@@ -455,17 +455,7 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
         </div>
       )}
 
-      {/* Patient Notes (Only visible during call) */}
-      {callStatus === "in-call" && (
-        <div className="mt-4 p-4 bg-white rounded-lg shadow-md w-full max-w-4xl">
-          <h3 className="text-lg font-medium text-gray-800 mb-2">Patient Notes</h3>
-          <textarea
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
-            placeholder="Add consultation notes here..."
-            rows={4}
-          ></textarea>
-        </div>
-      )}
+     
     </div>
   )
 }

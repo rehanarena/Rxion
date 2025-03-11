@@ -11,19 +11,15 @@ import doctorRouter from './routes/doctorRoute';
 import fs from "fs";
 import path from "path";
 
-// App configuration
 const app: Application = express(); 
 const port: number = parseInt(process.env.PORT || '4000', 10);
 
-// Connect to the database and cloudinary
 connectDB();
 connectCloudinary();
 
-// Middlewares
 app.use(express.json());
 app.use(cors());
 
-// API endpoints
 app.use('/api/admin', adminRouter);
 app.use('/api/user', userRouter);
 app.use('/api/doctor', doctorRouter);
@@ -32,23 +28,27 @@ app.get("/", (req: Request, res: Response) => {
   res.send("API Working");
 });
 
-// Ensure upload directory exists
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Create HTTP server and attach Socket.IO
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*" } 
 });
 
-// Store active call details
 const activeCalls: { [room: string]: any } = {};
 
-// Declare a global in-memory store for chat histories per room
-const chatHistory: { [room: string]: Array<{ sender: string; message: string; timestamp: Date }> } = {};
+// Define a type for chat rooms that include metadata
+interface ChatRoom {
+  patientName: string;
+  patientImage: string;
+  messages: Array<{ sender: string; message: string; timestamp: Date }>;
+}
+
+// Updated chatHistory: each room now stores metadata and messages
+const chatHistory: { [room: string]: ChatRoom } = {};
 
 io.on('connection', (socket) => {
   console.log("Client connected:", socket.id);
@@ -95,33 +95,66 @@ io.on('connection', (socket) => {
     console.log(`Socket ${socket.id} joined chat room ${room}`);
     // Initialize chat history if not available
     if (!chatHistory[room]) {
-      chatHistory[room] = [];
+      // Initialize with empty metadata; metadata will be updated on first message
+      chatHistory[room] = { patientName: "", patientImage: "", messages: [] };
     }
-    // Send the existing chat history to the new client
-    socket.emit('chat-history', chatHistory[room]);
+    // Send the existing chat messages to the new client
+    socket.emit('chat-history', chatHistory[room].messages);
+  });
+  
+  // Update send-message to accept patientName and patientImage when provided
+  socket.on('send-message', (data: { room: string; message: string; sender: string; patientName?: string; patientImage?: string }) => {
+    const { room, message, sender, patientName, patientImage } = data;
+    console.log("send-message received:", data);
+    const msg = { sender, message, timestamp: new Date() };
+
+    // Initialize room if needed
+    if (!chatHistory[room]) {
+      chatHistory[room] = { 
+        patientName: patientName || "", 
+        patientImage: patientImage || "", 
+        messages: [] 
+      };
+    } else {
+      // Update metadata only if not set yet and if values are provided
+      if (!chatHistory[room].patientName && patientName) {
+        chatHistory[room].patientName = patientName;
+      }
+      if (!chatHistory[room].patientImage && patientImage) {
+        chatHistory[room].patientImage = patientImage;
+      }
+    }
+    chatHistory[room].messages.push(msg);
+    io.to(room).emit('receive-message', msg);
   });
 
-  socket.on('send-message', (data: { room: string; message: string; sender: string }) => {
-    const { room, message, sender } = data;
-    const msg = { sender, message, timestamp: new Date() };
-    // Save the message to history
-    if (!chatHistory[room]) {
-      chatHistory[room] = [];
-    }
-    chatHistory[room].push(msg);
-    // Emit the new message to everyone in the room
-    io.to(room).emit('receive-message', msg);
+  // Handle "get-chat-history" for the doctor to get the last messages from all rooms
+  socket.on('get-chat-history', () => {
+    const summary = Object.entries(chatHistory)
+      .map(([room, chatRoom]) => {
+        if (!chatRoom.messages.length) return null;
+        const lastMsg = chatRoom.messages[chatRoom.messages.length - 1];
+        return {
+          room,
+          patientName: chatRoom.patientName,
+          patientImage: chatRoom.patientImage,
+          message: lastMsg.message,
+          timestamp: lastMsg.timestamp,
+        };
+      })
+      .filter(Boolean);
+
+    console.log("Emitting chat history summary:", summary);
+    socket.emit('chat-history', summary);
   });
 
   socket.on('typing', (data: { room: string; sender: string }) => {
     const { room, sender } = data;
-    // Inform all other clients in the room that this user is typing
     socket.to(room).emit('typing', { sender });
   });
 
   socket.on('stop-typing', (data: { room: string; sender: string }) => {
     const { room, sender } = data;
-    // Inform all other clients in the room that this user stopped typing
     socket.to(room).emit('stop-typing', { sender });
   });
 

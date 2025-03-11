@@ -7,7 +7,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import MyProfile from "./pages/MyProfile";
 import Appointment from "./pages/Appoinment";
-import  ChatMessage  from "./pages/chat";
+import ChatMessage from "./pages/chat";
 import MyAppointments from "./pages/MyAppoinments";
 import Wallet from "./pages/MyWallet";
 import Navbar from "./components/Navbar";
@@ -37,6 +37,7 @@ const App = () => {
       <ToastContainer />
       <Navbar />
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="*" element={<NotFound />} />
         <Route path="/doctors" element={<Doctors />} />
@@ -47,14 +48,15 @@ const App = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        
+        {/* Protected Routes */}
         <Route path="/my-profile" element={<MyProfile />} />
         <Route path="/my-appointments" element={<MyAppointments />} />
-        <Route path="/payment-success" element={<PaymentSuccess/>} />
-        <Route path="/payment-failure" element={<PaymentFailure/>} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/payment-failure" element={<PaymentFailure />} />
         <Route path="/appointment/:docId" element={<Appointment />} />
-        <Route path="/chat" element={< ChatMessage/>} />
+        <Route path="/chat/:doctorId" element={<ChatMessage />} />
         <Route path="/patient/video-call/:appointmentId" element={<PatientVideoCallPage />} />
-
         <Route path="/my-wallet" element={<Wallet />} />
       </Routes>
       <Footer />
