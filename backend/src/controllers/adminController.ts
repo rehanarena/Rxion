@@ -1,12 +1,6 @@
 import { Request, Response } from "express";
-import validator from "validator";
-import { v2 as cloudinary } from "cloudinary";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import doctorModel from "../models/doctorModel";
-import userModel from "../models/userModel";
-import appointmentModel from "../models/appoinmentModel";
-import { sendPasswordEmail } from "../helper/mailer";
+import { AdminService } from "../services/AdminService";
+const adminServiceInstance = new AdminService();
 
 interface AddDoctorRequestBody {
   name: string;
@@ -24,279 +18,137 @@ export interface IBookedSlot {
   isBooked: boolean;
 }
 
+
 const addDoctor = async (req: Request, res: Response): Promise<void> => {
   try {
-    const {
-      name,
-      email,
-      password,
-      speciality,
-      degree,
-      experience,
-      about,
-      fees,
-      address,
-    } = req.body as AddDoctorRequestBody;
+    const data = req.body;
     const imageFile = req.file;
 
-    if (
-      !name ||
-      !email ||
-      !password ||
-      !speciality ||
-      !degree ||
-      !experience ||
-      !about ||
-      !fees ||
-      !address
-    ) {
-      res.status(400).json({ success: false, message: "Missing Details" });
+    if (!imageFile) {
+      res.status(400).json({ success: false, message: "Image file missing" });
       return;
     }
 
-    if (!validator.isEmail(email)) {
-      res.status(400).json({ success: false, message: "Invalid Email" });
-      return;
-    }
+    await adminServiceInstance.addDoctor(data, imageFile);
 
-    if (password.length < 8) {
-      res.status(400).json({ success: false, message: "Weak password" });
-      return;
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const imageUpload = await cloudinary.uploader.upload(imageFile!.path, {
-      resource_type: "image",
+    res.status(201).json({
+      success: true,
+      message: "Doctor Added Successfully and Password Sent to Email",
     });
-
-    const imageUrl = imageUpload.secure_url;
-
-    let parsedAddress;
-    try {
-      parsedAddress = JSON.parse(address);
-    } catch (err) {
-      res
-        .status(400)
-        .json({ success: false, message: "Invalid address format" });
-      return;
-    }
-
-    const doctorData = {
-      name,
-      email,
-      image: imageUrl,
-      password: hashedPassword,
-      speciality,
-      degree,
-      experience,
-      about,
-      fees,
-      address: parsedAddress,
-      date: new Date(),
-    };
-
-    const newDoctor = new doctorModel(doctorData);
-    await newDoctor.save();
-
-    await sendPasswordEmail(email, password);
-    console.log("password for the doc:", password);
-
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Doctor Added Successfully and Password Sent to Email",
-      });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
-      });
+    res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    });
   }
 };
-
-/// loginAdmin ///
 
 const loginAdmin = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
-
-    if (
-      email === process.env.ADMIN_EMAIL &&
-      password === process.env.ADMIN_PASSWORD
-    ) {
-      const token = jwt.sign(
-        { email, password },
-        process.env.JWT_SECRET as string,
-        { expiresIn: "1h" }
-      );
-      res.json({ success: true, token });
-    } else {
-      res.json({ success: false, message: "Invalid Credentials" });
-    }
+    const { token } = await adminServiceInstance.loginAdmin(email, password);
+    res.json({ success: true, token });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.json({
       success: false,
-      message:
-        error instanceof Error ? error.message : "An unexpected error occurred",
+      message: error instanceof Error ? error.message : "An unexpected error occurred",
     });
   }
 };
+
 
 /// Dashboard ///
 const adminDashboard = async (req: Request, res: Response): Promise<void> => {
   try {
-    const doctors = await doctorModel.find({});
-    const users = await userModel.find({});
-
-    const dashData = {
-      doctors: doctors.length,
-      patients: users.length,
-    };
+    const dashData = await adminServiceInstance.getDashboardData();
     res.json({ success: true, dashData });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.json({
       success: false,
-      message:
-        error instanceof Error ? error.message : "An unexpected error occurred",
+      message: error instanceof Error ? error.message : "An unexpected error occurred",
     });
   }
 };
+
+
 const userList = async (req: Request, res: Response): Promise<void> => {
   try {
-    const users = await userModel.find();
-    // console.log(users);
+    const users = await adminServiceInstance.getAllUsers();
     res.status(200).json(users);
-    return;
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error while fetching users." });
-    return;
   }
 };
+
+
 const blockUnblockUser = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
   const { action } = req.body;
-
   try {
-    const user = await userModel.findById(id);
-
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-
-    if (action === "block") {
-      user.isBlocked = true;
-    } else if (action === "unblock") {
-      user.isBlocked = false;
-    } else {
-      res.status(400).json({ message: "Invalid action" });
-      return;
-    }
-
-    await user.save();
-    res
-      .status(200)
-      .json({ message: `User has been ${action}ed successfully.` });
+    const result = await adminServiceInstance.blockUnblockUser(id, action);
+    res.status(200).json(result);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    if (error instanceof Error) {
+      const status = error.message === "User not found" ? 404 : error.message === "Invalid action" ? 400 : 500;
+      res.status(status).json({ message: error.message });
+    } else {
+      res.status(500).json({ message: "Server error" });
+    }
   }
 };
 
-const blockUnblockDoctor = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+
+const blockUnblockDoctor = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
   const { action } = req.body;
-
   try {
-    const doctor = await doctorModel.findById(id);
-
-    if (!doctor) {
-      res.status(404).json({ message: "Doctor not found" });
-      return;
-    }
-
-    if (action === "block") {
-      doctor.isBlocked = true;
-    } else if (action === "unblock") {
-      doctor.isBlocked = false;
-    } else {
-      res.status(400).json({ message: "Invalid action" });
-      return;
-    }
-
-    await doctor.save();
-    res
-      .status(200)
-      .json({ message: `Doctor has been ${action}ed successfully.` });
+    const result = await adminServiceInstance.blockUnblockDoctor(id, action);
+    res.status(200).json(result);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    if (error instanceof Error) {
+      const status = error.message === "Doctor not found" ? 404 : error.message === "Invalid action" ? 400 : 500;
+      res.status(status).json({ message: error.message });
+    } else {
+      res.status(500).json({ message: "Server error" });
+    }
   }
 };
+
 const doctorList = async (req: Request, res: Response): Promise<void> => {
   try {
     const { search, page = "1", limit = "8", speciality } = req.query;
-    let query: any = {};
-    if (speciality) {
-      query.speciality = speciality;
-    }
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ];
-    }
-    const pageNum = parseInt(page as string, 10) || 1;
-    const limitNum = parseInt(limit as string, 10) || 8;
-    const skip = (pageNum - 1) * limitNum;
-    const doctors = await doctorModel.find(query).skip(skip).limit(limitNum);
-    const totalDoctors = await doctorModel.countDocuments(query);
-
-    res.status(200).json({
-      totalPages: Math.ceil(totalDoctors / limitNum),
-      currentPage: pageNum,
-      totalDoctors,
-      doctors,
+    const result = await adminServiceInstance.doctorList({
+      search: search as string,
+      page: page as string,
+      limit: limit as string,
+      speciality: speciality as string,
     });
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching doctors:", error);
     res.status(500).json({ message: "Server error while fetching doctors." });
   }
 };
-
 const allDoctors = async (req: Request, res: Response): Promise<void> => {
   try {
-    const doctors = await doctorModel.find({}).select("-password");
+    const doctors = await adminServiceInstance.allDoctors();
     res.json({ success: true, doctors });
   } catch (error) {
-    console.error(error);
-
+    console.error("Error fetching all doctors:", error);
     res.status(500).json({ message: "Server error while fetching doctors." });
   }
 };
-
-export const getDoctors = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const getDoctors = async (req: Request, res: Response): Promise<void> => {
   const { doctorId } = req.params;
   try {
-    const doctor = await doctorModel.findById(doctorId);
+    const doctor = await adminServiceInstance.getDoctor(doctorId);
     if (!doctor) {
       res.status(404).json({ success: false, message: "Doctor not found" });
       return;
@@ -308,65 +160,27 @@ export const getDoctors = async (
   }
 };
 
+
 /// All appointment list ///
-const appointmentsAdmin = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+const appointmentsAdmin = async (req: Request, res: Response): Promise<void> => {
   try {
-    const appointments = await appointmentModel.find({});
+    const appointments = await adminServiceInstance.getAllAppointments();
     res.json({ success: true, appointments });
   } catch (error) {
     console.error(error);
-
-    res.status(500).json({ message: "Server error while fetching doctors." });
+    res.status(500).json({ message: "Server error while fetching appointments." });
   }
 };
 
 /// cancelAppointment ///
-const cancelAppointment = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+const cancelAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { appointmentId }: { appointmentId: string } = req.body;
-
-    const appointmentData = await appointmentModel.findById(appointmentId);
-
-    if (!appointmentData) {
-      res
-        .status(404)
-        .json({ success: false, message: "Appointment not found" });
-      return;
-    }
-
-    await appointmentModel.findByIdAndUpdate(appointmentId, {
-      cancelled: true,
-    });
-
-    const { docId, slotDate, slotTime } = appointmentData;
-    const doctorData = await doctorModel.findById(docId);
-
-    if (!doctorData) {
-      res.status(404).json({ success: false, message: "Doctor not found" });
-      return;
-    }
-
-    let slots_booked = doctorData.slots_booked;
-    console.log("Slots booked: ", slots_booked);
-
-    if (slots_booked[slotDate]) {
-      const updatedSlots = (
-        slots_booked[slotDate] as Array<{ date: string; time: string }>
-      ).filter((slot) => `${slot.date} ${slot.time}` !== slotTime);
-      slots_booked[slotDate] = updatedSlots;
-      await doctorModel.findByIdAndUpdate(docId, { slots_booked });
-    }
-
-    res.json({ success: true, message: "Appointment cancelled successfully" });
+    const { appointmentId } = req.body as { appointmentId: string };
+    const result = await adminServiceInstance.cancelAppointment(appointmentId);
+    res.json({ success: true, message: result.message });
   } catch (error: any) {
-    console.log(error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };
 

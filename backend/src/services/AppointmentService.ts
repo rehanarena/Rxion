@@ -63,7 +63,8 @@ export class AppointmentService {
       time: slotTimePart,
     });
     docData.markModified("slots_booked");
-    await this.doctorRepository.updateDoctor(docData);
+    await this.doctorRepository.updateDoctor(String(docData._id), { slots_booked: docData.slots_booked });
+
 
     // Retrieve user data (selecting without password if needed)
     const userData = await this.userRepository.findById(userId);

@@ -1,17 +1,13 @@
 import { Request, Response } from "express";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import doctorModel from "../models/doctorModel";
 import appointmentModel from "../models/appoinmentModel";
 import Slot from "../models/slotModel";
 import { RRule } from "rrule";
 import moment from "moment";
-import DoctorOTP from "../models/docOtpModel";
 import { sendAppointmentCancelledEmail, sendAppointmentCompletedEmail, sendOtpEmail } from "../helper/mailer"; 
-import crypto from 'crypto'
-import { ObjectId } from "mongodb";
-import mongoose from "mongoose";
-import nodemailer from 'nodemailer';
+import { DoctorService } from '../services/DoctorService';
+
+const doctorService = new DoctorService();
 
 
 interface AddSlotsRequestBody {
@@ -54,207 +50,68 @@ interface SlotData {
 
 const loginDoctor = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password }: { email: string; password: string } = req.body;
-
-    const doctor: Doctor | null = await doctorModel.findOne({ email });
-
-    if (!doctor) {
-      res.json({ success: false, message: "Invalid credentials" });
-      return;
-    }
-
-    if (doctor.isBlocked) {
-      res.json({
-        success: false,
-        message: "Your account has been blocked by the admin.",
-      });
-      return;
-    }
-
-    const isMatch: boolean = await bcrypt.compare(password, doctor.password);
-
-    if (isMatch) {
-      const token: string = jwt.sign(
-        { id: doctor._id },
-        process.env.JWT_SECRET as string
-      );
-      res.json({ success: true, token });
-    } else {
-      res.json({ success: false, message: "Incorrect password" });
-    }
+    const { email, password } = req.body;
+    const result = await doctorService.loginDoctor(email, password);
+    res.json(result);
   } catch (error: any) {
-    console.log(error);
-    res.json({ success: false, message: error.message });
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const doctorForgotPasswordOTP = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email } = req.body;
-    const doctor = await doctorModel.findOne({ email });
-    if (!doctor) {
-       res.status(404).json({ success: false, message: "Doctor not found" });
-       return
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log("Generated OTP:", otp);
-
-    const otpRecord = await DoctorOTP.create({
-      otp,
-      doctorId: doctor._id,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000), 
-    });
-
-    const message = `Your OTP for password reset is: ${otp}. It is valid for 10 minutes.`;
-
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: doctor.email,
-      subject: "Doctor Password Reset OTP",
-      text: message,
-    });
-
-    res.status(200).json({ success: true, message: "OTP sent to your email.", doctorId: doctor._id });
-  } catch (error) {
+    const result = await doctorService.doctorForgotPasswordOTP(email);
+    res.status(200).json(result);
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    const status = error.status || 500;
+    res.status(status).json({ success: false, message: error.message || "Server error" });
   }
 };
-/// Verify OTP endpoint ///
+
 export const verifyDoctorOtp = async (req: Request, res: Response): Promise<void> => {
-  const { otp, doctorId } = req.body;
-
-  if (!doctorId || !ObjectId.isValid(doctorId)) {
-    res.status(400).json({ success: false, message: "Invalid doctorId." });
-    return;
-  }
-
   try {
-    const otpData = await DoctorOTP.findOne({ otp, doctorId });
-    if (!otpData) {
-      res.json({ success: false, message: "OTP is invalid" });
-      return;
-    }
-
-    if (otpData.expiresAt < new Date()) {
-      res.json({ success: false, message: "OTP has expired" });
-      return;
-    }
-
-    const doctor = await doctorModel.findById(doctorId);
-    if (doctor) {
-      await DoctorOTP.deleteOne({ otp, doctorId });
-      
-      const resetToken = crypto.randomBytes(20).toString("hex");
-      doctor.resetPasswordToken = resetToken;
-      doctor.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000); 
-      await doctor.save();
-
-      res.json({
-        success: true,
-        message: "Doctor verified successfully. You can reset your password now.",
-        isForPasswordReset: true,
-        doctorId,
-        email: doctor.email,  
-        token: resetToken,   
-      });
-      return;
-    } else {
-      res.json({ success: false, message: "Doctor not found" });
-      return;
-    }
-  } catch (error) {
+    const { otp, doctorId } = req.body;
+    const result = await doctorService.verifyDoctorOtp(doctorId, otp);
+    res.json(result);
+  } catch (error: any) {
     console.error("Error verifying OTP:", error);
     res.status(500).json({ success: false, message: "Something went wrong." });
   }
 };
-/// Resend OTP endpoint ///
+
 export const resendDoctorOtp = async (req: Request, res: Response): Promise<void> => {
-  const { doctorId } = req.body;
-
-  if (!doctorId || !ObjectId.isValid(doctorId)) {
-     res.status(400).json({ success: false, message: "Invalid doctorId." });
-     return
-  }
-
   try {
-    const doctor = await doctorModel.findById(doctorId);
-    if (!doctor) {
-       res.status(404).json({ success: false, message: "Doctor not found." });
-       return
-    }
-
-    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    const otpData = await DoctorOTP.findOneAndUpdate(
-      { doctorId },
-      {
-        otp: newOtp,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      },
-      { upsert: true, new: true }
-    );
-
-    const emailBody = `
-      Hello ${doctor.name || "Doctor"},
-      
-      Your OTP code is: ${newOtp}
-      This OTP is valid for the next 10 minutes.
-      
-      If you did not request this, please ignore this email.
-      
-      Regards,
-      Rxion Team
-    `;
-
-    await sendOtpEmail(doctor.email, emailBody);
-
-    res.json({ success: true, message: "OTP has been resent to your email." });
-  } catch (error) {
+    const { doctorId } = req.body;
+    const result = await doctorService.resendDoctorOtp(doctorId);
+    res.json(result);
+  } catch (error: any) {
     console.error("Error resending OTP:", error);
-    res.status(500).json({
+    const status = error.status || 500;
+    res.status(status).json({
       success: false,
-      message: "An error occurred while resending the OTP. Please try again later.",
+      message: error.message || "An error occurred while resending the OTP. Please try again later."
     });
   }
 };
 
-/// Reset password ///
 export const doctorResetPassword = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, token, password } = req.body;
-
-    const doctor = await doctorModel.findOne({
-      email,
-      resetPasswordToken: token,
-      resetPasswordExpire: { $gt: new Date() },
-    });
-
-    if (!doctor) {
-      res.status(400).json({ success: false, message: "Invalid or expired reset token" });
-      return;
+    const result = await doctorService.doctorResetPassword(email, token, password);
+    if (!result.success) {
+      res.status(400).json(result);
+    } else {
+      res.status(200).json(result);
     }
-    doctor.password = await bcrypt.hash(password, 10);
-    doctor.resetPasswordToken = null;
-    doctor.resetPasswordExpire = null;
-    await doctor.save();
-
-    res.status(200).json({ success: true, message: "Password updated successfully" });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 
 
