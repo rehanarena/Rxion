@@ -100,6 +100,12 @@ const Navbar: React.FC = () => {
                   My Appointments
                 </p>
                 <p
+                  onClick={() => navigate("/my-wallet")}
+                  className="text-gray-600 hover:text-black cursor-pointer transition whitespace-nowrap"
+                >
+                  My Wallet
+                </p>
+                <p
                   onClick={logout}
                   className="text-gray-600 hover:text-black cursor-pointer transition whitespace-nowrap"
                 >
