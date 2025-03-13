@@ -1,4 +1,4 @@
-import DoctorOTP from '../models/docOtpModel';
+import DoctorOTP from "../../models/docOtpModel";
 
 export class DoctorOTPRepository {
   async createOtp(otpData: { otp: string; doctorId: string; expiresAt: Date }) {

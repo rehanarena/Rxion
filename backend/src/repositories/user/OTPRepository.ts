@@ -1,5 +1,4 @@
-// repositories/OTPRepository.ts
-import OTP from '../models/otpModel';
+import OTP from "../../models/otpModel";
 
 export class OTPRepository {
   async createOTP(userId: string, otp: string, expiresAt: Date) {

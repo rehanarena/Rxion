@@ -2,7 +2,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 
 export interface RequestWithUser extends Request {
-    userId?: string;
+  userId?: string;
 }
 
 const authUser = async (
@@ -11,7 +11,6 @@ const authUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Extract the token from the Authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -22,7 +21,6 @@ const authUser = async (
       return;
     }
 
-    // The token is the second part of the 'Bearer <token>' string
     const token = authHeader.split(" ")[1];
 
     if (!token) {

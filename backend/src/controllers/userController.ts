@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import { RequestWithUser } from "../middlewares/authUser";
 import IBookedSlot from "../models/doctorModel";
-import { AuthService } from "../services/authService";
-import { DoctorService } from "../services/DoctorService";
-import { AppointmentService } from "../services/AppointmentService";
-import PaymentService from "../services/PaymentService";
-import UserService from "../services/UserService";
+import { AuthService } from "../services/user/authService";
+import { DoctorService } from "../services/doctor/DoctorService";
+import { AppointmentService } from "../services/user/AppointmentService";
+import PaymentService from "../services/user/PaymentService";
+import UserService from "../services/user/UserService";
 import { Types } from "mongoose";
 
 interface UpdateProfileRequestBody {

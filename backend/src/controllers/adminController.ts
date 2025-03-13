@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AdminService } from "../services/AdminService";
+import { AdminService } from "../services/admin/adminService";
 const adminServiceInstance = new AdminService();
 
 interface AddDoctorRequestBody {

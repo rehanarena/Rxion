@@ -1,6 +1,4 @@
-// services/UserService.ts
-import { UserRepository } from "../repositories/UserRepository";
-
+import { UserRepository } from "../../repositories/user/UserRepository";
 
 export class UserService {
   private userRepository: UserRepository;

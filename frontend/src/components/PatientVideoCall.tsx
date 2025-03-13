@@ -7,10 +7,15 @@ const socket = io('http://localhost:4000');
 interface PatientVideoCallProps {
   roomId: string;
 }
+interface IncomingCallData {
+  room: string;
+  signalData: RTCSessionDescriptionInit;
+  from: string;
+}
 
 
 const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
-  const [incomingCall, setIncomingCall] = useState<any>(null);
+  const [incomingCall, setIncomingCall] = useState<IncomingCallData | null>( null);
   const [callAccepted, setCallAccepted] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);

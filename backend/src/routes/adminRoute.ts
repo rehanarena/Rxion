@@ -2,7 +2,7 @@ import express from "express";
 import { addDoctor,loginAdmin, adminDashboard, userList, blockUnblockUser, doctorList, allDoctors, blockUnblockDoctor, appointmentsAdmin, cancelAppointment, getDoctors } from  "../controllers/adminController";
 import upload from "../middlewares/multer";
 import authAdmin from "../middlewares/authAdmin";
-import { changeAvailability } from "../controllers/doctorController";
+import { changeAvailability } from "../controllers/doctor/doctorController";
 
 const adminRouter = express.Router();
 

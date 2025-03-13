@@ -1,11 +1,11 @@
-// services/DoctorService.ts
-import { DoctorRepository } from '../repositories/DoctorRepository';
-import { DoctorOTPRepository } from '../repositories/DoctorOTPRepository';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
-import crypto from 'crypto';
-import { ObjectId } from "mongodb"; 
+import { DoctorRepository } from "../../repositories/doctor/DoctorRepository";
+import { DoctorOTPRepository } from "../../repositories/doctor/DoctorOTPRepository";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
+import { ObjectId } from "mongodb";
+import { IDoctor } from "../../models/doctorModel";
 
 interface SearchParams {
   speciality?: string;
@@ -13,6 +13,11 @@ interface SearchParams {
   sortBy?: string;
   page?: string;
   limit?: string;
+}
+interface UpdateDoctorProfileData {
+  fees: number;
+  address: string;
+  available: boolean;
 }
 
 export class DoctorService {
@@ -40,20 +45,24 @@ export class DoctorService {
     }
 
     let sortOptions: any = {};
-    // If sorting by availability, we add a filter instead of a sort.
     if (sortBy === "availability") {
       query.available = true;
     } else if (sortBy === "fees") {
-      sortOptions.fees = 1; // ascending order
+      sortOptions.fees = 1;
     } else if (sortBy === "experience") {
-      sortOptions.experience = -1; // descending order
+      sortOptions.experience = -1;
     }
 
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 8;
     const skip = (pageNum - 1) * limitNum;
 
-    const doctors = await this.doctorRepository.searchDoctors(query, sortOptions, skip, limitNum);
+    const doctors = await this.doctorRepository.searchDoctors(
+      query,
+      sortOptions,
+      skip,
+      limitNum
+    );
     const totalDoctors = await this.doctorRepository.countDoctors(query);
 
     return {
@@ -63,25 +72,29 @@ export class DoctorService {
       doctors,
     };
   }
-   // Login doctor
-   async loginDoctor(email: string, password: string) {
+  async loginDoctor(email: string, password: string) {
     const doctor = await this.doctorRepository.findByEmail(email);
     if (!doctor) {
       return { success: false, message: "Invalid credentials" };
     }
     if (doctor.isBlocked) {
-      return { success: false, message: "Your account has been blocked by the admin." };
+      return {
+        success: false,
+        message: "Your account has been blocked by the admin.",
+      };
     }
     const isMatch = await bcrypt.compare(password, doctor.password);
     if (isMatch) {
-      const token = jwt.sign({ id: doctor._id }, process.env.JWT_SECRET as string);
+      const token = jwt.sign(
+        { id: doctor._id },
+        process.env.JWT_SECRET as string
+      );
       return { success: true, token };
     } else {
       return { success: false, message: "Incorrect password" };
     }
   }
 
-  // Generate OTP for forgot password
   async doctorForgotPasswordOTP(email: string) {
     const doctor = await this.doctorRepository.findByEmail(email);
     if (!doctor) {
@@ -97,10 +110,13 @@ export class DoctorService {
     });
     const message = `Your OTP for password reset is: ${otp}. It is valid for 10 minutes.`;
     await this.sendOtpEmail(doctor.email, "Doctor Password Reset OTP", message);
-    return { success: true, message: "OTP sent to your email.", doctorId: doctor._id };
+    return {
+      success: true,
+      message: "OTP sent to your email.",
+      doctorId: doctor._id,
+    };
   }
 
-  // Verify OTP and create a reset token
   async verifyDoctorOtp(doctorId: string, otp: string) {
     if (!doctorId || !ObjectId.isValid(doctorId)) {
       throw { status: 400, message: "Invalid doctorId." };
@@ -121,7 +137,8 @@ export class DoctorService {
       await this.doctorRepository.saveDoctor(doctor);
       return {
         success: true,
-        message: "Doctor verified successfully. You can reset your password now.",
+        message:
+          "Doctor verified successfully. You can reset your password now.",
         isForPasswordReset: true,
         doctorId,
         email: doctor.email,
@@ -132,7 +149,6 @@ export class DoctorService {
     }
   }
 
-  // Resend OTP
   async resendDoctorOtp(doctorId: string) {
     if (!doctorId || !ObjectId.isValid(doctorId)) {
       throw { status: 400, message: "Invalid doctorId." };
@@ -159,7 +175,6 @@ Rxion Team
     return { success: true, message: "OTP has been resent to your email." };
   }
 
-  // Reset password using the reset token
   async doctorResetPassword(email: string, token: string, password: string) {
     const doctor = await this.doctorRepository.findOne({
       email,
@@ -176,7 +191,6 @@ Rxion Team
     return { success: true, message: "Password updated successfully" };
   }
 
-  // Utility method to send OTP emails
   private async sendOtpEmail(to: string, subject: string, text: string) {
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -192,5 +206,61 @@ Rxion Team
       text,
     });
   }
+  async getDashboardData(docId: string) {
+    const appointments = await this.doctorRepository.getAppointments(docId);
 
+    let earnings = 0;
+    const patients: string[] = [];
+
+    appointments.forEach((item: any) => {
+      if (item.isCompleted || item.payment) {
+        earnings += item.amount;
+      }
+      if (!patients.includes(item.userId)) {
+        patients.push(item.userId);
+      }
+    });
+
+    const dashData = {
+      earnings,
+      appointments: appointments.length,
+      patients: patients.length,
+      latestAppointments: [...appointments].reverse().slice(0, 5),
+    };
+
+    return dashData;
+  }
+  async changeAvailability(docId: string): Promise<boolean> {
+    const doctor = await this.doctorRepository.findById(docId);
+    if (!doctor) {
+      throw new Error("Doctor not found");
+    }
+    const newAvailability = !doctor.available;
+    await this.doctorRepository.updateAvailability(docId, newAvailability);
+    return newAvailability;
+  }
+  async listDoctors(): Promise<IDoctor[]> {
+    return this.doctorRepository.getAllDoctors();
+  }
+  async getDoctorProfile(docId: string): Promise<IDoctor | null> {
+    return this.doctorRepository.getDoctorProfile(docId);
+  }
+  async updateDoctorProfile(
+    docId: string,
+    data: UpdateDoctorProfileData
+  ): Promise<IDoctor> {
+    if (!docId) {
+      throw new Error("Doctor ID is required");
+    }
+
+    const updatedDoctor = await this.doctorRepository.updateDoctorProfile(
+      docId,
+      data
+    );
+    if (!updatedDoctor) {
+      throw new Error("Doctor not found");
+    }
+
+    return updatedDoctor;
+  }
 }

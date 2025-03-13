@@ -1,6 +1,5 @@
-// repositories/UserRepository.ts
-import userModel from '../models/userModel';
-import { IUser } from '../models/userModel';
+import userModel from "../../models/userModel";
+import { IUser } from "../../models/userModel";
 
 interface UserData {
   name: string;
@@ -25,11 +24,9 @@ export class UserRepository {
   async updateUser(user: any): Promise<any>;
   async updateUser(userId: string, update: object): Promise<any>;
   async updateUser(arg1: any, arg2?: object): Promise<any> {
-    if (typeof arg1 === 'string' && arg2 !== undefined) {
-      // When called with userId and update object.
+    if (typeof arg1 === "string" && arg2 !== undefined) {
       return await userModel.findByIdAndUpdate(arg1, arg2, { new: true });
     } else {
-      // When called with a user document.
       return await arg1.save();
     }
   }
@@ -41,7 +38,9 @@ export class UserRepository {
     return await userModel.findByIdAndUpdate(userId, updateData, { new: true });
   }
   async updateWalletBalance(userId: string, amount: number): Promise<void> {
-    await userModel.findByIdAndUpdate(userId, { $inc: { walletBalance: amount } });
+    await userModel.findByIdAndUpdate(userId, {
+      $inc: { walletBalance: amount },
+    });
   }
   async resetWalletBalance(userId: string): Promise<void> {
     await userModel.findByIdAndUpdate(userId, { walletBalance: 0 });

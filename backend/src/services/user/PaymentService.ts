@@ -1,7 +1,6 @@
-// services/PaymentService.ts
-import { UserRepository } from "../repositories/UserRepository";
-import { AppointmentRepository } from "../repositories/AppointmentRepository";
-import { razorpayInstance } from "../config/razorpay";
+import { UserRepository } from "../../repositories/user/UserRepository";
+import { AppointmentRepository } from "../../repositories/user/AppointmentRepository";
+import { razorpayInstance } from "../../config/razorpay";
 
 interface RazorpayOrderCreateRequestBody {
   amount: number;
@@ -37,7 +36,6 @@ class PaymentService {
     let walletUsed = 0;
     let remainingAmount = appointment.amount;
 
-    // Use wallet balance if available
     if (user.walletBalance > 0) {
       if (user.walletBalance >= appointment.amount) {
         walletUsed = appointment.amount;
@@ -63,11 +61,10 @@ class PaymentService {
       }
     }
 
-    // Create a Razorpay order if remaining amount exists
     if (remainingAmount > 0) {
       const currency = process.env.CURRENCY || "INR";
       const options: RazorpayOrderCreateRequestBody = {
-        amount: remainingAmount * 100, // amount in paise
+        amount: remainingAmount * 100,
         currency: currency,
         receipt: appointmentId.toString(),
         payment_capture: 1,
@@ -83,7 +80,6 @@ class PaymentService {
   async verifyPayment(razorpay_payment_id: string, razorpay_order_id: string) {
     const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id);
     if (orderInfo.status === "paid") {
-      // Assuming orderInfo.receipt contains the appointmentId
       await this.appointmentRepository.updatePaymentStatus(
         orderInfo.receipt as string,
         { payment: true }

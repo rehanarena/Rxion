@@ -461,4 +461,3 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
 }
 
 export default DoctorVideoCall
-

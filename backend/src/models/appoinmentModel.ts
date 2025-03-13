@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-// TypeScript interface for the Appointment schema
 export interface IAppointment extends Document {
   userId: string;
   docId: string;
@@ -15,14 +14,13 @@ export interface IAppointment extends Document {
   isCompleted?: boolean;
 }
 
-// Appointment schema definition
 const appointmentSchema: Schema<IAppointment> = new mongoose.Schema({
   userId: { type: String, required: true },
   docId: { type: String, required: true },
   slotDate: { type: String, required: true },
   slotTime: { type: String, required: true },
   userData: { type: Object, required: true },
-  doctData: { type: Object},
+  doctData: { type: Object },
   amount: { type: Number, required: true },
   date: { type: Number, required: true },
   cancelled: { type: Boolean, required: false },
@@ -30,8 +28,8 @@ const appointmentSchema: Schema<IAppointment> = new mongoose.Schema({
   isCompleted: { type: Boolean, required: false },
 });
 
-// Appointment model
 const appointmentModel: Model<IAppointment> =
-  mongoose.models.appointment || mongoose.model<IAppointment>("appointment", appointmentSchema);
+  mongoose.models.appointment ||
+  mongoose.model<IAppointment>("appointment", appointmentSchema);
 
 export default appointmentModel;

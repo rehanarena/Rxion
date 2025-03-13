@@ -1,7 +1,7 @@
 // repositories/adminRepository.ts
-import doctorModel from "../models/doctorModel";
-import userModel from "../models/userModel";
-import appointmentModel from "../models/appoinmentModel";
+import doctorModel from "../../models/doctorModel";
+import userModel from "../../models/userModel";
+import appointmentModel from "../../models/appoinmentModel";
 
 export class adminRepository {
   async create(doctorData: any): Promise<any> {

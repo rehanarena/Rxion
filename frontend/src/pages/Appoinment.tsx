@@ -1,13 +1,12 @@
 "use client"
 
-import type React from "react"
-
-import { useContext, useEffect, useState } from "react"
+import { useEffect, useState, useContext } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { Calendar, MessageSquare, Check } from "lucide-react"
+import axios from "axios"
+import { toast } from "react-toastify"
 import { AppContext } from "../context/AppContext"
 import { DoctorContext } from "../context/DoctorContext"
-import { toast } from "react-toastify"
-import axios from "axios"
 
 interface BookedSlot {
   date: string
@@ -27,23 +26,25 @@ interface Doctor {
   slots_booked?: { [key: string]: BookedSlot[] }
 }
 
-const Appointment: React.FC = () => {
+const Appointment = () => {
   const { docId } = useParams<{ docId: string }>()
+  const navigate = useNavigate()
+
   const { doctors, currencySymbol, backendUrl, token, getDoctorsData } = useContext(AppContext)!
   const { docSlots, fetchSlots } = useContext(DoctorContext)!
-  const navigate = useNavigate()
 
   const [docInfo, setDocInfo] = useState<Doctor | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [slotTime, setSlotTime] = useState<string>("")
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     if (docId && doctors.length > 0) {
-      fetchDocInfo();
-      fetchSlots(docId);
+      fetchDocInfo()
+      fetchSlots(docId)
+      setIsLoading(false)
     }
-  }, [docId, doctors, fetchSlots]);
-  
+  }, [docId, doctors, fetchSlots])
 
   const fetchDocInfo = () => {
     const doc = doctors.find((doctor: Doctor) => doctor._id === docId)
@@ -67,6 +68,11 @@ const Appointment: React.FC = () => {
     if (!token) {
       toast.warn("Login to book appointment")
       return navigate("/login")
+    }
+
+    if (!slotTime) {
+      toast.warn("Please select a time slot")
+      return
     }
 
     try {
@@ -144,10 +150,9 @@ const Appointment: React.FC = () => {
             }
           })
         } else {
-          console.warn('Expected an array but got:', slotArray)
+          console.warn("Expected an array but got:", slotArray)
         }
       })
-      
     }
     return booked
   }
@@ -199,81 +204,119 @@ const Appointment: React.FC = () => {
   })
   timeSlots.sort((a, b) => a.getTime() - b.getTime())
 
-  return docInfo ? (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8 text-center">Book Appointment</h1>
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="md:flex">
-          <div className="md:w-1/3">
-            <img src={docInfo.image || "/placeholder.svg"} alt={docInfo.name} className="w-full h-full object-cover" />
-          </div>
-          <div className="p-6 md:w-2/3">
-            <div className="flex items-center">
-              <h2 className="text-2xl font-semibold mb-2">{docInfo.name}</h2>
-              <button
-  onClick={() => navigate(`/chat/${docInfo?._id}`)}
-  className="ml-4 p-2 rounded-full hover:bg-gray-200"
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    className="w-6 h-6"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.97-4.03 9-9 9a9.93 9.93 0 01-4.465-1.026L3 21l1.026-4.465A9.93 9.93 0 013 12c0-4.97 4.03-9 9-9s9 4.03 9 9z"
-    />
-  </svg>
-</button>
+  const formatDate = (date: Date) => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-            </div>
-            <p className="text-gray-600 mb-4">
-              {docInfo.degree} - {docInfo.speciality}
-            </p>
-            <p className="text-sm text-gray-500 mb-4">{docInfo.experience} of experience</p>
-            <div className="mb-4">
-              <h3 className="text-lg font-medium mb-2">About</h3>
-              <p className="text-gray-600">{docInfo.about}</p>
-            </div>
-            <div className="mb-4">
-              <h3 className="text-lg font-medium mb-2">Appointment Fee</h3>
-              <p className="text-xl font-bold text-green-600">
-                {currencySymbol}
-                {docInfo.fees}
-              </p>
+    return {
+      day: days[date.getDay()],
+      date: date.getDate(),
+      month: months[date.getMonth()],
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-4 md:p-6">
+        <h1 className="text-3xl font-bold mb-8 text-center">Book Appointment</h1>
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden animate-pulse">
+          <div className="md:flex">
+            <div className="md:w-1/3 h-[300px] bg-gray-200"></div>
+            <div className="p-6 md:w-2/3">
+              <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
+              <div className="h-24 bg-gray-200 rounded w-full mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/4"></div>
             </div>
           </div>
         </div>
-        <div className="p-6 bg-gray-50">
+      </div>
+    )
+  }
+
+  return docInfo ? (
+    <div className="max-w-4xl mx-auto p-4 md:p-6">
+      <h1 className="text-3xl font-bold mb-6 text-center">Book Appointment</h1>
+
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="md:flex">
+          <div className="md:w-1/3 h-[300px] relative">
+            <img src={docInfo.image || "/placeholder.svg"} alt={docInfo.name} className="w-full h-full object-cover" />
+          </div>
+          <div className="p-6 md:w-2/3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold">{docInfo.name}</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    {docInfo.speciality}
+                  </span>
+                  <span className="px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    {docInfo.degree}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate(`/chat/${docInfo._id}`)}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <MessageSquare className="h-5 w-5 text-gray-600" />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 mt-2">{docInfo.experience} of experience</p>
+
+            <div className="mt-4">
+              <h3 className="text-lg font-medium">About</h3>
+              <p className="text-gray-600 mt-1 text-sm">{docInfo.about}</p>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium">Appointment Fee</h3>
+                <p className="text-xl font-bold text-green-600">
+                  {currencySymbol}
+                  {docInfo.fees}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Calendar className="h-4 w-4" />
+                <span>30 min session</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 bg-gray-50 border-t border-b border-gray-100">
           <h3 className="text-xl font-semibold mb-4">Select Appointment Date</h3>
-          <div className="flex gap-4 overflow-x-auto pb-4">
+          <div className="flex gap-3 overflow-x-auto pb-2">
             {Object.keys(groupedSlots).map((dateStr, index) => {
               const date = new Date(dateStr)
+              const { day, date: dateNum, month } = formatDate(date)
+
               return (
                 <button
                   key={index}
                   onClick={() => setSelectedDate(date)}
-                  className={`flex flex-col items-center py-2 px-4 rounded-lg transition-colors ${
+                  className={`flex flex-col items-center py-3 px-4 min-w-[90px] rounded-lg transition-colors ${
                     selectedDate.toDateString() === dateStr
                       ? "bg-blue-500 text-white"
-                      : "bg-white text-gray-800 hover:bg-blue-100"
+                      : "bg-white text-gray-800 border border-gray-200 hover:bg-blue-50"
                   }`}
                 >
-                  <span className="text-sm font-semibold">{date.toLocaleDateString([], { weekday: "short" })}</span>
-                  <span className="text-lg font-bold">{date.toLocaleDateString([], { day: "numeric" })}</span>
-                  <span className="text-sm">{date.toLocaleDateString([], { month: "short" })}</span>
+                  <span className="text-xs font-medium">{day}</span>
+                  <span className="text-lg font-bold my-1">{dateNum}</span>
+                  <span className="text-xs">{month}</span>
                 </button>
               )
             })}
           </div>
         </div>
+
         <div className="p-6">
           <h3 className="text-xl font-semibold mb-4">Available Time Slots</h3>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
             {timeSlots.map((slot, idx) => {
               const slotDate = slot.toISOString().split("T")[0]
               const slotTime24 = slot.toLocaleTimeString([], {
@@ -290,26 +333,37 @@ const Appointment: React.FC = () => {
 
               if (bookedSlotSet.has(slotDateTime)) return null
 
+              const isSelected = slotTime === slot.toISOString()
+
               return (
                 <button
                   key={idx}
                   onClick={() => setSlotTime(slot.toISOString())}
-                  className={`py-2 px-3 rounded-lg text-sm transition-colors ${
-                    slotTime === slot.toISOString()
+                  className={`py-2 px-3 rounded-lg text-sm transition-colors relative ${
+                    isSelected
                       ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-800 hover:bg-blue-100"
+                      : "bg-gray-50 text-gray-800 border border-gray-200 hover:bg-blue-50"
                   }`}
                 >
                   {slotTime12}
+                  {isSelected && (
+                    <span className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                      <Check className="h-3 w-3 text-white" />
+                    </span>
+                  )}
                 </button>
               )
             })}
           </div>
         </div>
-        <div className="p-6 bg-gray-50">
+
+        <div className="p-6 bg-gray-50 border-t border-gray-100">
           <button
             onClick={bookAppointment}
-            className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
+            disabled={!slotTime}
+            className={`w-full py-4 rounded-lg text-white text-lg font-semibold transition-colors ${
+              slotTime ? "bg-green-500 hover:bg-green-600" : "bg-gray-300 cursor-not-allowed"
+            }`}
           >
             Book Appointment
           </button>
@@ -317,8 +371,8 @@ const Appointment: React.FC = () => {
       </div>
     </div>
   ) : (
-    <div className="flex justify-center items-center h-screen">
-      <p className="text-xl">Loading...</p>
+    <div className="flex justify-center items-center h-[70vh]">
+      <p className="text-xl">Doctor not found</p>
     </div>
   )
 }
