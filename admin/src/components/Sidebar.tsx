@@ -115,17 +115,8 @@ const Sidebar: React.FC = () => {
               `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
-            } to={'/doctor-slots'}>
-            <img src={add_icon} alt="" />
-            <p className="hidden md:block">Add Slots</p>
-          </NavLink>
-
-          <NavLink  className={({ isActive }) =>
-              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${
-                isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
-              }`
             } to={'/doctor-slot-manage'}>
-            <img src={time_icon} alt="" />
+            <img src= {add_icon} alt="" />
             <p className="hidden md:block">SlotManagement</p>
           </NavLink>
 

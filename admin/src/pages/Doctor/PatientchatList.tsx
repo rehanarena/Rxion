@@ -1,8 +1,10 @@
+"use client"
+
 import type React from "react"
 import { useEffect, useState } from "react"
 import { io } from "socket.io-client"
 import { useNavigate } from "react-router-dom"
-import { MessageSquare, Search, Inbox } from "lucide-react"
+import { MessageSquare, Search, Inbox, Clock, ChevronRight } from "lucide-react"
 
 interface MessageSummary {
   patientId: string
@@ -11,12 +13,13 @@ interface MessageSummary {
   lastMessage: string
   timestamp: Date
 }
+
 interface ChatHistoryMessage {
-  room: string;
-  patientName: string;
-  patientImage: string;
-  message: string;
-  timestamp: string;
+  room: string
+  patientName: string
+  patientImage: string
+  message: string
+  timestamp: string
 }
 
 const DoctorMessages: React.FC = () => {
@@ -37,7 +40,7 @@ const DoctorMessages: React.FC = () => {
         patientImage: msg.patientImage || "/default-user.png",
         lastMessage: msg.message,
         timestamp: new Date(msg.timestamp),
-      }));
+      }))
       setMessageSummaries(formattedHistory)
     })
 
@@ -81,74 +84,104 @@ const DoctorMessages: React.FC = () => {
   const handlePatientClick = (patientId: string, patientName: string, patientImage: string) => {
     navigate(
       `/doctor-chat?room=${patientId}&sender=doctor&patientName=${encodeURIComponent(
-        patientName
-      )}&patientImage=${encodeURIComponent(patientImage)}`
+        patientName,
+      )}&patientImage=${encodeURIComponent(patientImage)}`,
     )
   }
 
   const filteredMessages = messageSummaries.filter(
     (msg) =>
       msg.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      msg.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
+      msg.lastMessage.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  }
+
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-4 md:p-6">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-4xl mx-auto p-4">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-5">
-          <div className="flex items-center space-x-2">
-            <MessageSquare className="h-6 w-6 text-white" />
-            <h2 className="text-2xl font-bold text-white">Patient Messages</h2>
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="Search patients or messages..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Message List */}
-        <div className="divide-y divide-gray-200 max-h-[calc(100vh-240px)] overflow-y-auto">
-          {filteredMessages.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="mx-auto h-12 w-12 text-gray-400 flex items-center justify-center rounded-full bg-gray-100">
-                <Inbox className="h-6 w-6" />
+        <header className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="bg-indigo-600 p-2 rounded-full">
+                <MessageSquare className="h-6 w-6 text-white" />
               </div>
-              <p className="mt-2 text-base font-medium text-gray-900">
-                No messages yet
-              </p>
+              <h1 className="text-2xl font-bold text-slate-800">Patient Messages</h1>
             </div>
-          ) : (
-            filteredMessages.map((msg) => (
-              <div
-                key={msg.patientId}
-                className="p-4 flex items-center cursor-pointer hover:bg-gray-50"
-                onClick={() => handlePatientClick(msg.patientId, msg.patientName, msg.patientImage)}
-              >
-                <img src={msg.patientImage} alt={msg.patientName} className="h-10 w-10 rounded-full" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-900">{msg.patientName}</p>
-                  <p className="text-xs text-gray-500">{msg.lastMessage}</p>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="bg-white rounded-xl shadow-sm overflow-hidden">
+          {/* Search Bar */}
+          <div className="p-4 border-b border-slate-100">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                placeholder="Search patients or messages..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Message List */}
+          <div className="max-h-[calc(100vh-240px)] overflow-y-auto">
+            {filteredMessages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                <div className="bg-slate-100 p-4 rounded-full mb-4">
+                  <Inbox className="h-8 w-8 text-slate-400" />
                 </div>
+                <h3 className="text-lg font-medium text-slate-800 mb-1">No messages yet</h3>
+                <p className="text-sm text-slate-500 max-w-md">
+                  When patients send you messages, they will appear here.
+                </p>
               </div>
-            ))
-          )}
-        </div>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {filteredMessages.map((msg) => (
+                  <li
+                    key={msg.patientId}
+                    className="hover:bg-slate-50 transition-colors cursor-pointer"
+                    onClick={() => handlePatientClick(msg.patientId, msg.patientName, msg.patientImage)}
+                  >
+                    <div className="flex items-center p-4">
+                      <div className="relative flex-shrink-0">
+                        <img
+                          src={msg.patientImage || "/placeholder.svg"}
+                          alt={msg.patientName}
+                          className="h-12 w-12 rounded-full object-cover border border-slate-200"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1 px-4">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="text-sm font-medium text-slate-900 truncate">{msg.patientName}</h3>
+                          <div className="flex items-center text-xs text-slate-500">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>{formatTime(msg.timestamp)}</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-slate-600 truncate">{msg.lastMessage}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   )
 }
 
 export default DoctorMessages
+

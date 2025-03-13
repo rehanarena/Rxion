@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useContext } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { Calendar, MessageSquare, Check } from "lucide-react"
+import { MessageSquare, Check } from "lucide-react"
 import axios from "axios"
 import { toast } from "react-toastify"
 import { AppContext } from "../context/AppContext"
@@ -280,10 +280,6 @@ const Appointment = () => {
                   {docInfo.fees}
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Calendar className="h-4 w-4" />
-                <span>30 min session</span>
-              </div>
             </div>
           </div>
         </div>
@@ -358,15 +354,16 @@ const Appointment = () => {
         </div>
 
         <div className="p-6 bg-gray-50 border-t border-gray-100">
-          <button
-            onClick={bookAppointment}
-            disabled={!slotTime}
-            className={`w-full py-4 rounded-lg text-white text-lg font-semibold transition-colors ${
-              slotTime ? "bg-green-500 hover:bg-green-600" : "bg-gray-300 cursor-not-allowed"
-            }`}
-          >
-            Book Appointment
-          </button>
+        <button
+  onClick={bookAppointment}
+  disabled={!slotTime}
+  className={`w-full py-4 rounded-lg text-white text-lg font-semibold transition-colors ${
+    slotTime ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"
+  }`}
+>
+  Book Appointment
+</button>
+
         </div>
       </div>
     </div>

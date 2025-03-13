@@ -3,7 +3,7 @@ import { AppContext } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Clock, MapPin, CreditCard, X} from "lucide-react";
+import { Calendar, Clock, MapPin, CreditCard, X } from "lucide-react";
 import io from "socket.io-client";
 
 interface IncomingCallData {
@@ -35,6 +35,7 @@ interface Appointment {
   slotTime: string;
   cancelled: boolean;
   payment: boolean;
+  isCompleted?: boolean;
 }
 
 export interface RazorpaySuccessResponse {
@@ -44,11 +45,11 @@ export interface RazorpaySuccessResponse {
 }
 export interface RazorpayErrorResponse {
   error: {
-    code: string;             
-    description: string;      
-    source: string;           
-    step: string;            
-    reason: string;           
+    code: string;
+    description: string;
+    source: string;
+    step: string;
+    reason: string;
     metadata: {
       order_id?: string;
       payment_id?: string;
@@ -74,6 +75,7 @@ interface Order {
   currency: string;
   receipt: string;
 }
+
 const socket = io("http://localhost:4000");
 
 const MyAppointments = () => {
@@ -175,19 +177,19 @@ const MyAppointments = () => {
         }
       }
     };
-  
+
     const rzp = new window.Razorpay(options);
-  
-    rzp.on('payment.failed', function(response: RazorpayErrorResponse) {
+
+    rzp.on("payment.failed", function (response: RazorpayErrorResponse) {
       rzp.close();
       setTimeout(() => {
         navigate("/payment-failure", { state: { errorMessage: response.error.description || "Payment failed." } });
       }, 900);
     });
-  
+
     rzp.open();
   };
-  
+
   const appointmentRazorpay = async (appointmentId: string) => {
     try {
       const { data } = await axios.post(
@@ -212,7 +214,6 @@ const MyAppointments = () => {
       }
     }
   };
-  
 
   useEffect(() => {
     socket.on("call-made", (data: IncomingCallData) => {
@@ -224,6 +225,7 @@ const MyAppointments = () => {
       socket.off("call-made");
     };
   }, []);
+
   useEffect(() => {
     appointments.forEach((appointment) => {
       socket.emit("join-room", appointment._id);
@@ -280,18 +282,26 @@ const MyAppointments = () => {
                   alt={appointment.doctData.name}
                 />
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-800 line-clamp-1">{appointment.doctData.name}</h2>
-                  <p className="text-sm text-gray-600 line-clamp-1">{appointment.doctData.speciality}</p>
+                  <h2 className="text-lg font-semibold text-gray-800 line-clamp-1">
+                    {appointment.doctData.name}
+                  </h2>
+                  <p className="text-sm text-gray-600 line-clamp-1">
+                    {appointment.doctData.speciality}
+                  </p>
                 </div>
               </div>
               <div className="space-y-1 text-sm">
                 <div className="flex items-center text-gray-600">
                   <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="line-clamp-1">{slotDateFormat(appointment.slotDate)}</span>
+                  <span className="line-clamp-1">
+                    {slotDateFormat(appointment.slotDate)}
+                  </span>
                 </div>
                 <div className="flex items-center text-gray-600">
                   <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="line-clamp-1">{new Date(appointment.slotTime).toLocaleTimeString()}</span>
+                  <span className="line-clamp-1">
+                    {new Date(appointment.slotTime).toLocaleTimeString()}
+                  </span>
                 </div>
                 <div className="flex items-center text-gray-600">
                   <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
@@ -302,13 +312,21 @@ const MyAppointments = () => {
               </div>
             </div>
             <div className="bg-gray-50 px-4 py-3 mt-auto">
-              {!appointment.cancelled && appointment.payment && (
+              {appointment.cancelled ? (
+                <div className="flex items-center text-red-600 text-sm">
+                  <X className="w-4 h-4 mr-2" />
+                  <span>Appointment Cancelled</span>
+                </div>
+              ) : appointment.isCompleted ? (
+                <div className="flex items-center text-green-600 text-sm">
+                  <span>Completed</span>
+                </div>
+              ) : appointment.payment ? (
                 <div className="flex items-center text-green-600 text-sm">
                   <CreditCard className="w-4 h-4 mr-2" />
                   <span>Paid</span>
                 </div>
-              )}
-              {!appointment.cancelled && !appointment.payment && (
+              ) : (
                 <button
                   onClick={() => appointmentRazorpay(appointment._id)}
                   className="w-full bg-blue-500 text-white py-1 px-2 rounded text-sm hover:bg-blue-600 transition duration-300"
@@ -316,19 +334,13 @@ const MyAppointments = () => {
                   Pay Online
                 </button>
               )}
-              {!appointment.cancelled && (
+              {!appointment.cancelled && !appointment.isCompleted && (
                 <button
                   onClick={() => cancelAppointment(appointment._id)}
                   className="w-full mt-2 bg-red-500 text-white py-1 px-2 rounded text-sm hover:bg-red-600 transition duration-300"
                 >
                   Cancel Appointment
                 </button>
-              )}
-              {appointment.cancelled && (
-                <div className="flex items-center text-red-600 text-sm">
-                  <X className="w-4 h-4 mr-2" />
-                  <span>Appointment Cancelled</span>
-                </div>
               )}
             </div>
           </div>
