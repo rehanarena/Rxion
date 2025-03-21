@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { DoctorContext } from "../../context/DoctorContext";
 import earning_icon from '../../assets/earning_icon.svg';
 import appoinments_icon from '../../assets/appointments_icon.svg';
