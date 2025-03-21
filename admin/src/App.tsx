@@ -20,7 +20,7 @@ import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 import DoctorAppoinments from './pages/Doctor/DoctorAppoinments';
 import DoctorProfile from './pages/Doctor/DoctorProfile';
 import AddSlots from './pages/Doctor/AddSlots';
-import { SlotManagement }from './pages/Doctor/SlotManagement';
+import { ManageSlot } from './pages/Doctor/ManageSlot'
 import NotFound from './components/NotFound';
 import DoctorForgotPasswordOTP from './pages/DoctorForgotPassword';
 import DoctorResetPasswordOTP from './pages/DoctorResetPassword';
@@ -71,7 +71,7 @@ const App = () => {
               <Route path="/doctor-chat" element={< DoctorChat/>} />
               <Route path='/doctor-profile' element={<DoctorProfile />} />
               <Route path='/doctor-slots' element={<AddSlots />} />
-              <Route path='/doctor-slot-manage' element={<SlotManagement />} />
+              <Route path='/doctor-slot-manage'  element={<ManageSlot />} />
               
               {/* Fallback for unknown routes */}
               <Route path='*' element={<NotFound />} />

@@ -10,7 +10,7 @@ interface Slot {
   endTime: string
 }
 
-export const SlotManagement = () => {
+export const ManageSlot = () => {
   const doctorContext = useContext(DoctorContext)
   if (!doctorContext) {
     throw new Error("DoctorContext must be used within a DoctorContextProvider")
@@ -100,7 +100,6 @@ export const SlotManagement = () => {
     setCurrentSlot(null)
   }
 
-
   const formatTimeOnly = (date: string) => {
     const newDate = new Date(date)
     return newDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -188,12 +187,12 @@ export const SlotManagement = () => {
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-semibold text-gray-800">Your Available Slots</h3>
             <button
-      onClick={() => navigate('/doctor-slots')}
-      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-    >
-      <Plus size={18} />
-      Add New Slot
-    </button>
+              onClick={() => navigate('/doctor-slots')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Add New Slot
+            </button>
           </div>
 
           {slots.length > 0 ? (
@@ -244,8 +243,9 @@ export const SlotManagement = () => {
               <h3 className="text-xl font-medium text-gray-700 mb-2">No Slots Available</h3>
               <p className="text-gray-500 mb-4">You haven't created any availability slots yet.</p>
               <button 
-               onClick={() => navigate('/doctor-slots')}
-               className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2">
+                onClick={() => navigate('/doctor-slots')}
+                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+              >
                 <Plus size={18} />
                 Create Your First Slot
               </button>
@@ -256,5 +256,3 @@ export const SlotManagement = () => {
     </div>
   )
 }
-
-
