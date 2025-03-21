@@ -19,7 +19,7 @@ import DoctorDetails from './pages/Admin/DoctorDeatils';
 import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 import DoctorAppoinments from './pages/Doctor/DoctorAppoinments';
 import DoctorProfile from './pages/Doctor/DoctorProfile';
-import SlotManagement from './pages/Doctor/SlotManagement';
+import SlotManagement from './pages/Doctor/SlotManagement'
 import AddSlots from './pages/Doctor/AddSlots';
 import NotFound from './components/NotFound';
 import DoctorForgotPasswordOTP from './pages/DoctorForgotPassword';
