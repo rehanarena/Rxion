@@ -23,10 +23,11 @@ interface UserData {
 interface AppContextType {
   backendUrl: string;
   token: string | false;
-  userData: UserData | false;
-  setUserData: React.Dispatch<React.SetStateAction<UserData | false>>;
+  userData: UserData | null;
+  setUserData: React.Dispatch<React.SetStateAction<UserData | null>>;
   loadUserProfileData: () => void;
 }
+
 
 const MyProfile = () => {
   const { userData, setUserData, token, backendUrl, loadUserProfileData } =
