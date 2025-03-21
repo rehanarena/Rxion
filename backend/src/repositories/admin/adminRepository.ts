@@ -17,14 +17,25 @@ export class adminRepository {
     );
   }
 
-  async getDashboardData(): Promise<{ doctors: number; patients: number }> {
+  async getDashboardData(): Promise<{
+    doctors: number;
+    patients: number;
+    latestAppointments: any[];
+  }> {
     const doctors = await doctorModel.find({});
-    const users = await userModel.find({});
+    const patients = await userModel.find({});
+    const latestAppointments = await appointmentModel
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(5);
+  
     return {
       doctors: doctors.length,
-      patients: users.length,
+      patients: patients.length,
+      latestAppointments,
     };
   }
+  
 
   async getAllUsers(): Promise<any[]> {
     return userModel.find();

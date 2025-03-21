@@ -1,4 +1,3 @@
-// frontend/src/pages/PatientVideoCallPage.tsx
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import PatientVideoCall from '../components/PatientVideoCall';

@@ -34,7 +34,8 @@ const Appointment = () => {
   const { docSlots, fetchSlots } = useContext(DoctorContext)!
 
   const [docInfo, setDocInfo] = useState<Doctor | null>(null)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  // No date is selected by default
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [slotTime, setSlotTime] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
 
@@ -188,8 +189,10 @@ const Appointment = () => {
     {} as { [key: string]: typeof docSlots },
   )
 
-  const slotsForSelectedDate = groupedSlots[selectedDate.toDateString()] || []
-
+  // Only compute slots if a date is selected
+  const slotsForSelectedDate = selectedDate
+    ? groupedSlots[selectedDate.toDateString()] || []
+    : []
   const timeSlotsSet = new Set<string>()
   const timeSlots: Date[] = []
   slotsForSelectedDate.forEach((slot) => {
@@ -242,7 +245,11 @@ const Appointment = () => {
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="md:flex">
           <div className="md:w-1/3 h-[300px] relative">
-            <img src={docInfo.image || "/placeholder.svg"} alt={docInfo.name} className="w-full h-full object-cover" />
+            <img
+              src={docInfo.image || "/placeholder.svg"}
+              alt={docInfo.name}
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="p-6 md:w-2/3">
             <div className="flex items-center justify-between">
@@ -286,84 +293,93 @@ const Appointment = () => {
 
         <div className="p-6 bg-gray-50 border-t border-b border-gray-100">
           <h3 className="text-xl font-semibold mb-4">Select Appointment Date</h3>
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {Object.keys(groupedSlots).map((dateStr, index) => {
-              const date = new Date(dateStr)
-              const { day, date: dateNum, month } = formatDate(date)
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => setSelectedDate(date)}
-                  className={`flex flex-col items-center py-3 px-4 min-w-[90px] rounded-lg transition-colors ${
-                    selectedDate.toDateString() === dateStr
-                      ? "bg-blue-500 text-white"
-                      : "bg-white text-gray-800 border border-gray-200 hover:bg-blue-50"
-                  }`}
-                >
-                  <span className="text-xs font-medium">{day}</span>
-                  <span className="text-lg font-bold my-1">{dateNum}</span>
-                  <span className="text-xs">{month}</span>
-                </button>
-              )
-            })}
-          </div>
+          {Object.keys(groupedSlots).length > 0 ? (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {Object.keys(groupedSlots).map((dateStr, index) => {
+                const date = new Date(dateStr)
+                const { day, date: dateNum, month } = formatDate(date)
+                return (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedDate(date)}
+                    className={`flex flex-col items-center py-3 px-4 min-w-[90px] rounded-lg transition-colors ${
+                      selectedDate?.toDateString() === dateStr
+                        ? "bg-blue-500 text-white"
+                        : "bg-white text-gray-800 border border-gray-200 hover:bg-blue-50"
+                    }`}
+                  >
+                    <span className="text-xs font-medium">{day}</span>
+                    <span className="text-lg font-bold my-1">{dateNum}</span>
+                    <span className="text-xs">{month}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-600">No available slots</p>
+          )}
         </div>
 
-        <div className="p-6">
-          <h3 className="text-xl font-semibold mb-4">Available Time Slots</h3>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {timeSlots.map((slot, idx) => {
-              const slotDate = slot.toISOString().split("T")[0]
-              const slotTime24 = slot.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-              })
-              const slotTime12 = slot.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })
-              const slotDateTime = `${slotDate} ${slotTime24}`
+        {/* Render Available Time Slots only when a date is selected */}
+        {selectedDate && (
+          <div className="p-6">
+            <h3 className="text-xl font-semibold mb-4">Available Time Slots</h3>
+            {timeSlots.length === 0 ? (
+              <p className="text-gray-600">No available slots</p>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                {timeSlots.map((slot, idx) => {
+                  const slotDate = slot.toISOString().split("T")[0]
+                  const slotTime24 = slot.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })
+                  const slotTime12 = slot.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })
+                  const slotDateTime = `${slotDate} ${slotTime24}`
 
-              if (bookedSlotSet.has(slotDateTime)) return null
+                  if (bookedSlotSet.has(slotDateTime)) return null
 
-              const isSelected = slotTime === slot.toISOString()
+                  const isSelected = slotTime === slot.toISOString()
 
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setSlotTime(slot.toISOString())}
-                  className={`py-2 px-3 rounded-lg text-sm transition-colors relative ${
-                    isSelected
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-50 text-gray-800 border border-gray-200 hover:bg-blue-50"
-                  }`}
-                >
-                  {slotTime12}
-                  {isSelected && (
-                    <span className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
-                      <Check className="h-3 w-3 text-white" />
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSlotTime(slot.toISOString())}
+                      className={`py-2 px-3 rounded-lg text-sm transition-colors relative ${
+                        isSelected
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-50 text-gray-800 border border-gray-200 hover:bg-blue-50"
+                      }`}
+                    >
+                      {slotTime12}
+                      {isSelected && (
+                        <span className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                          <Check className="h-3 w-3 text-white" />
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         <div className="p-6 bg-gray-50 border-t border-gray-100">
-        <button
-  onClick={bookAppointment}
-  disabled={!slotTime}
-  className={`w-full py-4 rounded-lg text-white text-lg font-semibold transition-colors ${
-    slotTime ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"
-  }`}
->
-  Book Appointment
-</button>
-
+          <button
+            onClick={bookAppointment}
+            disabled={!slotTime}
+            className={`w-full py-4 rounded-lg text-white text-lg font-semibold transition-colors ${
+              slotTime ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"
+            }`}
+          >
+            Book Appointment
+          </button>
         </div>
       </div>
     </div>

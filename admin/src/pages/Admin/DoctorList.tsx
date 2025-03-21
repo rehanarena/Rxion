@@ -8,14 +8,11 @@ interface Doctor {
   email: string;
   speciality: string;
   isBlocked: boolean;
+  image?: string;
 }
 
-interface AdminContextType {
-  aToken: string;
-}
-
-const DoctorList = () => {
-  const { aToken } = useContext(AdminContext) as AdminContextType;
+const DoctorCardList = () => {
+  const { aToken } = useContext(AdminContext) as { aToken: string };
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -24,7 +21,6 @@ const DoctorList = () => {
   const [doctorsPerPage] = useState<number>(8);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedSpeciality, setSelectedSpeciality] = useState<string>("");
-
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
@@ -45,12 +41,10 @@ const DoctorList = () => {
         if (selectedSpeciality) {
           queryParams.append("speciality", selectedSpeciality);
         }
-
         const response = await axios.get(
           `${backendUrl}/api/admin/doctors?${queryParams.toString()}`,
           { headers: { atoken: aToken } }
         );
-
         if (response.data.doctors) {
           setDoctors(response.data.doctors);
           setTotalPages(response.data.totalPages);
@@ -69,19 +63,9 @@ const DoctorList = () => {
     };
 
     fetchDoctors();
-  }, [
-    aToken,
-    backendUrl,
-    currentPage,
-    doctorsPerPage,
-    searchTerm,
-    selectedSpeciality,
-  ]);
+  }, [aToken, backendUrl, currentPage, doctorsPerPage, searchTerm, selectedSpeciality]);
 
-  const handleBlockUnblockDoctor = async (
-    doctorId: string,
-    action: "block" | "unblock"
-  ) => {
+  const handleBlockUnblockDoctor = async (doctorId: string, action: "block" | "unblock") => {
     try {
       if (!aToken) {
         setError("Not Authorized. Please login.");
@@ -117,8 +101,9 @@ const DoctorList = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-semibold mb-6">Doctor List</h1>
+      <h1 className="text-3xl font-semibold mb-6">Doctor Card List</h1>
 
+      {/* Search & Filter Controls */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <input
           type="text"
@@ -150,111 +135,90 @@ const DoctorList = () => {
       {loading && <p className="text-gray-500">Loading doctors...</p>}
       {error && <p className="text-red-500">{error}</p>}
 
-      {doctors.length === 0 && !loading ? (
-        <p className="text-gray-500">No doctors found.</p>
-      ) : (
-        <div className="overflow-x-auto shadow-lg rounded-lg">
-          <table className="min-w-full table-auto border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                  Name
-                </th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                  Email
-                </th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                  Speciality
-                </th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                  Status
-                </th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {doctors.map((doctor) => (
-                <tr key={doctor._id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-2 text-sm text-gray-700">
-                    {doctor.name}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-gray-700">
-                    {doctor.email}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-gray-700">
-                    {doctor.speciality}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-gray-700">
-                    <span
-                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full 
-                      ${
-                        doctor.isBlocked
-                          ? "bg-red-100 text-red-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {doctor.isBlocked ? "Blocked" : "Active"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-sm">
-                    <button
-                      onClick={() =>
-                        handleBlockUnblockDoctor(
-                          doctor._id,
-                          doctor.isBlocked ? "unblock" : "block"
-                        )
-                      }
-                      className={`px-4 py-2 rounded-full text-white font-semibold 
-                        ${
-                          doctor.isBlocked
-                            ? "bg-green-600 hover:bg-green-700"
-                            : "bg-red-600 hover:bg-red-700"
-                        }`}
-                    >
-                      {doctor.isBlocked ? "Unblock" : "Block"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Pagination Controls */}
-          <div className="flex justify-center mt-4">
-            <button
-              onClick={() => paginate(currentPage - 1)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-l-lg hover:bg-blue-600 disabled:bg-gray-300"
-              disabled={currentPage === 1}
-            >
-              Prev
-            </button>
-            {Array.from({ length: totalPages }, (_, index) => (
-              <button
-                key={index}
-                onClick={() => paginate(index + 1)}
-                className={`px-4 py-2 ${
-                  currentPage === index + 1
-                    ? "bg-blue-600 text-white"
-                    : "bg-blue-500 text-white hover:bg-blue-600"
+      {/* Doctor Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {doctors.map((doctor) => (
+          <div
+            key={doctor._id}
+            className="border border-gray-300 rounded-lg p-4 shadow hover:shadow-lg transition-shadow"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src={doctor.image || "https://via.placeholder.com/100"}
+                alt={doctor.name}
+                className="w-16 h-16 rounded-full object-cover"
+              />
+              <div>
+                <h2 className="text-xl font-semibold">{doctor.name}</h2>
+                <p className="text-sm text-gray-500">{doctor.email}</p>
+              </div>
+            </div>
+            <p className="mb-2">
+              <span className="font-semibold">Speciality:</span> {doctor.speciality}
+            </p>
+            <p className="mb-4">
+              <span className="font-semibold">Status:</span>{" "}
+              <span
+                className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  doctor.isBlocked
+                    ? "bg-red-100 text-red-800"
+                    : "bg-green-100 text-green-800"
                 }`}
               >
-                {index + 1}
-              </button>
-            ))}
+                {doctor.isBlocked ? "Blocked" : "Active"}
+              </span>
+            </p>
             <button
-              onClick={() => paginate(currentPage + 1)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 disabled:bg-gray-300"
-              disabled={currentPage === totalPages}
+              onClick={() =>
+                handleBlockUnblockDoctor(
+                  doctor._id,
+                  doctor.isBlocked ? "unblock" : "block"
+                )
+              }
+              className={`w-full px-4 py-2 rounded text-white font-semibold ${
+                doctor.isBlocked
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }`}
             >
-              Next
+              {doctor.isBlocked ? "Unblock" : "Block"}
             </button>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center mt-8">
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-blue-500 text-white rounded-l-lg hover:bg-blue-600 disabled:bg-gray-300"
+        >
+          Prev
+        </button>
+        {Array.from({ length: totalPages }, (_, index) => (
+          <button
+            key={index}
+            onClick={() => paginate(index + 1)}
+            className={`px-4 py-2 ${
+              currentPage === index + 1
+                ? "bg-blue-600 text-white"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+          >
+            {index + 1}
+          </button>
+        ))}
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 disabled:bg-gray-300"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };
 
-export default DoctorList;
+export default DoctorCardList;

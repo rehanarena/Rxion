@@ -8,6 +8,7 @@ import { sendOtpEmail } from "../../helper/mailer";
 import jwt from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
 import { Address } from "../../interfaces/IAddress";
+import { IUser} from "../../models/userModel";
 
 interface RegisterRequestBody {
   name: string;
@@ -308,21 +309,30 @@ export class AuthService {
     address: string,
     dob: string,
     gender: string,
-    imageFile?: Express.Multer.File
+    imageFile?: Express.Multer.File,
+    medicalHistory?: string 
   ): Promise<{ message: string }> {
     if (!userId || !name || !phone || !address || !dob || !gender) {
       throw new Error("Enter details in all missing fields");
     }
     const parsedAddress = JSON.parse(address) as Address;
-
-    await this.userRepository.updateProfile(userId, {
+  
+    // Build the update data object including medicalHistory if provided
+    const updateData: Partial<IUser> = {
       name,
       phone,
       address: parsedAddress,
       dob,
       gender,
-    });
-
+    };
+  
+    if (medicalHistory) {
+      updateData.medicalHistory = medicalHistory;
+    }
+  
+    // Update the user profile with the new data
+    await this.userRepository.updateProfile(userId, updateData);
+  
     if (imageFile) {
       const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
         resource_type: "image",
@@ -330,7 +340,8 @@ export class AuthService {
       const imageURL = imageUpload.secure_url;
       await this.userRepository.updateProfile(userId, { image: imageURL });
     }
-
+  
     return { message: "Profile updated" };
   }
+  
 }

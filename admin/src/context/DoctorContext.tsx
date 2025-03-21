@@ -91,6 +91,7 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
       return;
     }
     try {
+      console.log(dToken)
       const { data } = await axios.get(`${backendUrl}/api/doctor/dashboard`, {
         headers: { dToken },
       });

@@ -1,5 +1,6 @@
 {
   "name": "frontend",
+  "homepage": "https://rehanarena.github.io/Rxion/",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +8,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run dev",
+    "deploy": "gh-pages -d dist"
+
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
@@ -20,6 +24,7 @@
     "date-fns": "^4.1.0",
     "firebase": "^11.2.0",
     "geolib": "^3.3.4",
+    "gh-pages": "^6.3.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.475.0",
     "next": "^15.1.7",

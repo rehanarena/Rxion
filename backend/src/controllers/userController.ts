@@ -15,6 +15,7 @@ interface UpdateProfileRequestBody {
   address: string;
   dob: string;
   gender: string;
+  medicalHistory: string;
 }
 
 export interface IBookedSlot {
@@ -259,7 +260,7 @@ const getProfile = async (req: Request, res: Response): Promise<void> => {
 /// updateProfile ///
 const updateProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { userId, name, phone, address, dob, gender } =
+    const { userId, name, phone, address, dob, gender, medicalHistory } =
       req.body as UpdateProfileRequestBody;
     const imageFile = req.file;
 
@@ -271,15 +272,20 @@ const updateProfile = async (req: Request, res: Response): Promise<void> => {
       address,
       dob,
       gender,
-      imageFile
+      imageFile,
+      medicalHistory 
     );
 
     res.json({ success: true, message: result.message });
   } catch (error: any) {
     console.error(error);
-    res.json({ success: false, message: error.message || "An error occurred" });
+    res.json({
+      success: false,
+      message: error.message || "An error occurred",
+    });
   }
 };
+
 
 ///serach ///
 const doctorSearch = async (req: Request, res: Response): Promise<void> => {
@@ -415,6 +421,15 @@ const getWalletBalance = async (
       .json({ success: false, message: error.message || "An error occurred" });
   }
 };
+const fileUpload = async(req: Request, res: Response): Promise<void>=>{
+  if (!req.file) {
+     res.status(400).json({ error: 'No file uploaded' })
+     return
+  }
+  // Construct the file URL. Adjust the URL based on your static file serving setup.
+  const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+  res.json({ url: fileUrl });
+}
 
 export {
   registerUser,
@@ -434,4 +449,5 @@ export {
   paymentRazorpay,
   verifyRazorpay,
   getWalletBalance,
+  fileUpload
 };

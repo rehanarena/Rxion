@@ -113,9 +113,18 @@ export class AdminService {
     return { token };
   }
 
-  async getDashboardData(): Promise<{ doctors: number; patients: number }> {
-    return this.adminRepository.getDashboardData();
-  }
+  // adminService.ts
+
+async getDashboardData(): Promise<{
+  doctors: number;
+  patients: number;
+  latestAppointments: any[];
+}> {
+  return this.adminRepository.getDashboardData();
+}
+
+  
+  
 
   async getAllUsers() {
     return this.adminRepository.getAllUsers();

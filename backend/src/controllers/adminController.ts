@@ -61,18 +61,24 @@ const loginAdmin = async (req: Request, res: Response): Promise<void> => {
 
 
 /// Dashboard ///
+// adminController.ts
+
 const adminDashboard = async (req: Request, res: Response): Promise<void> => {
   try {
     const dashData = await adminServiceInstance.getDashboardData();
     res.json({ success: true, dashData });
   } catch (error) {
     console.error(error);
-    res.json({
+    res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : "An unexpected error occurred",
+      message:
+        error instanceof Error ? error.message : "An unexpected error occurred",
     });
   }
 };
+
+
+
 
 
 const userList = async (req: Request, res: Response): Promise<void> => {

@@ -12,6 +12,7 @@ export interface IUser extends Document {
   gender: string;
   dob: string;
   phone: string;
+  medicalHistory: string;
   isVerified: boolean;
   otp: string | null;
   otpExpires: Date | null;
@@ -35,6 +36,7 @@ const userSchema = new Schema<IUser>({
   gender: { type: String, default: "Not Selected" },
   dob: { type: String, default: "Not Selected" },
   phone: { type: String, default: "000000" },
+  medicalHistory: {type: String, default: ''},
   isVerified: { type: Boolean, default: false },
   otp: { type: String, default: null },
   otpExpires: { type: Date, default: null },

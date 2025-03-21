@@ -17,6 +17,7 @@ interface UserData {
   gender: string;
   dob: string;
   image: string;
+  medicalHistory?: string;
 }
 
 interface AppContextType {
@@ -56,6 +57,9 @@ const MyProfile = () => {
       formData.append("address", JSON.stringify(userData.address));
       formData.append("gender", userData.gender);
       formData.append("dob", userData.dob);
+      if (userData.medicalHistory) {
+        formData.append("medicalHistory", userData.medicalHistory);
+      }
 
       if (image) formData.append("image", image);
 
@@ -387,7 +391,30 @@ const MyProfile = () => {
           </div>
         </div>
       )}
-
+      <div className="bg-white/30 rounded-2xl p-6 mb-8 shadow-lg">
+        <p className="text-2xl font-bold text-purple-800 mb-4">
+          Medical History
+        </p>
+        {isEdit ? (
+          <textarea
+            className="w-full p-3 bg-white/50 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+            placeholder="Enter any disease details or allergies here"
+            value={userData.medicalHistory || ""}
+            onChange={(e) =>
+              setUserData((prev) =>
+                prev ? { ...prev, medicalHistory: e.target.value } : prev
+              )
+            }
+            rows={4}
+          />
+        ) : (
+          <p className="text-gray-600">
+            {userData.medicalHistory
+              ? userData.medicalHistory
+              : "No medical history provided."}
+          </p>
+        )}
+      </div>
       <div className="mt-8 space-y-4">
         {isEdit ? (
           <button

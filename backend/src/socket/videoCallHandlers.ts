@@ -1,51 +1,43 @@
-import { Socket } from 'socket.io';
+// socket/videoCallHandler.ts
 
+import { Socket, Server } from 'socket.io';
+
+// In-memory store for active calls
 const activeCalls: { [room: string]: any } = {};
 
-export function setupVideoCallHandlers(socket: Socket) {
-  // Single "join-room" listener
+export function videoCallHandler(socket: Socket, io: Server) {
   socket.on('join-room', (roomId: string) => {
-    console.log(`🟢 Socket ${socket.id} joining room: ${roomId}`);
     socket.join(roomId);
-    console.log("📌 Rooms this socket is in:", socket.rooms);
-  
+    console.log(`Socket ${socket.id} joined room ${roomId}`);
     if (activeCalls[roomId]) {
-      console.log("📞 Active call found, emitting call-made:", activeCalls[roomId]);
       socket.emit('call-made', activeCalls[roomId]);
-    } else {
-      console.log("⚠️ No active call found for this room.");
     }
   });
 
-  socket.on('call-user', (data) => {
-    console.log("🔵 call-user event received:", data);
+  socket.on('call-user', (data: { room: string; [key: string]: any }) => {
+    console.log("Call-user event:", data);
     activeCalls[data.room] = data;
-    console.log("📌 Updated activeCalls:", activeCalls);
-    socket.to(data.room).emit('call-made', data);
+    io.to(data.room).emit('call-made', data);
   });
 
-  socket.on('make-answer', (data) => {
-    console.log("🟠 make-answer event received:", data);
-    if (activeCalls[data.room]) {
-      console.log("✅ Call found in activeCalls, deleting...");
-      delete activeCalls[data.room];
-    } else {
-      console.log("⚠️ No active call found to delete.");
-    }
-    socket.to(data.room).emit('answer-made', data);
-  });
-
-  socket.on('reject-call', (data) => {
+  socket.on('make-answer', (data: { room: string; [key: string]: any }) => {
     delete activeCalls[data.room];
-    socket.to(data.room).emit('call-declined', { from: socket.id });
+    io.to(data.room).emit('answer-made', data);
   });
 
-  socket.on('end-call', (data) => {
+  socket.on('reject-call', (data: { room: string; [key: string]: any }) => {
+    console.log("Reject-call event:", data);
     delete activeCalls[data.room];
-    socket.to(data.room).emit('call-ended', { from: socket.id });
+    io.to(data.room).emit('call-declined', { from: socket.id });
   });
 
-  socket.on('ice-candidate', (data) => {
-    socket.to(data.room).emit('ice-candidate', data.candidate);
+  socket.on('end-call', (data: { room: string; [key: string]: any }) => {
+    console.log("End-call event:", data);
+    delete activeCalls[data.room];
+    io.to(data.room).emit('call-ended', { from: socket.id });
+  });
+
+  socket.on('ice-candidate', (data: { room: string; candidate: any }) => {
+    io.to(data.room).emit('ice-candidate', data.candidate);
   });
 }

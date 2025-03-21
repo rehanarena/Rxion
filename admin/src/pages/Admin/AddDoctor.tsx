@@ -1,8 +1,15 @@
-import React, { useContext, useState, ChangeEvent, FormEvent } from "react";
+import React, { useContext, useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { AdminContext } from "../../context/AdminContext";
 import { toast } from "react-toastify";
 import axios from "axios";
 import upload_area from "../../assets/upload_area.svg";
+
+// Define a type for a Specialty
+interface Specialty {
+  _id: string;
+  name: string;
+  description?: string;
+}
 
 const AddDoctor: React.FC = () => {
   const [docImg, setDocImg] = useState<File | null>(null);
@@ -16,7 +23,34 @@ const AddDoctor: React.FC = () => {
   const [degree, setDegree] = useState<string>("");
   const [address1, setAddress1] = useState<string>("");
   const [address2, setAddress2] = useState<string>("");
+  const [specialityOptions, setSpecialityOptions] = useState<Specialty[]>([]);
+
   const { aToken, backendUrl } = useContext(AdminContext)!; 
+
+  // Fetch specialties from your database when the component mounts
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      try {
+        const { data } = await axios.get(`${backendUrl}/api/doctor/specialties`, {
+          headers: { aToken }
+        });
+        if (data.success) {
+          setSpecialityOptions(data.specialties);
+          // Optionally set a default speciality if needed:
+          if (data.specialties.length > 0) {
+            setSpeciality(data.specialties[0].name);
+          }
+        } else {
+          toast.error("Failed to fetch specialties");
+        }
+      } catch (error) {
+        console.log(error)
+        toast.error("Error fetching specialties");
+      }
+    };
+
+    fetchSpecialties();
+  }, [backendUrl, aToken]);
 
   const onSubmitHandler = async (event: FormEvent) => {
     event.preventDefault();
@@ -41,6 +75,7 @@ const AddDoctor: React.FC = () => {
         JSON.stringify({ line1: address1, line2: address2 })
       );
 
+      // Debug: log form data
       formData.forEach((value, key) => {
         console.log(`${key}: ${value}`);
       });
@@ -53,15 +88,18 @@ const AddDoctor: React.FC = () => {
 
       if (data.success) {
         toast.success(data.message);
+        // Reset form fields after a successful submission
         setDocImg(null);
         setName("");
-        setPassword("");
         setEmail("");
+        setPassword("");
+        setExperience("1 Year");
+        setFees("");
+        setAbout("");
+        // Optionally reset speciality to the first option or leave it as is
+        setDegree("");
         setAddress1("");
         setAddress2("");
-        setDegree("");
-        setAbout("");
-        setFees("");
       } else {
         toast.error(data.message);
       }
@@ -69,7 +107,7 @@ const AddDoctor: React.FC = () => {
       if (axios.isAxiosError(error)) {
         toast.error(error.message);
       } else {
-        toast.error('An unknown error occurred');
+        toast.error("An unknown error occurred");
       }
     }
   };
@@ -93,12 +131,7 @@ const AddDoctor: React.FC = () => {
               alt="Upload area"
             />
           </label>
-          <input
-            onChange={handleFileChange}
-            type="file"
-            id="doc-img"
-            hidden
-          />
+          <input onChange={handleFileChange} type="file" id="doc-img" hidden />
           <p className="text-sm">
             Upload doctor <br /> picture
           </p>
@@ -171,13 +204,13 @@ const AddDoctor: React.FC = () => {
                 onChange={(e) => setSpeciality(e.target.value)}
                 value={speciality}
                 className="border p-2 rounded"
+                required
               >
-                <option value="General physician">General physician</option>
-                <option value="Gynecologist">Gynecologist</option>
-                <option value="Dermatologist">Dermatologist</option>
-                <option value="Pediatricians">Pediatricians</option>
-                <option value="Neurologist">Neurologist</option>
-                <option value="Gastroenterologist">Gastroenterologist</option>
+                {specialityOptions.map((spec) => (
+                  <option key={spec._id} value={spec.name}>
+                    {spec.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="flex flex-col gap-2">

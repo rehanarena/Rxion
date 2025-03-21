@@ -1,5 +1,3 @@
-"use client"
-
 import { useContext, useEffect } from "react"
 import { DoctorContext } from "../../context/DoctorContext"
 import { AppContext } from "../../context/AppContext"
@@ -10,6 +8,7 @@ interface userData {
   name: string
   image: string
   dob: string
+  medicalHistory?: string 
 }
 interface Appointment {
   _id: string
@@ -82,6 +81,11 @@ const DoctorAppointments = () => {
               <div>
                 <h3 className="font-semibold text-gray-800">{appointment.userData.name}</h3>
                 <p className="text-sm text-gray-500">Age: {calculateAge(appointment.userData.dob)}</p>
+                {appointment.userData.medicalHistory && (
+                  <p className="text-sm text-gray-600">
+                    <strong>Medical History:</strong> {appointment.userData.medicalHistory}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -155,4 +159,3 @@ const DoctorAppointments = () => {
 }
 
 export default DoctorAppointments
-

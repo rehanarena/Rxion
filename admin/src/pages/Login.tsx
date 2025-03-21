@@ -1,4 +1,5 @@
 import { useContext, useState, FormEvent } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { AdminContext } from "../context/AdminContext";
 import { DoctorContext } from "../context/DoctorContext";
 import axios from "axios";
@@ -13,6 +14,7 @@ const Login = () => {
 
   const { setAToken, backendUrl } = useContext(AdminContext)!;
   const { setDToken } = useContext(DoctorContext)!;
+  const navigate = useNavigate();
 
   const onSubmitHandler = async (event: FormEvent) => {
     event.preventDefault();
@@ -25,6 +27,7 @@ const Login = () => {
           localStorage.setItem("aToken", data.token);
           setAToken(data.token);
           toast.success('Admin logged in successfully');
+          navigate("/admin-dashboard");
         } else {
           toast.error(data.message);
         }
@@ -38,6 +41,7 @@ const Login = () => {
           localStorage.setItem("dToken", data.token);
           setDToken(data.token);
           toast.success('Doctor logged in successfully');
+          navigate("/doctor-dashboard");
         } else {
           toast.error(data.message);
         }

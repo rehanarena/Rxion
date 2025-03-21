@@ -10,6 +10,8 @@ import Sidebar from './components/Sidebar';
 import Dashboard from '../src/pages/Admin/Dashboard';
 import AllAppoinments from './pages/Admin/AllAppoinments';
 import AddDoctor from './pages/Admin/AddDoctor';
+import AddSpeciality from './pages/Admin/AddSpeciality';
+import Speciality from './pages/Admin/Speciality'
 import DoctorList from './pages/Admin/DoctorList';
 import UserList from './pages/Admin/UserList';
 import AllDoctors from './pages/Admin/AllDoctors';
@@ -54,6 +56,8 @@ const App = () => {
               <Route path='/admin-dashboard' element={<Dashboard />} />
               <Route path='/all-appoinments' element={<AllAppoinments />} />
               <Route path='/add-doctor' element={<AddDoctor />} />
+              <Route path='/add-speciality' element={<AddSpeciality />} />
+              <Route path='/speciality' element={<Speciality />} />
               <Route path='/doctor-list' element={<DoctorList />} />
               <Route path='/all-doctors' element={<AllDoctors />} />
               <Route path='/doctor-details/:doctorId' element={<DoctorDetails />} />

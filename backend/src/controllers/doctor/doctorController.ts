@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { DoctorService } from '../../services/doctor/DoctorService';
+import specialityModel from "../../models/specialityModel";
 
 const doctorService = new DoctorService();
 
@@ -117,6 +118,14 @@ const doctorList = async (req: Request, res: Response): Promise<void> => {
     });
   }
 };
+export const getSpeciality = async(req: Request, res: Response): Promise<void> => {
+  try {
+    const specialties = await specialityModel.find({});
+    res.json({ success: true, specialties });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Unable to fetch specialties" });
+  }
+};
 
 export const doctorProfile = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -147,6 +156,15 @@ export const updateDoctorProfile = async (req: Request, res: Response): Promise<
   }
 };
 
+const fileUpload = async(req: Request, res: Response): Promise<void>=>{
+  if (!req.file) {
+     res.status(400).json({ error: 'No file uploaded' })
+     return
+  }
+  // Construct the file URL. Adjust the URL based on your static file serving setup.
+  const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+  res.json({ url: fileUrl });
+}
 
 
 export {
@@ -154,4 +172,5 @@ export {
   doctorDashboard,
   changeAvailability,
   doctorList,
+  fileUpload
 };
