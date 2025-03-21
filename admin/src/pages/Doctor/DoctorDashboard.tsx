@@ -28,14 +28,17 @@ interface DashDataType {
 interface DoctorContextType {
   dToken: string | null;
   getDashData: () => Promise<void>;
-  dashData: DashDataType | null;
+  dashData: DashDataType | boolean; 
   completeAppointment: (appointmentId: string) => void;
   cancelAppointment: (appointmentId: string) => void;
 }
 
 const DoctorDashboard: React.FC = () => {
-  const { dToken, getDashData, dashData, completeAppointment, cancelAppointment } =
-    useContext(DoctorContext) as DoctorContextType;
+  const doctorContext = useContext(DoctorContext);
+  if (!doctorContext) {
+    throw new Error("DoctorContext is not available");
+  }
+  const { dToken, getDashData, dashData, completeAppointment, cancelAppointment } = doctorContext as DoctorContextType;
 
   useEffect(() => {
     if (dToken) {
@@ -43,7 +46,7 @@ const DoctorDashboard: React.FC = () => {
     }
   }, [dToken, getDashData]);
 
-  if (!dashData) {
+  if (typeof dashData !== "object" || dashData === null) {
     return <p className="text-gray-500">Loading dashboard data...</p>;
   }
 
@@ -86,15 +89,8 @@ const DoctorDashboard: React.FC = () => {
 
       <div className="pt-4 border border-t-0">
         {dashData.latestAppointments.map((item, index) => (
-          <div
-            key={index}
-            className="flex items-center px-6 py-3 gap-3 hover:bg-gray-100"
-          >
-            <img
-              className="rounded-full w-10"
-              src={item.userData.image}
-              alt="User"
-            />
+          <div key={index} className="flex items-center px-6 py-3 gap-3 hover:bg-gray-100">
+            <img className="rounded-full w-10" src={item.userData.image} alt="User" />
             <div className="flex-1 text-sm">
               <p className="text-gray-800 font-medium">{item.userData.name}</p>
               <p className="text-gray-600">{item.slotDate}</p>
