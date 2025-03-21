@@ -20,7 +20,7 @@ import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 import DoctorAppoinments from './pages/Doctor/DoctorAppoinments';
 import DoctorProfile from './pages/Doctor/DoctorProfile';
 import AddSlots from './pages/Doctor/AddSlots';
-import SlotManagement from './pages/Doctor/SlotManagement';
+import { SlotManagement }from './pages/Doctor/SlotManagement';
 import NotFound from './components/NotFound';
 import DoctorForgotPasswordOTP from './pages/DoctorForgotPassword';
 import DoctorResetPasswordOTP from './pages/DoctorResetPassword';

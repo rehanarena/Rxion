@@ -10,7 +10,7 @@ interface Slot {
   endTime: string
 }
 
-const SlotManagement = () => {
+export const SlotManagement = () => {
   const doctorContext = useContext(DoctorContext)
   if (!doctorContext) {
     throw new Error("DoctorContext must be used within a DoctorContextProvider")
@@ -257,5 +257,4 @@ const SlotManagement = () => {
   )
 }
 
-export default SlotManagement
 
