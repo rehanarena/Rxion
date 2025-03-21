@@ -3,6 +3,7 @@ import { AdminContext } from "../../context/AdminContext";
 import { AppContext } from "../../context/AppContext";
 import cancel_icon from "../../assets/cancel_icon.svg";
 
+// Updated AdminContextType and related interfaces
 interface AdminContextType {
   aToken: string;
   appointments: Appointment[];
@@ -26,7 +27,7 @@ interface UserData {
 
 interface Appointment {
   _id: string;
-  doctData: DoctorData;
+  doctData?: DoctorData; // Made optional to match the actual context data
   userData: UserData;
   amount: number;
   slotDate: string;
@@ -35,16 +36,27 @@ interface Appointment {
   isCompleted: boolean;
 }
 
+// Updated AppContextType to match the actual implementation
 interface AppContextType {
-  slotDateFormat: (date: string) => string;
+  slotDateFormat: (slotDate: string, slotTime: string) => string;
   currencySymbol: string;
   calculateAge: (dob: string) => number;
 }
 
 const AllAppointments = () => {
-  const { aToken, appointments, getAllAppointments, cancelAppointment } =
-    useContext(AdminContext) as AdminContextType;
-  const { calculateAge, currencySymbol } = useContext(AppContext) as AppContextType;
+  // Check that AdminContext is available
+  const adminContext = useContext(AdminContext);
+  if (!adminContext) {
+    throw new Error("AdminContext is not available");
+  }
+  const { aToken, appointments, getAllAppointments, cancelAppointment } = adminContext as AdminContextType;
+
+  // Check that AppContext is available
+  const appContext = useContext(AppContext);
+  if (!appContext) {
+    throw new Error("AppContext is not available");
+  }
+  const { calculateAge, currencySymbol } = appContext as AppContextType;
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -69,24 +81,6 @@ const AllAppointments = () => {
     }
   };
 
-  const formatDateTime = (dateString: string, timeString: string) => {
-    const dateObj = new Date(dateString);
-    if (isNaN(dateObj.getTime())) {
-      return "Invalid date";
-    }
-    const dateOptions: Intl.DateTimeFormatOptions = {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-    const timeOptions: Intl.DateTimeFormatOptions = {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    };
-    return `${dateObj.toLocaleDateString(undefined, dateOptions)} ${dateObj.toLocaleTimeString(undefined, timeOptions)}`;
-  };
 
   return (
     <div className="w-full max-w-6xl mx-auto my-5 px-4">
@@ -94,7 +88,7 @@ const AllAppointments = () => {
         All Appointments
       </p>
       <div className="bg-white border rounded-lg text-sm shadow-sm max-h-[80vh] overflow-y-auto">
-        {/* Updated grid template to include 7 columns */}
+        {/* Grid template for headers */}
         <div className="hidden sm:grid grid-cols-[0.5fr_2.5fr_2fr_2.5fr_1.5fr_1fr_1fr] py-3 px-6 border-b bg-gray-100 text-gray-700">
           <p>#</p>
           <p>Patient</p>
@@ -123,7 +117,7 @@ const AllAppointments = () => {
             </div>
             <p className="hidden sm:block">{calculateAge(item.userData.dob)}</p>
             <p className="text-gray-600">
-              {formatDateTime(item.slotDate, item.slotTime)}
+              {(item.slotDate, item.slotTime)}
             </p>
             <div className="flex items-center gap-3">
               {item.doctData ? (

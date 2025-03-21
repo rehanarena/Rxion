@@ -1,64 +1,90 @@
-// Dashboard.tsx
-import React, { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AdminContext } from "../../context/AdminContext";
-import doctor_icon from "../../assets/doctor_icon.svg";
-import patients_icon from "../../assets/patients_icon.svg";
-import appointment_icon from "../../assets/appointment_icon.svg"; // If you have one
 import { AppContext } from "../../context/AppContext";
+import cancel_icon from "../../assets/cancel_icon.svg";
 
-// Types
+// Updated AdminContextType and related interfaces
+interface AdminContextType {
+  aToken: string;
+  appointments: Appointment[];
+  getAllAppointments: () => void;
+  cancelAppointment: (id: string) => void;
+}
+
+interface DoctorData {
+  image: string;
+  name: string;
+  speciality: string;
+  degree: string;
+  fees: number;
+}
+
+interface UserData {
+  name: string;
+  image: string;
+  dob: string;
+}
+
 interface Appointment {
   _id: string;
-  userData: {
-    name: string;
-    image: string;
-    dob: string;
-  };
-  doctData: {
-    name: string;
-    image: string;
-    // ... other fields
-  };
+  doctData?: DoctorData; // Made optional to match the actual context data
+  userData: UserData;
+  amount: number;
   slotDate: string;
   slotTime: string;
   cancelled: boolean;
   isCompleted: boolean;
 }
 
-interface DashDataType {
-  doctors: number;
-  patients: number;
-  latestAppointments: Appointment[];
-}
-
-interface AdminContextType {
-  dashData: DashDataType | null;
-  getDashData: () => Promise<void>;
-  // ... other context fields
-}
-
+// Updated AppContextType to match the actual implementation
 interface AppContextType {
+  slotDateFormat: (slotDate: string, slotTime: string) => string;
+  currencySymbol: string;
   calculateAge: (dob: string) => number;
-  // ... other context fields
 }
 
-const Dashboard: React.FC = () => {
-  const { dashData, getDashData } = useContext(AdminContext) as AdminContextType;
-  const { calculateAge } = useContext(AppContext) as AppContextType;
+const AllAppointments = () => {
+  // Check that AdminContext is available
+  const adminContext = useContext(AdminContext);
+  if (!adminContext) {
+    throw new Error("AdminContext is not available");
+  }
+  const { aToken, appointments, getAllAppointments, cancelAppointment } = adminContext as AdminContextType;
+
+  // Check that AppContext is available
+  const appContext = useContext(AppContext);
+  if (!appContext) {
+    throw new Error("AppContext is not available");
+  }
+  const { calculateAge, currencySymbol } = appContext as AppContextType;
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
-    getDashData();
-  }, [getDashData]);
+    if (aToken) {
+      getAllAppointments();
+    }
+  }, [aToken, getAllAppointments]);
 
-  if (!dashData) {
-    return <p className="text-gray-500">Loading dashboard data...</p>;
-  }
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentAppointments = appointments.slice(indexOfFirstItem, indexOfLastItem);
 
-  const { doctors, patients, latestAppointments } = dashData;
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
 
-  // Helper to format date/time:
+  const handleNextPage = () => {
+    if (indexOfLastItem < appointments.length) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
   const formatDateTime = (dateString: string, timeString: string) => {
-    const dateObj = new Date(dateString);
+    // Combine the date and time into one string that can be parsed by Date
+    const combined = `${dateString} ${timeString}`;
+    const dateObj = new Date(combined);
     if (isNaN(dateObj.getTime())) {
       return "Invalid date";
     }
@@ -73,103 +99,106 @@ const Dashboard: React.FC = () => {
       minute: "numeric",
       hour12: true,
     };
-    return `${dateObj.toLocaleDateString(undefined, dateOptions)} 
-      ${dateObj.toLocaleTimeString(undefined, timeOptions)}`;
+    return `${dateObj.toLocaleDateString(undefined, dateOptions)} ${dateObj.toLocaleTimeString(undefined, timeOptions)}`;
   };
+  
 
   return (
-    <div className="m-5 space-y-6">
-      {/* Cards for doctors & patients */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all">
-          <img className="w-14" src={doctor_icon} alt="Doctor Icon" />
-          <div>
-            <p className="text-xl font-semibold text-gray-600">{doctors}</p>
-            <p className="text-gray-400">Doctors</p>
-          </div>
+    <div className="w-full max-w-6xl mx-auto my-5 px-4">
+      <p className="mb-5 text-xl font-semibold text-center sm:text-left text-gray-800">
+        All Appointments
+      </p>
+      <div className="bg-white border rounded-lg text-sm shadow-sm max-h-[80vh] overflow-y-auto">
+        {/* Grid template for headers */}
+        <div className="hidden sm:grid grid-cols-[0.5fr_2.5fr_2fr_2.5fr_1.5fr_1fr_1fr] py-3 px-6 border-b bg-gray-100 text-gray-700">
+          <p>#</p>
+          <p>Patient</p>
+          <p>Age</p>
+          <p>Date & Time</p>
+          <p>Doctor</p>
+          <p>Fees</p>
+          <p>Action</p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all">
-          <img className="w-14" src={patients_icon} alt="Patients Icon" />
-          <div>
-            <p className="text-xl font-semibold text-gray-600">{patients}</p>
-            <p className="text-gray-400">Patients</p>
+        {currentAppointments.map((item, index) => (
+          <div
+            className="grid sm:grid-cols-[0.5fr_2.5fr_2fr_2.5fr_1.5fr_1fr_1fr] grid-cols-1 items-center py-4 px-6 border-b hover:bg-gray-50"
+            key={item._id}
+          >
+            <p className="hidden sm:block text-gray-600">
+              {index + 1 + indexOfFirstItem}
+            </p>
+            <div className="flex items-center gap-3">
+              <img
+                className="w-10 h-10 rounded-full object-cover"
+                src={item.userData.image}
+                alt="Patient"
+              />
+              <p className="text-gray-800 font-medium">{item.userData.name}</p>
+            </div>
+            <p className="hidden sm:block">{calculateAge(item.userData.dob)}</p>
+            <p className="text-gray-600">
+              {formatDateTime(item.slotDate, item.slotTime)}
+            </p>
+            <div className="flex items-center gap-3">
+              {item.doctData ? (
+                <>
+                  <img
+                    className="w-10 h-10 rounded-full object-cover bg-gray-200"
+                    src={item.doctData.image}
+                    alt="Doctor"
+                  />
+                  <p className="text-gray-800 font-medium">{item.doctData.name}</p>
+                </>
+              ) : (
+                <p className="text-gray-500">Doctor information unavailable</p>
+              )}
+            </div>
+            <p className="text-gray-800 font-semibold">
+              {currencySymbol}
+              {item.amount}
+            </p>
+            <div>
+              {item.cancelled ? (
+                <p className="text-red-500 text-sm font-medium">Cancelled</p>
+              ) : item.isCompleted ? (
+                <p className="text-green-500 text-sm font-medium">Completed</p>
+              ) : (
+                <img
+                  onClick={() => cancelAppointment(item._id)}
+                  className="w-8 sm:w-10 cursor-pointer hover:opacity-80"
+                  src={cancel_icon}
+                  alt="Cancel Appointment"
+                  title="Cancel Appointment"
+                />
+              )}
+            </div>
           </div>
-        </div>
+        ))}
       </div>
 
-      {/* Latest Appointments */}
-      <div className="bg-white border rounded-lg p-4 shadow-sm">
-        <h2 className="text-xl font-semibold mb-4">Latest Appointments</h2>
-
-        {latestAppointments.length === 0 ? (
-          <p className="text-gray-500">No recent appointments.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-100 text-gray-700">
-                <tr>
-                  <th className="py-2 px-3">Patient</th>
-                  <th className="py-2 px-3">Age</th>
-                  <th className="py-2 px-3">Date & Time</th>
-                  <th className="py-2 px-3">Doctor</th>
-                  <th className="py-2 px-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {latestAppointments.map((appointment) => (
-                  <tr
-                    key={appointment._id}
-                    className="border-b last:border-none hover:bg-gray-50"
-                  >
-                    <td className="py-2 px-3 flex items-center gap-2">
-                      <img
-                        src={appointment.userData.image}
-                        alt="Patient"
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                      <span className="font-medium text-gray-700">
-                        {appointment.userData.name}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3">
-                      {calculateAge(appointment.userData.dob)}
-                    </td>
-                    <td className="py-2 px-3">
-                      {formatDateTime(appointment.slotDate, appointment.slotTime)}
-                    </td>
-                    <td className="py-2 px-3 flex items-center gap-2">
-                      {appointment.doctData && (
-                        <img
-                          src={appointment.doctData.image}
-                          alt="Doctor"
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                      )}
-                      <span>
-                        {appointment.doctData
-                          ? appointment.doctData.name
-                          : "N/A"}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3">
-                      {appointment.cancelled ? (
-                        <span className="text-red-500 font-medium">Cancelled</span>
-                      ) : appointment.isCompleted ? (
-                        <span className="text-green-500 font-medium">Completed</span>
-                      ) : (
-                        <span className="text-blue-500 font-medium">Upcoming</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {/* Pagination Controls */}
+      <div className="flex justify-end items-center mt-4 space-x-4">
+        <button
+          onClick={handlePrevPage}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span className="text-gray-700">
+          Page {currentPage} of {Math.ceil(appointments.length / itemsPerPage)}
+        </span>
+        <button
+          onClick={handleNextPage}
+          disabled={indexOfLastItem >= appointments.length}
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default AllAppointments;

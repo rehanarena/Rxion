@@ -36,9 +36,9 @@ interface AppContextType {
 }
 
 const DoctorAppointments = () => {
-  const { dToken, appointments, getAppointments, completeAppointment, cancelAppointment } = useContext(
-    DoctorContext,
-  ) as DoctorContextType
+  const { dToken, appointments, getAppointments, completeAppointment, cancelAppointment } =
+  useContext(DoctorContext) as unknown as DoctorContextType;
+
   const { calculateAge, slotDateFormat, currencySymbol } = useContext(AppContext) as AppContextType
   const navigate = useNavigate()
 
