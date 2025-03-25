@@ -20,6 +20,11 @@ export interface ChatMessage {
   file?: ChatFile
 }
 
+interface PatientStatus {
+  online: boolean
+  lastSeen?: Date
+}
+
 const DoctorChatComponent: React.FC = () => {
   const [searchParams] = useSearchParams()
   const room = searchParams.get("room") || "defaultRoom"
@@ -37,15 +42,38 @@ const DoctorChatComponent: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // New state for patient's status
+  const [patientStatus, setPatientStatus] = useState<PatientStatus>({ online: false })
 
-  // Connect to socket server on mount
+  // Connect to socket server on mount and emit our online status (as doctor)
   useEffect(() => {
     const newSocket = io("http://localhost:4000")
     setSocket(newSocket)
+    // Optionally, doctor can also emit online status if needed:
+    newSocket.emit("user-online", sender)
     return () => {
       newSocket.disconnect()
     }
-  }, [])
+  }, [sender])
+
+  // Listen for user-status events (for the patient)
+  useEffect(() => {
+    if (!socket) return
+    socket.on(
+      "user-status",
+      (data: { userId: string; online: boolean; lastSeen?: string }) => {
+        if (data.userId === room) {
+          setPatientStatus({
+            online: data.online,
+            lastSeen: data.lastSeen ? new Date(data.lastSeen) : undefined,
+          })
+        }
+      }
+    )
+    return () => {
+      socket.off("user-status")
+    }
+  }, [socket, room])
 
   // Join chat room and set up socket listeners
   useEffect(() => {
@@ -71,7 +99,11 @@ const DoctorChatComponent: React.FC = () => {
     // Update messages when the patient marks them as read
     socket.on("messages-read", (data: { room: string; sender: string }) => {
       if (data.sender !== sender) {
-        setMessages((prevMessages) => prevMessages.map((msg) => (msg.sender === sender ? { ...msg, read: true } : msg)))
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.sender === sender ? { ...msg, read: true } : msg
+          )
+        )
       }
     })
 
@@ -136,7 +168,7 @@ const DoctorChatComponent: React.FC = () => {
       formData.append("file", file)
       formData.append("room", room)
 
-      // Assume an upload endpoint exists at /api/upload returning { url: string }
+      // Assume an upload endpoint exists at /api/doctor/upload returning { url: string }
       const response = await fetch("http://localhost:4000/api/doctor/upload", {
         method: "POST",
         body: formData,
@@ -191,8 +223,19 @@ const DoctorChatComponent: React.FC = () => {
           <div>
             <h2 className="text-xl font-semibold">{patientName}</h2>
             <div className="flex items-center text-xs text-white/80">
-              <div className="w-2 h-2 rounded-full bg-green-400 mr-1.5"></div>
-              <span>Active now</span>
+              {patientStatus.online ? (
+                <div className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-green-400 mr-1.5"></div>
+                  <span>Online</span>
+                </div>
+              ) : (
+                <div className="text-gray-300">
+                  Last seen{" "}
+                  {patientStatus.lastSeen
+                    ? patientStatus.lastSeen.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    : "N/A"}
+                </div>
+              )}
               <span className="mx-2">•</span>
               <span>Connected as {sender}</span>
             </div>
@@ -362,4 +405,3 @@ const DoctorChatComponent: React.FC = () => {
 }
 
 export default DoctorChatComponent
-

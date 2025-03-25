@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { RequestWithUser } from "../middlewares/authUser";
 import IBookedSlot from "../models/doctorModel";
 import { AuthService } from "../services/user/authService";
@@ -29,7 +29,7 @@ interface CustomRequest extends Request {
 }
 
 /// Regietr User ///
-const registerUser = async (req: Request, res: Response): Promise<void> => {
+const registerUser = async (req: Request, res: Response,  next: NextFunction): Promise<void> => {
   try {
     const authService = new AuthService();
     const user = await authService.registerUser(req.body);
@@ -39,14 +39,12 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
       message: "OTP sent to email. Please verify.",
     });
   } catch (error: any) {
-    console.error(error);
-    // Send a 400 for validation errors or 500 for server errors depending on the error context
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
 /// Verify Otp ///
-const verifyOtp = async (req: Request, res: Response): Promise<void> => {
+const verifyOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { otp, userId } = req.body;
 
   // Validate userId
@@ -60,14 +58,13 @@ const verifyOtp = async (req: Request, res: Response): Promise<void> => {
     const result = await authService.verifyOtp(otp, userId);
     res.json({ success: true, ...result });
   } catch (error: any) {
-    console.error(error);
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
 /// Resend OTP ///
 
-const resendOtp = async (req: Request, res: Response): Promise<void> => {
+const resendOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { userId } = req.body;
 
   // Validate userId
@@ -81,18 +78,13 @@ const resendOtp = async (req: Request, res: Response): Promise<void> => {
     const result = await authService.resendOtp(userId);
     res.json({ success: true, ...result });
   } catch (error: any) {
-    console.error("Error resending OTP:", error);
-    res.status(500).json({
-      success: false,
-      message:
-        "An error occurred while resending the OTP. Please try again later.",
-    });
+    next(error);
   }
 };
 
 /// Login User ///
 
-const loginUser = async (req: Request, res: Response): Promise<void> => {
+const loginUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password } = req.body;
     const authService = new AuthService();
@@ -106,16 +98,13 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
       refreshToken,
     });
   } catch (error: any) {
-    console.error(error);
-    // Return a 400 status code for validation/business errors,
-    // and a 500 for unexpected errors if needed.
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
 /// Google Auth ///
 
-const google = async (req: Request, res: Response): Promise<void> => {
+const google = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, name, photo } = req.body;
 
@@ -158,9 +147,8 @@ const google = async (req: Request, res: Response): Promise<void> => {
         accessToken: token,
       });
     }
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+  } catch (error: any) {
+    next(error);
   }
 };
 
@@ -168,7 +156,8 @@ const google = async (req: Request, res: Response): Promise<void> => {
 
 const refreshAccessToken = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { refreshToken } = req.body;
 
@@ -184,19 +173,13 @@ const refreshAccessToken = async (
     const newAccessToken = await authService.refreshAccessToken(refreshToken);
     res.json({ success: true, accessToken: newAccessToken });
   } catch (error: any) {
-    console.error(error);
-    res
-      .status(403)
-      .json({
-        success: false,
-        message: error.message || "Invalid or expired refresh token",
-      });
+    next(error);
   }
 };
 
 /// Forgot Password Request ///
 
-const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email } = req.body;
 
@@ -205,20 +188,15 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
 
     res.json({ success: true, ...result });
   } catch (error: any) {
-    console.error(error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: error.message || "Internal server error",
-      });
+    next(error);
   }
 };
 
 /// Change Password ///
 const changePassword = async (
   req: RequestWithUser,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const { userId, currentPassword, newPassword, confirmPassword } = req.body;
@@ -233,32 +211,24 @@ const changePassword = async (
 
     res.status(200).json({ success: true, message });
   } catch (error: any) {
-    console.error(error);
-    // Return appropriate error status codes based on the error message if needed
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: error.message || "Internal server error.",
-      });
+    next(error);
   }
 };
 
 ///getProfile ///
-const getProfile = async (req: Request, res: Response): Promise<void> => {
+const getProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.body;
     const authService = new AuthService();
     const userData = await authService.getProfile(userId);
     res.json({ success: true, userData });
   } catch (error: any) {
-    console.error(error);
-    res.json({ success: false, message: error.message || "An error occurred" });
+    next(error);
   }
 };
 
 /// updateProfile ///
-const updateProfile = async (req: Request, res: Response): Promise<void> => {
+const updateProfile = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   try {
     const { userId, name, phone, address, dob, gender, medicalHistory } =
       req.body as UpdateProfileRequestBody;
@@ -278,17 +248,13 @@ const updateProfile = async (req: Request, res: Response): Promise<void> => {
 
     res.json({ success: true, message: result.message });
   } catch (error: any) {
-    console.error(error);
-    res.json({
-      success: false,
-      message: error.message || "An error occurred",
-    });
+    next(error);
   }
 };
 
 
 ///serach ///
-const doctorSearch = async (req: Request, res: Response): Promise<void> => {
+const doctorSearch = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   try {
     const { speciality, search, sortBy, page, limit } = req.query;
     const doctorService = new DoctorService();
@@ -301,13 +267,12 @@ const doctorSearch = async (req: Request, res: Response): Promise<void> => {
     });
     res.status(200).json(result);
   } catch (error: any) {
-    console.error("Error fetching doctors:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(error);
   }
 };
 
 /// book appoinment ///
-const bookAppointment = async (req: Request, res: Response): Promise<void> => {
+const bookAppointment = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   try {
     const { docId, slotDate, slotTime } = req.body;
     const token = req.headers.authorization?.split(" ")[1];
@@ -327,24 +292,19 @@ const bookAppointment = async (req: Request, res: Response): Promise<void> => {
 
     res.status(201).json({ success: true, message });
   } catch (error: any) {
-    console.error("Error booking appointment:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "An error occurred, please try again",
-    });
+    next(error);
   }
 };
 
 /// appoinments list in my-appointments ///
-const listAppointments = async (req: Request, res: Response): Promise<void> => {
+const listAppointments = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.body;
     const appointmentService = new AppointmentService();
     const appointments = await appointmentService.listAppointments(userId);
     res.json({ success: true, appointments });
   } catch (error: any) {
-    console.error("Error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
@@ -352,7 +312,8 @@ const listAppointments = async (req: Request, res: Response): Promise<void> => {
 
 const cancelAppointment = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const { userId, appointmentId } = req.body;
@@ -363,27 +324,23 @@ const cancelAppointment = async (
     );
     res.json({ success: true, message });
   } catch (error: any) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ success: false, message: error.message || "An error occurred" });
+    next(error);
   }
 };
 
 /// payment razorpay ///
-const paymentRazorpay = async (req: Request, res: Response): Promise<void> => {
+const paymentRazorpay = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { appointmentId } = req.body;
     const result = await PaymentService.processPayment(appointmentId);
     res.json(result);
   } catch (error: any) {
-    console.error("Payment error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
 /// verify payment ///
-const verifyRazorpay = async (req: Request, res: Response): Promise<void> => {
+const verifyRazorpay = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { razorpay_payment_id, razorpay_order_id } = req.body;
     const result = await PaymentService.verifyPayment(
@@ -392,8 +349,7 @@ const verifyRazorpay = async (req: Request, res: Response): Promise<void> => {
     );
     res.json(result);
   } catch (error: any) {
-    console.error("Verification error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
@@ -401,7 +357,8 @@ const verifyRazorpay = async (req: Request, res: Response): Promise<void> => {
 
 const getWalletBalance = async (
   req: CustomRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const userId = req.user?.id || req.body.userId;
@@ -415,10 +372,7 @@ const getWalletBalance = async (
     const walletBalance = await UserService.getWalletBalance(userId);
     res.json({ success: true, walletBalance });
   } catch (error: any) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ success: false, message: error.message || "An error occurred" });
+    next(error);
   }
 };
 const fileUpload = async(req: Request, res: Response): Promise<void>=>{

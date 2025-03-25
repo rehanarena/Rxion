@@ -21,7 +21,9 @@ export class adminRepository {
     doctors: number;
     patients: number;
     latestAppointments: any[];
+    appointmentChartData: { labels: string[]; data: number[] };
   }> {
+    // Basic counts
     const doctors = await doctorModel.find({});
     const patients = await userModel.find({});
     const latestAppointments = await appointmentModel
@@ -29,12 +31,54 @@ export class adminRepository {
       .sort({ createdAt: -1 })
       .limit(5);
   
+    // Calculate "today" and "7 days ahead"
+    const today = new Date();
+    const sevenDaysAhead = new Date();
+    sevenDaysAhead.setDate(today.getDate() + 7);
+  
+    // Aggregate appointments that are scheduled between today and 7 days ahead
+    // converting slotTime (a string) to a Date using $dateFromString
+    const appointmentAggregation = await appointmentModel.aggregate([
+      {
+        $addFields: {
+          convertedSlotTime: {
+            $dateFromString: {
+              dateString: "$slotTime"
+            }
+          }
+        }
+      },
+      {
+        $match: {
+          convertedSlotTime: { $gte: today, $lte: sevenDaysAhead },
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%m-%d", date: "$convertedSlotTime" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+  
+    console.log("Today is:", today);
+    console.log("Seven days ahead:", sevenDaysAhead);
+    console.log("Aggregation result:", appointmentAggregation);
+  
+    // Build labels & data arrays for the chart
+    const labels = appointmentAggregation.map((item: any) => item._id);
+    const data = appointmentAggregation.map((item: any) => item.count);
+  
     return {
       doctors: doctors.length,
       patients: patients.length,
       latestAppointments,
+      appointmentChartData: { labels, data },
     };
   }
+  
+  
   
 
   async getAllUsers(): Promise<any[]> {

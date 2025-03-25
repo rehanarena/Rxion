@@ -8,6 +8,7 @@ import connectCloudinary from './config/cloudinary';
 import adminRouter from './routes/adminRoute';
 import userRouter from './routes/userRoute';
 import doctorRouter from './routes/doctorRoute';
+import { errorHandler } from './middlewares/errorHandler';
 import fs from "fs";
 import path from "path";
 
@@ -24,6 +25,8 @@ connectCloudinary();
 app.use(express.json());
 app.use(cors());
 
+app.use(errorHandler);
+
 app.use('/api/admin', adminRouter);
 app.use('/api/user', userRouter);
 app.use('/api/doctor', doctorRouter);
@@ -32,7 +35,6 @@ app.get("/", (req: Request, res: Response) => {
   res.send("API Working");
 });
 
-// Ensure uploads directory exists
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });

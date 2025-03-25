@@ -1,25 +1,15 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { AdminService } from "../services/admin/adminService";
 const adminServiceInstance = new AdminService();
 
-interface AddDoctorRequestBody {
-  name: string;
-  email: string;
-  password: string;
-  speciality: string;
-  degree: string;
-  experience: string;
-  about: string;
-  fees: string;
-  address: string;
-}
+
 export interface IBookedSlot {
   startTime: string;
   isBooked: boolean;
 }
 
 
-const addDoctor = async (req: Request, res: Response): Promise<void> => {
+const addDoctor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const data = req.body;
     const imageFile = req.file;
@@ -35,27 +25,18 @@ const addDoctor = async (req: Request, res: Response): Promise<void> => {
       success: true,
       message: "Doctor Added Successfully and Password Sent to Email",
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message:
-        error instanceof Error ? error.message : "An unexpected error occurred",
-    });
+  } catch (error: any) {
+    next(error);
   }
 };
 
-const loginAdmin = async (req: Request, res: Response): Promise<void> => {
+const loginAdmin = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   try {
     const { email, password } = req.body;
     const { token } = await adminServiceInstance.loginAdmin(email, password);
     res.json({ success: true, token });
-  } catch (error) {
-    console.error(error);
-    res.json({
-      success: false,
-      message: error instanceof Error ? error.message : "An unexpected error occurred",
-    });
+  } catch (error: any) {
+    next(error);
   }
 };
 
@@ -63,17 +44,12 @@ const loginAdmin = async (req: Request, res: Response): Promise<void> => {
 /// Dashboard ///
 // adminController.ts
 
-const adminDashboard = async (req: Request, res: Response): Promise<void> => {
+const adminDashboard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const dashData = await adminServiceInstance.getDashboardData();
     res.json({ success: true, dashData });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message:
-        error instanceof Error ? error.message : "An unexpected error occurred",
-    });
+  } catch (error: any) {
+    next(error);
   }
 };
 
@@ -81,53 +57,40 @@ const adminDashboard = async (req: Request, res: Response): Promise<void> => {
 
 
 
-const userList = async (req: Request, res: Response): Promise<void> => {
+const userList = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   try {
     const users = await adminServiceInstance.getAllUsers();
     res.status(200).json(users);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error while fetching users." });
+  } catch (error: any) {
+    next(error);
   }
 };
 
 
-const blockUnblockUser = async (req: Request, res: Response): Promise<void> => {
+const blockUnblockUser = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   const { id } = req.params;
   const { action } = req.body;
   try {
     const result = await adminServiceInstance.blockUnblockUser(id, action);
     res.status(200).json(result);
-  } catch (error) {
-    console.error(error);
-    if (error instanceof Error) {
-      const status = error.message === "User not found" ? 404 : error.message === "Invalid action" ? 400 : 500;
-      res.status(status).json({ message: error.message });
-    } else {
-      res.status(500).json({ message: "Server error" });
-    }
+  } catch (error: any) {
+    next(error);
   }
 };
 
 
-const blockUnblockDoctor = async (req: Request, res: Response): Promise<void> => {
+const blockUnblockDoctor = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   const { id } = req.params;
   const { action } = req.body;
   try {
     const result = await adminServiceInstance.blockUnblockDoctor(id, action);
     res.status(200).json(result);
-  } catch (error) {
-    console.error(error);
-    if (error instanceof Error) {
-      const status = error.message === "Doctor not found" ? 404 : error.message === "Invalid action" ? 400 : 500;
-      res.status(status).json({ message: error.message });
-    } else {
-      res.status(500).json({ message: "Server error" });
-    }
+  } catch (error: any) {
+    next(error);
   }
 };
 
-const doctorList = async (req: Request, res: Response): Promise<void> => {
+const doctorList = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   try {
     const { search, page = "1", limit = "8", speciality } = req.query;
     const result = await adminServiceInstance.doctorList({
@@ -137,21 +100,19 @@ const doctorList = async (req: Request, res: Response): Promise<void> => {
       speciality: speciality as string,
     });
     res.status(200).json(result);
-  } catch (error) {
-    console.error("Error fetching doctors:", error);
-    res.status(500).json({ message: "Server error while fetching doctors." });
+  } catch (error: any) {
+    next(error);
   }
 };
-const allDoctors = async (req: Request, res: Response): Promise<void> => {
+const allDoctors = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   try {
     const doctors = await adminServiceInstance.allDoctors();
     res.json({ success: true, doctors });
-  } catch (error) {
-    console.error("Error fetching all doctors:", error);
-    res.status(500).json({ message: "Server error while fetching doctors." });
+  } catch (error: any) {
+    next(error);
   }
 };
-export const getDoctors = async (req: Request, res: Response): Promise<void> => {
+export const getDoctors = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   const { doctorId } = req.params;
   try {
     const doctor = await adminServiceInstance.getDoctor(doctorId);
@@ -160,33 +121,30 @@ export const getDoctors = async (req: Request, res: Response): Promise<void> => 
       return;
     }
     res.json({ success: true, doctor });
-  } catch (error) {
-    console.error("Error fetching doctor details:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+  } catch (error: any) {
+    next(error);
   }
 };
 
 
 /// All appointment list ///
-const appointmentsAdmin = async (req: Request, res: Response): Promise<void> => {
+const appointmentsAdmin = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   try {
     const appointments = await adminServiceInstance.getAllAppointments();
     res.json({ success: true, appointments });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error while fetching appointments." });
+  } catch (error: any) {
+    next(error);
   }
 };
 
 /// cancelAppointment ///
-const cancelAppointment = async (req: Request, res: Response): Promise<void> => {
+const cancelAppointment = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
   try {
     const { appointmentId } = req.body as { appointmentId: string };
     const result = await adminServiceInstance.cancelAppointment(appointmentId);
     res.json({ success: true, message: result.message });
   } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ success: false, message: error.message || "Server error" });
+    next(error);
   }
 };
 

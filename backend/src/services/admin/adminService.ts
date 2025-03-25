@@ -113,12 +113,12 @@ export class AdminService {
     return { token };
   }
 
-  // adminService.ts
 
 async getDashboardData(): Promise<{
   doctors: number;
   patients: number;
   latestAppointments: any[];
+  appointmentChartData: { labels: string[]; data: number[] };
 }> {
   return this.adminRepository.getDashboardData();
 }

@@ -1,204 +1,198 @@
-import { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect } from "react";
 import { AdminContext } from "../../context/AdminContext";
-import { AppContext } from "../../context/AppContext";
-import cancel_icon from "../../assets/cancel_icon.svg";
+import doctor_icon from "../../assets/doctor_icon.svg";
+import patients_icon from "../../assets/patients_icon.svg";
+import { Doughnut, Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
 
-// Updated AdminContextType and related interfaces
-interface AdminContextType {
-  aToken: string;
-  appointments: Appointment[];
-  getAllAppointments: () => void;
-  cancelAppointment: (id: string) => void;
-}
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Tooltip,
+  Legend
+);
 
-interface DoctorData {
-  image: string;
-  name: string;
-  speciality: string;
-  degree: string;
-  fees: number;
+interface DashDataType {
+  appointments: number;
+  doctors: number;
+  patients: number;
+  appointmentChartData?: {
+    labels: string[];
+    data: number[];
+  };
 }
 
 interface UserData {
   name: string;
   image: string;
-  dob: string;
 }
 
 interface Appointment {
   _id: string;
-  doctData?: DoctorData; // Made optional to match the actual context data
+  slotTime: string; // e.g. "2025-03-15T09:30:00.000Z"
   userData: UserData;
-  amount: number;
-  slotDate: string;
-  slotTime: string;
-  cancelled: boolean;
-  isCompleted: boolean;
 }
 
-// Updated AppContextType to match the actual implementation
-interface AppContextType {
-  slotDateFormat: (slotDate: string, slotTime: string) => string;
-  currencySymbol: string;
-  calculateAge: (dob: string) => number;
+interface AdminContextType {
+  aToken: string | null;
+  getDashData: () => Promise<void>;
+  dashData: DashDataType | null;
+  appointments: Appointment[];
+  getAllAppointments: () => void;
 }
 
-const AllAppointments = () => {
-  // Check that AdminContext is available
-  const adminContext = useContext(AdminContext);
-  if (!adminContext) {
-    throw new Error("AdminContext is not available");
-  }
-  const { aToken, appointments, getAllAppointments, cancelAppointment } = adminContext as AdminContextType;
-
-  // Check that AppContext is available
-  const appContext = useContext(AppContext);
-  if (!appContext) {
-    throw new Error("AppContext is not available");
-  }
-  const { calculateAge, currencySymbol } = appContext as AppContextType;
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+const Dashboard: React.FC = () => {
+  const { aToken, getDashData, dashData, appointments, getAllAppointments } =
+    useContext(AdminContext) as AdminContextType;
 
   useEffect(() => {
     if (aToken) {
+      getDashData();
       getAllAppointments();
     }
-  }, [aToken, getAllAppointments]);
+  }, [aToken, getDashData, getAllAppointments]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentAppointments = appointments.slice(indexOfFirstItem, indexOfLastItem);
+  if (!dashData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500 text-xl">Loading dashboard data...</p>
+      </div>
+    );
+  }
 
-  const handlePrevPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
+  // Get the first 7 upcoming appointments
+  const upcomingAppointments = appointments.slice(0, 7);
 
-  const handleNextPage = () => {
-    if (indexOfLastItem < appointments.length) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const formatDateTime = (dateString: string, timeString: string) => {
-    // Combine the date and time into one string that can be parsed by Date
-    const combined = `${dateString} ${timeString}`;
-    const dateObj = new Date(combined);
+  // Helper function to convert an ISO date/time string to a readable local format
+  const formatLocalDateTime = (isoString: string) => {
+    const dateObj = new Date(isoString);
     if (isNaN(dateObj.getTime())) {
-      return "Invalid date";
+      return "Invalid date/time";
     }
-    const dateOptions: Intl.DateTimeFormatOptions = {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-    const timeOptions: Intl.DateTimeFormatOptions = {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    };
-    return `${dateObj.toLocaleDateString(undefined, dateOptions)} ${dateObj.toLocaleTimeString(undefined, timeOptions)}`;
+    return dateObj.toLocaleString([], {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
   };
-  
+
+  // Chart data for Doctors vs Patients Doughnut Chart
+  const doughnutChartData = {
+    labels: ["Doctors", "Patients"],
+    datasets: [
+      {
+        data: [dashData.doctors, dashData.patients],
+        backgroundColor: ["#36A2EB", "#FF6384"],
+      },
+    ],
+  };
+
+  // Chart data for Appointments Trend (line chart)
+  const lineChartData = {
+    labels: dashData.appointmentChartData?.labels || [],
+    datasets: [
+      {
+        label: "Appointments",
+        data: dashData.appointmentChartData?.data || [],
+        fill: false,
+        borderColor: "#4BC0C0",
+        tension: 0.1,
+      },
+    ],
+  };
 
   return (
-    <div className="w-full max-w-6xl mx-auto my-5 px-4">
-      <p className="mb-5 text-xl font-semibold text-center sm:text-left text-gray-800">
-        All Appointments
-      </p>
-      <div className="bg-white border rounded-lg text-sm shadow-sm max-h-[80vh] overflow-y-auto">
-        {/* Grid template for headers */}
-        <div className="hidden sm:grid grid-cols-[0.5fr_2.5fr_2fr_2.5fr_1.5fr_1fr_1fr] py-3 px-6 border-b bg-gray-100 text-gray-700">
-          <p>#</p>
-          <p>Patient</p>
-          <p>Age</p>
-          <p>Date & Time</p>
-          <p>Doctor</p>
-          <p>Fees</p>
-          <p>Action</p>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Summary Cards */}
+      <div className="flex flex-wrap gap-6">
+        <div className="flex items-center gap-4 bg-white p-6 min-w-[200px] rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-transform transform hover:scale-105">
+          <img className="w-16" src={doctor_icon} alt="Doctor Icon" />
+          <div>
+            <p className="text-2xl font-semibold text-gray-700">{dashData.doctors}</p>
+            <p className="text-gray-500">Doctors</p>
+          </div>
         </div>
 
-        {currentAppointments.map((item, index) => (
-          <div
-            className="grid sm:grid-cols-[0.5fr_2.5fr_2fr_2.5fr_1.5fr_1fr_1fr] grid-cols-1 items-center py-4 px-6 border-b hover:bg-gray-50"
-            key={item._id}
-          >
-            <p className="hidden sm:block text-gray-600">
-              {index + 1 + indexOfFirstItem}
-            </p>
-            <div className="flex items-center gap-3">
-              <img
-                className="w-10 h-10 rounded-full object-cover"
-                src={item.userData.image}
-                alt="Patient"
-              />
-              <p className="text-gray-800 font-medium">{item.userData.name}</p>
-            </div>
-            <p className="hidden sm:block">{calculateAge(item.userData.dob)}</p>
-            <p className="text-gray-600">
-              {formatDateTime(item.slotDate, item.slotTime)}
-            </p>
-            <div className="flex items-center gap-3">
-              {item.doctData ? (
-                <>
-                  <img
-                    className="w-10 h-10 rounded-full object-cover bg-gray-200"
-                    src={item.doctData.image}
-                    alt="Doctor"
-                  />
-                  <p className="text-gray-800 font-medium">{item.doctData.name}</p>
-                </>
-              ) : (
-                <p className="text-gray-500">Doctor information unavailable</p>
-              )}
-            </div>
-            <p className="text-gray-800 font-semibold">
-              {currencySymbol}
-              {item.amount}
-            </p>
-            <div>
-              {item.cancelled ? (
-                <p className="text-red-500 text-sm font-medium">Cancelled</p>
-              ) : item.isCompleted ? (
-                <p className="text-green-500 text-sm font-medium">Completed</p>
-              ) : (
-                <img
-                  onClick={() => cancelAppointment(item._id)}
-                  className="w-8 sm:w-10 cursor-pointer hover:opacity-80"
-                  src={cancel_icon}
-                  alt="Cancel Appointment"
-                  title="Cancel Appointment"
-                />
-              )}
-            </div>
+        <div className="flex items-center gap-4 bg-white p-6 min-w-[200px] rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-transform transform hover:scale-105">
+          <img className="w-16" src={patients_icon} alt="Patients Icon" />
+          <div>
+            <p className="text-2xl font-semibold text-gray-700">{dashData.patients}</p>
+            <p className="text-gray-500">Patients</p>
           </div>
-        ))}
+        </div>
       </div>
 
-      {/* Pagination Controls */}
-      <div className="flex justify-end items-center mt-4 space-x-4">
-        <button
-          onClick={handlePrevPage}
-          disabled={currentPage === 1}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <span className="text-gray-700">
-          Page {currentPage} of {Math.ceil(appointments.length / itemsPerPage)}
-        </span>
-        <button
-          onClick={handleNextPage}
-          disabled={indexOfLastItem >= appointments.length}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
-        >
-          Next
-        </button>
+      {/* Upcoming Appointments */}
+      <div className="mt-12">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Upcoming Appointments</h2>
+        {upcomingAppointments.length === 0 ? (
+          <p className="text-gray-500 text-lg">No upcoming appointments</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {upcomingAppointments.map((appointment) => (
+              <div
+                key={appointment._id}
+                className="bg-white p-6 rounded-lg border border-gray-200 shadow hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <img
+                    className="w-12 h-12 rounded-full object-cover"
+                    src={appointment.userData.image}
+                    alt={`${appointment.userData.name}'s avatar`}
+                  />
+                  <p className="text-lg font-medium text-gray-800">
+                    {appointment.userData.name}
+                  </p>
+                </div>
+                <p className="text-gray-600">
+                  <span className="font-medium">Time:</span> {formatLocalDateTime(appointment.slotTime)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Charts */}
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Doughnut Chart */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            Doctors vs Patients
+          </h2>
+          <div className="relative h-72">
+            <Doughnut data={doughnutChartData} />
+          </div>
+        </div>
+
+        {/* Line Chart */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            Appointments Trend (Next 7 Days)
+          </h2>
+          {lineChartData.labels.length ? (
+            <div className="relative h-72">
+              <Line data={lineChartData} />
+            </div>
+          ) : (
+            <p className="text-gray-500 text-lg">No appointment trend data available</p>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default AllAppointments;
+export default Dashboard;

@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect, useRef, type ChangeEvent } from "react"
-import { io, type Socket } from "socket.io-client"
-import { useAppContext } from "../context/AppContext"
+import type React from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import { io, type Socket } from "socket.io-client";
+import { useAppContext } from "../context/AppContext";
 import {
   Send,
   Loader2,
@@ -12,79 +12,128 @@ import {
   CheckCheck,
   Check,
   FileText,
-} from "lucide-react"
-import { useParams } from "react-router-dom"
+} from "lucide-react";
+import { useParams } from "react-router-dom";
 
 interface ChatFile {
-  url: string
-  type: string
-  fileName: string
+  url: string;
+  type: string;
+  fileName: string;
 }
 
 export interface ChatMessage {
-  sender: string
-  message: string
-  timestamp: Date
-  read?: boolean
-  file?: ChatFile
+  sender: string;
+  message: string;
+  timestamp: Date;
+  read?: boolean;
+  file?: ChatFile;
+}
+interface ChatHistoryResponse {
+  patientName: string;
+  patientImage: string;
+  messages: ChatMessage[];
+}
+
+interface DoctorStatus {
+  online: boolean;
+  lastSeen?: Date;
 }
 
 const ChatComponent: React.FC = () => {
-  const { userData, doctors } = useAppContext()
-  const { doctorId } = useParams<{ doctorId: string }>()
-  console.log("doctorId from URL:", doctorId)
+  const { userData, doctors } = useAppContext();
+  const { doctorId } = useParams<{ doctorId: string }>();
+  console.log("doctorId from URL:", doctorId);
 
-  const selectedDoctor = doctors.find((doc) => doc._id === doctorId)
-  const doctorName = selectedDoctor ? selectedDoctor.name : "Doctor"
-  const doctorImage = selectedDoctor ? selectedDoctor.image : "/fallback-image.png"
+  const selectedDoctor = doctors.find((doc) => doc._id === doctorId);
+  const doctorName = selectedDoctor ? selectedDoctor.name : "Doctor";
+  const doctorImage = selectedDoctor
+    ? selectedDoctor.image
+    : "/fallback-image.png";
 
   // Use patient's _id as the room and name as sender.
-  const room = userData?._id
-  const sender = userData?.name
+  const room = userData?._id;
+  const sender = userData?.name;
 
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [input, setInput] = useState("")
-  const [typingMessage, setTypingMessage] = useState("")
-  const [uploading, setUploading] = useState(false)
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const [socket, setSocket] = useState<Socket | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [typingMessage, setTypingMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // New state for doctor's online status
+  const [doctorStatus, setDoctorStatus] = useState<DoctorStatus>({
+    online: false,
+  });
 
-  // Connect to the socket server on mount
+  // Connect to the socket server on mount and emit our own online status.
   useEffect(() => {
-    const newSocket = io("http://localhost:4000")
-    setSocket(newSocket)
-    return () => {
-      newSocket.disconnect()
+    const newSocket = io("http://localhost:4000");
+    setSocket(newSocket);
+    if (userData?._id) {
+      newSocket.emit("user-online", userData._id);
     }
-  }, [])
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [userData]);
+
+  // Listen for user-status events (e.g. for the doctor)
+  useEffect(() => {
+    if (!socket) return;
+    socket.on(
+      "user-status",
+      (data: { userId: string; online: boolean; lastSeen?: string }) => {
+        console.log("Received user-status:", data);
+        if (data.userId === doctorId) {
+          setDoctorStatus({
+            online: data.online,
+            lastSeen: data.lastSeen ? new Date(data.lastSeen) : undefined,
+          });
+        }
+      }
+    );
+    return () => {
+      socket.off("user-status");
+    };
+  }, [socket, doctorId]);
 
   // Auto-scroll to bottom when messages update
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // Join chat room and set up listeners
   useEffect(() => {
-    if (!socket || !room) return
-    socket.emit("join-chat", room)
+    if (!socket || !room) return;
+    socket.emit("join-chat", room);
 
-    socket.on("chat-history", (history: ChatMessage[]) => {
-      setMessages(history)
-    })
+    // Updated to expect an object with patient info and messages
+    // In your useEffect where you set up socket listeners:
+    socket.on("chat-history", (data: ChatHistoryResponse | ChatMessage[]) => {
+      if (Array.isArray(data)) {
+        // If data is already an array, use it directly.
+        setMessages(data);
+      } else if (data && data.messages) {
+        // If data is an object, extract messages from it.
+        setMessages(data.messages);
+      } else {
+        setMessages([]);
+      }
+    });
 
     socket.on("receive-message", (msg: ChatMessage) => {
-      setMessages((prev) => [...prev, msg])
-    })
+      setMessages((prev) => [...prev, msg]);
+    });
 
     socket.on("typing", ({ sender: typingSender }: { sender: string }) => {
-      setTypingMessage(`${typingSender} is typing...`)
-    })
+      setTypingMessage(`${typingSender} is typing...`);
+    });
 
     socket.on("stop-typing", () => {
-      setTypingMessage("")
-    })
+      setTypingMessage("");
+    });
 
     // Update read receipts when the doctor marks messages as read
     socket.on("messages-read", (data: { room: string; sender: string }) => {
@@ -93,42 +142,42 @@ const ChatComponent: React.FC = () => {
           prevMessages.map((msg) =>
             msg.sender === sender ? { ...msg, read: true } : msg
           )
-        )
+        );
       }
-    })
+    });
 
     return () => {
-      socket.off("chat-history")
-      socket.off("receive-message")
-      socket.off("typing")
-      socket.off("stop-typing")
-      socket.off("messages-read")
-    }
-  }, [socket, room, sender])
+      socket.off("chat-history");
+      socket.off("receive-message");
+      socket.off("typing");
+      socket.off("stop-typing");
+      socket.off("messages-read");
+    };
+  }, [socket, room, sender]);
 
   // Emit a read event when there are unread messages
   useEffect(() => {
     if (socket && room && messages.length > 0 && sender) {
       const unreadMessages = messages.filter(
         (msg) => msg.sender !== sender && !msg.read
-      )
+      );
       if (unreadMessages.length > 0) {
-        socket.emit("read-messages", { room, sender })
+        socket.emit("read-messages", { room, sender });
       }
     }
-  }, [messages, socket, room, sender])
+  }, [messages, socket, room, sender]);
 
   // Handle text input change and typing events
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value)
-    socket?.emit("typing", { room, sender })
+    setInput(e.target.value);
+    socket?.emit("typing", { room, sender });
     if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current)
+      clearTimeout(typingTimeoutRef.current);
     }
     typingTimeoutRef.current = setTimeout(() => {
-      socket?.emit("stop-typing", { room, sender })
-    }, 1000)
-  }
+      socket?.emit("stop-typing", { room, sender });
+    }, 1000);
+  };
 
   // Function to send a text message
   const sendMessage = () => {
@@ -139,33 +188,31 @@ const ChatComponent: React.FC = () => {
         sender,
         patientName: userData.name,
         patientImage: userData.image,
-      })
-      setInput("")
-      socket?.emit("stop-typing", { room, sender })
+      });
+      setInput("");
+      socket?.emit("stop-typing", { room, sender });
     }
-  }
+  };
 
   // Handle file selection and upload
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !socket || !room || !sender) return
+    const file = e.target.files?.[0];
+    if (!file || !socket || !room || !sender) return;
 
-    setUploading(true)
+    setUploading(true);
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("room", room)
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("room", room);
 
       // Make sure /api/user/upload returns { url: string }
       const response = await fetch("http://localhost:4000/api/user/upload", {
         method: "POST",
         body: formData,
-      })
-      const data = await response.json()
-      const fileUrl = data.url // returned file URL
+      });
+      const data = await response.json();
+      const fileUrl = data.url; // returned file URL
 
-      // Send a chat message with file information,
-      // set message to "" so we don't display file name as text
       socket.emit("send-message", {
         room,
         message: "",
@@ -177,31 +224,31 @@ const ChatComponent: React.FC = () => {
           type: file.type,
           fileName: file.name,
         },
-      })
+      });
     } catch (error) {
-      console.error("File upload failed:", error)
+      console.error("File upload failed:", error);
     } finally {
-      setUploading(false)
+      setUploading(false);
       if (fileInputRef.current) {
-        fileInputRef.current.value = ""
+        fileInputRef.current.value = "";
       }
     }
-  }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      sendMessage()
+      sendMessage();
     }
-  }
+  };
 
   const formatTime = (timestamp: Date) => {
     return new Date(timestamp).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-    })
-  }
+    });
+  };
 
-  const isCurrentUser = (messageSender: string) => messageSender === sender
+  const isCurrentUser = (messageSender: string) => messageSender === sender;
 
   return (
     <div className="flex flex-col h-[600px] w-full max-w-md mx-auto rounded-xl shadow-lg overflow-hidden bg-white border border-gray-200">
@@ -217,8 +264,22 @@ const ChatComponent: React.FC = () => {
         <div className="flex-1">
           <h2 className="text-white font-semibold">{doctorName}</h2>
           <div className="flex items-center text-xs text-white/80">
-            <div className="w-2 h-2 rounded-full bg-green-400 mr-1.5"></div>
-            Online
+            {doctorStatus.online ? (
+              <div className="flex items-center">
+                <div className="w-2 h-2 rounded-full bg-green-400 mr-1.5"></div>
+                <span>Online</span>
+              </div>
+            ) : (
+              <div className="text-gray-300">
+                Last seen{" "}
+                {doctorStatus.lastSeen
+                  ? doctorStatus.lastSeen.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "not available"}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -258,16 +319,13 @@ const ChatComponent: React.FC = () => {
                 {/* Message text or file */}
                 <div className="break-words">
                   {msg.file ? (
-                    // If there's a file
                     msg.file.type.startsWith("image/") ? (
-                      // Display the image only
                       <img
                         src={msg.file.url || "/placeholder.svg"}
                         alt="Uploaded image"
                         className="rounded-md max-w-full border border-gray-200"
                       />
                     ) : (
-                      // Non-image file
                       <div className="flex items-center space-x-2">
                         <div
                           className={`p-2 rounded ${
@@ -299,7 +357,6 @@ const ChatComponent: React.FC = () => {
                       </div>
                     )
                   ) : (
-                    // No file? Show text
                     msg.message
                   )}
                 </div>
@@ -351,9 +408,10 @@ const ChatComponent: React.FC = () => {
               value={input}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
+              placeholder={`Message ${doctorName}...`}
               className="flex-1 bg-transparent py-2 outline-none text-gray-700 placeholder-gray-400"
             />
+
             <button
               onClick={sendMessage}
               disabled={input.trim() === ""}
@@ -393,7 +451,7 @@ const ChatComponent: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ChatComponent
+export default ChatComponent;
