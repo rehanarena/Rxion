@@ -28,6 +28,7 @@ import VerifyOtp from './pages/verifyOtp';
 import DoctorVideoCallPage from './pages/Doctor/DoctorVideoCallPage';
 import DoctorChat from './pages/Doctor/chat';
 import PatientList from './pages/Doctor/PatientchatList';
+import Reports from './pages/Admin/Reports';
 
 
 interface AdminContextType {
@@ -62,6 +63,7 @@ const App = () => {
               <Route path='/all-doctors' element={<AllDoctors />} />
               <Route path='/doctor-details/:doctorId' element={<DoctorDetails />} />
               <Route path='/user-list' element={<UserList />} />
+              <Route path='/reports' element={<Reports />} />
               
               {/* Doctor Routes */}
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />

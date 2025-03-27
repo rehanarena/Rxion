@@ -69,9 +69,9 @@ class adminRepository {
                 },
                 { $sort: { _id: 1 } }
             ]);
-            console.log("Today is:", today);
-            console.log("Seven days ahead:", sevenDaysAhead);
-            console.log("Aggregation result:", appointmentAggregation);
+            // console.log("Today is:", today);
+            // console.log("Seven days ahead:", sevenDaysAhead);
+            // console.log("Aggregation result:", appointmentAggregation);
             // Build labels & data arrays for the chart
             const labels = appointmentAggregation.map((item) => item._id);
             const data = appointmentAggregation.map((item) => item.count);

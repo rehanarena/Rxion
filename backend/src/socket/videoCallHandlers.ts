@@ -1,8 +1,5 @@
-// socket/videoCallHandler.ts
-
 import { Socket, Server } from 'socket.io';
 
-// In-memory store for active calls
 const activeCalls: { [room: string]: any } = {};
 
 export function videoCallHandler(socket: Socket, io: Server) {
