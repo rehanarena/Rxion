@@ -12,55 +12,83 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendOtpEmail = void 0;
-const bcrypt_1 = __importDefault(require("bcrypt"));
-const otpModel_1 = __importDefault(require("../models/otpModel"));
+exports.sendAppointmentCancelledEmail = exports.sendAppointmentCompletedEmail = exports.sendPasswordEmail = exports.sendOtpEmail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
-const sendOtpEmail = (_a, res_1) => __awaiter(void 0, [_a, res_1], void 0, function* ({ _id, email }, res) {
-    const otp = `${Math.floor(100000 + Math.random() * 900000)}`;
-    console.log("otp: ", otp);
+const sendOtpEmail = (email, otp) => __awaiter(void 0, void 0, void 0, function* () {
     const transporter = nodemailer_1.default.createTransport({
-        host: "smtp-relay.brevo.com",
-        port: 587,
-        secure: false,
-        requireTLS: true,
+        service: 'gmail',
         auth: {
-            user: process.env.BREVO_MAIL,
-            pass: process.env.BREVO_KEY,
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
         },
     });
     const mailOptions = {
-        from: process.env.BREVO_MAIL,
+        from: process.env.EMAIL_USER,
         to: email,
-        subject: "For email verification from Ministore",
-        html: `<p>Your OTP for verification is ${otp}. Don't share your OTP!<br>The OTP is only valid for 5 minutes.</p>`,
+        subject: 'OTP for User Verification',
+        text: `Your OTP for account verification is: ${otp}`,
     };
-    const hashedOtp = yield bcrypt_1.default.hash(otp, 10);
-    const existingOtpData = yield otpModel_1.default.findOne({ userId: _id });
-    if (existingOtpData) {
-        const deletedOldOtpData = yield otpModel_1.default.deleteOne({ userId: _id });
-        // Handle deletion failure if necessary
-        if (!deletedOldOtpData) {
-            // You can send an error response here if needed
-            console.log("Failed to delete the old OTP data.");
-            return false;
-        }
-    }
-    const otpdata = new otpModel_1.default({
-        userId: _id,
-        otp: hashedOtp,
-        createdAt: Date.now(),
-        expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes expiration
-    });
-    yield otpdata.save();
-    try {
-        const info = yield transporter.sendMail(mailOptions);
-        console.log("Email has been sent", info.response);
-        return true;
-    }
-    catch (error) {
-        console.error("Error sending email:", error);
-        return false;
-    }
+    yield transporter.sendMail(mailOptions);
 });
 exports.sendOtpEmail = sendOtpEmail;
+const sendPasswordEmail = (email, password) => __awaiter(void 0, void 0, void 0, function* () {
+    const transporter = nodemailer_1.default.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+    });
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Your Doctor Account Password',
+        text: `Your account has been successfully created. Your password is: ${password}`,
+    };
+    yield transporter.sendMail(mailOptions);
+});
+exports.sendPasswordEmail = sendPasswordEmail;
+const sendAppointmentCompletedEmail = (email, patientName) => __awaiter(void 0, void 0, void 0, function* () {
+    const transporter = nodemailer_1.default.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+    });
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Thank You for Choosing Rxion Team',
+        text: `Hello ${patientName},
+
+Thank you for choosing the Rxion team for your consultation. We appreciate your trust in us and look forward to assisting you in the future.
+
+Best regards,
+Rxion Team`,
+    };
+    yield transporter.sendMail(mailOptions);
+});
+exports.sendAppointmentCompletedEmail = sendAppointmentCompletedEmail;
+const sendAppointmentCancelledEmail = (email, patientName) => __awaiter(void 0, void 0, void 0, function* () {
+    const transporter = nodemailer_1.default.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+    });
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Appointment Cancellation Notice',
+        text: `Hello ${patientName},
+
+We regret to inform you that your appointment has been canceled due to unforeseen circumstances on the doctor's end. We sincerely apologize for the inconvenience. Please feel free to reschedule at your convenience.
+
+Best regards,
+Rxion Team`,
+    };
+    yield transporter.sendMail(mailOptions);
+});
+exports.sendAppointmentCancelledEmail = sendAppointmentCancelledEmail;

@@ -7,6 +7,7 @@ import { AppointmentService } from "../services/user/AppointmentService";
 import PaymentService from "../services/user/PaymentService";
 import UserService from "../services/user/UserService";
 import { Types } from "mongoose";
+import HttpStatus from "../utils/statusCode";
 
 interface UpdateProfileRequestBody {
   userId: string;
@@ -28,12 +29,12 @@ interface CustomRequest extends Request {
   };
 }
 
-/// Regietr User ///
-const registerUser = async (req: Request, res: Response,  next: NextFunction): Promise<void> => {
+/// Register User ///
+const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const authService = new AuthService();
     const user = await authService.registerUser(req.body);
-    res.json({
+    res.status(HttpStatus.OK).json({
       success: true,
       userId: user._id,
       message: "OTP sent to email. Please verify.",
@@ -43,56 +44,51 @@ const registerUser = async (req: Request, res: Response,  next: NextFunction): P
   }
 };
 
-/// Verify Otp ///
+/// Verify OTP ///
 const verifyOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { otp, userId } = req.body;
 
   // Validate userId
   if (!userId || !Types.ObjectId.isValid(userId)) {
-    res.status(400).json({ success: false, message: "Invalid userId." });
+    res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: "Invalid userId." });
     return;
   }
 
   try {
     const authService = new AuthService();
     const result = await authService.verifyOtp(otp, userId);
-    res.json({ success: true, ...result });
+    res.status(HttpStatus.OK).json({ success: true, ...result });
   } catch (error: any) {
     next(error);
   }
 };
 
 /// Resend OTP ///
-
 const resendOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { userId } = req.body;
 
   // Validate userId
   if (!userId || !Types.ObjectId.isValid(userId)) {
-    res.status(400).json({ success: false, message: "Invalid userId." });
+    res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: "Invalid userId." });
     return;
   }
 
   try {
     const authService = new AuthService();
     const result = await authService.resendOtp(userId);
-    res.json({ success: true, ...result });
+    res.status(HttpStatus.OK).json({ success: true, ...result });
   } catch (error: any) {
     next(error);
   }
 };
 
 /// Login User ///
-
 const loginUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password } = req.body;
     const authService = new AuthService();
-    const { accessToken, refreshToken } = await authService.loginUser(
-      email,
-      password
-    );
-    res.json({
+    const { accessToken, refreshToken } = await authService.loginUser(email, password);
+    res.status(HttpStatus.OK).json({
       success: true,
       accessToken,
       refreshToken,
@@ -103,28 +99,23 @@ const loginUser = async (req: Request, res: Response, next: NextFunction): Promi
 };
 
 /// Google Auth ///
-
 const google = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, name, photo } = req.body;
 
     if (!name || !email || !photo) {
-      res.status(400).json({ message: "Name, email, and photo are required" });
+      res.status(HttpStatus.BAD_REQUEST).json({ message: "Name, email, and photo are required" });
       return;
     }
 
     const authService = new AuthService();
-    const { status, user, token } = await authService.googleAuth(
-      email,
-      name,
-      photo
-    );
+    const { status, user, token } = await authService.googleAuth(email, name, photo);
 
     // Convert the user document to a plain object and remove the password field.
     const userObject = user.toObject ? user.toObject() : user;
     const { password, ...rest } = userObject;
 
-    if (status === 200) {
+    if (status === HttpStatus.OK) {
       // For an existing user, set an HTTP-only cookie with the token.
       const expiryDate = new Date(Date.now() + 3600000); // 1 hour expiry
       res
@@ -132,7 +123,7 @@ const google = async (req: Request, res: Response, next: NextFunction): Promise<
           httpOnly: true,
           expires: expiryDate,
         })
-        .status(200)
+        .status(HttpStatus.OK)
         .json({
           success: true,
           message: "Login successful",
@@ -141,7 +132,7 @@ const google = async (req: Request, res: Response, next: NextFunction): Promise<
         });
     } else {
       // For a newly created account.
-      res.status(201).json({
+      res.status(HttpStatus.CREATED).json({
         message: "Account created",
         user: rest,
         accessToken: token,
@@ -153,17 +144,12 @@ const google = async (req: Request, res: Response, next: NextFunction): Promise<
 };
 
 /// Refresh Access Token ///
-
-const refreshAccessToken = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+const refreshAccessToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
     res
-      .status(401)
+      .status(HttpStatus.UNAUTHORIZED)
       .json({ success: false, message: "No refresh token provided" });
     return;
   }
@@ -171,22 +157,19 @@ const refreshAccessToken = async (
   try {
     const authService = new AuthService();
     const newAccessToken = await authService.refreshAccessToken(refreshToken);
-    res.json({ success: true, accessToken: newAccessToken });
+    res.status(HttpStatus.OK).json({ success: true, accessToken: newAccessToken });
   } catch (error: any) {
     next(error);
   }
 };
 
 /// Forgot Password Request ///
-
 const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email } = req.body;
-
     const authService = new AuthService();
     const result = await authService.forgotPassword(email);
-
-    res.json({ success: true, ...result });
+    res.status(HttpStatus.OK).json({ success: true, ...result });
   } catch (error: any) {
     next(error);
   }
@@ -200,7 +183,6 @@ const changePassword = async (
 ): Promise<void> => {
   try {
     const { userId, currentPassword, newPassword, confirmPassword } = req.body;
-
     const authService = new AuthService();
     const message = await authService.changePassword(
       userId,
@@ -208,32 +190,30 @@ const changePassword = async (
       newPassword,
       confirmPassword
     );
-
-    res.status(200).json({ success: true, message });
+    res.status(HttpStatus.OK).json({ success: true, message });
   } catch (error: any) {
     next(error);
   }
 };
 
-///getProfile ///
+/// Get Profile ///
 const getProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.body;
     const authService = new AuthService();
     const userData = await authService.getProfile(userId);
-    res.json({ success: true, userData });
+    res.status(HttpStatus.OK).json({ success: true, userData });
   } catch (error: any) {
     next(error);
   }
 };
 
-/// updateProfile ///
-const updateProfile = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
+/// Update Profile ///
+const updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId, name, phone, address, dob, gender, medicalHistory } =
       req.body as UpdateProfileRequestBody;
     const imageFile = req.file;
-
     const authService = new AuthService();
     const result = await authService.updateProfile(
       userId,
@@ -245,16 +225,14 @@ const updateProfile = async (req: Request, res: Response,next: NextFunction): Pr
       imageFile,
       medicalHistory 
     );
-
-    res.json({ success: true, message: result.message });
+    res.status(HttpStatus.OK).json({ success: true, message: result.message });
   } catch (error: any) {
     next(error);
   }
 };
 
-
-///serach ///
-const doctorSearch = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
+/// Doctor Search ///
+const doctorSearch = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { speciality, search, sortBy, page, limit } = req.query;
     const doctorService = new DoctorService();
@@ -265,125 +243,102 @@ const doctorSearch = async (req: Request, res: Response,next: NextFunction): Pro
       page: page as string,
       limit: limit as string,
     });
-    res.status(200).json(result);
+    res.status(HttpStatus.OK).json(result);
   } catch (error: any) {
     next(error);
   }
 };
 
-/// book appoinment ///
-const bookAppointment = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
+/// Book Appointment ///
+const bookAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { docId, slotDate, slotTime } = req.body;
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
-      res.status(401).json({ success: false, message: "Unauthorized access" });
+      res.status(HttpStatus.UNAUTHORIZED).json({ success: false, message: "Unauthorized access" });
       return;
     }
 
     const appointmentService = new AppointmentService();
-    const message = await appointmentService.bookAppointment(
-      token,
-      docId,
-      slotDate,
-      slotTime
-    );
-
-    res.status(201).json({ success: true, message });
+    const message = await appointmentService.bookAppointment(token, docId, slotDate, slotTime);
+    res.status(HttpStatus.CREATED).json({ success: true, message });
   } catch (error: any) {
     next(error);
   }
 };
 
-/// appoinments list in my-appointments ///
-const listAppointments = async (req: Request, res: Response,next: NextFunction): Promise<void> => {
+/// List Appointments ///
+const listAppointments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.body;
     const appointmentService = new AppointmentService();
     const appointments = await appointmentService.listAppointments(userId);
-    res.json({ success: true, appointments });
+    res.status(HttpStatus.OK).json({ success: true, appointments });
   } catch (error: any) {
     next(error);
   }
 };
 
-///cancel appointment ///
-
-const cancelAppointment = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+/// Cancel Appointment ///
+const cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId, appointmentId } = req.body;
     const appointmentService = new AppointmentService();
-    const message = await appointmentService.cancelAppointment(
-      userId,
-      appointmentId
-    );
-    res.json({ success: true, message });
+    const message = await appointmentService.cancelAppointment(userId, appointmentId);
+    res.status(HttpStatus.OK).json({ success: true, message });
   } catch (error: any) {
     next(error);
   }
 };
 
-/// payment razorpay ///
+/// Payment Razorpay ///
 const paymentRazorpay = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { appointmentId } = req.body;
     const result = await PaymentService.processPayment(appointmentId);
-    res.json(result);
+    res.status(HttpStatus.OK).json(result);
   } catch (error: any) {
     next(error);
   }
 };
 
-/// verify payment ///
+/// Verify Payment ///
 const verifyRazorpay = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { razorpay_payment_id, razorpay_order_id } = req.body;
-    const result = await PaymentService.verifyPayment(
-      razorpay_payment_id,
-      razorpay_order_id
-    );
-    res.json(result);
+    const result = await PaymentService.verifyPayment(razorpay_payment_id, razorpay_order_id);
+    res.status(HttpStatus.OK).json(result);
   } catch (error: any) {
     next(error);
   }
 };
 
-///getWallet ///
-
-const getWalletBalance = async (
-  req: CustomRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+/// Get Wallet Balance ///
+const getWalletBalance = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.user?.id || req.body.userId;
     if (!userId) {
-      res
-        .status(401)
-        .json({ success: false, message: "User not authenticated" });
+      res.status(HttpStatus.UNAUTHORIZED).json({ success: false, message: "User not authenticated" });
       return;
     }
 
     const walletBalance = await UserService.getWalletBalance(userId);
-    res.json({ success: true, walletBalance });
+    res.status(HttpStatus.OK).json({ success: true, walletBalance });
   } catch (error: any) {
     next(error);
   }
 };
-const fileUpload = async(req: Request, res: Response): Promise<void>=>{
+
+const fileUpload = async (req: Request, res: Response): Promise<void> => {
   if (!req.file) {
-     res.status(400).json({ error: 'No file uploaded' })
-     return
+    res.status(HttpStatus.BAD_REQUEST).json({ error: 'No file uploaded' });
+    return;
   }
   // Construct the file URL. Adjust the URL based on your static file serving setup.
   const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
-  res.json({ url: fileUrl });
-}
+  res.status(HttpStatus.OK).json({ url: fileUrl });
+};
 
 export {
   registerUser,

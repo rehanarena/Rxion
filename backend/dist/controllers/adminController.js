@@ -12,59 +12,146 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loginAdmin = void 0;
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
-const secretKey = process.env.JWT_SECRET;
-/**
- * Create a JWT token for admin authentication.
- * @param email - Admin email
- * @param password - Admin password
- * @returns Signed JWT token
- */
-const createAdminToken = (email, password) => {
-    return jsonwebtoken_1.default.sign({ email, password }, secretKey, { expiresIn: "1h" });
-};
-/**
- * API for admin login
- * @param req - Express request object
- * @param res - Express response object
- */
-const loginAdmin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.cancelAppointment = exports.appointmentsAdmin = exports.allDoctors = exports.doctorList = exports.blockUnblockDoctor = exports.blockUnblockUser = exports.userList = exports.adminDashboard = exports.loginAdmin = exports.addDoctor = exports.getDoctors = void 0;
+const adminService_1 = require("../services/admin/adminService");
+const statusCode_1 = __importDefault(require("../utils/statusCode"));
+const adminServiceInstance = new adminService_1.AdminService();
+const addDoctor = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { email, password } = req.body;
-        // Validate input
-        if (!email || !password) {
-            res.status(400).json({
-                success: false,
-                message: "Email and password are required",
-            });
+        const data = req.body;
+        const imageFile = req.file;
+        if (!imageFile) {
+            res.status(statusCode_1.default.BAD_REQUEST).json({ success: false, message: "Image file missing" });
             return;
         }
-        // Check credentials
-        if (email === process.env.ADMIN_EMAIL &&
-            password === process.env.ADMIN_PASSWORD) {
-            const token = createAdminToken(email, password); // Generate token
-            res.status(200).json({
-                success: true,
-                token,
-                message: "Admin login successful",
-            });
-        }
-        else {
-            res.status(401).json({
-                success: false,
-                message: "Invalid credentials",
-            });
-        }
+        yield adminServiceInstance.addDoctor(data, imageFile);
+        res.status(statusCode_1.default.CREATED).json({
+            success: true,
+            message: "Doctor Added Successfully and Password Sent to Email",
+        });
     }
     catch (error) {
-        console.error("Error during admin login:", error);
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error",
-        });
+        next(error);
+    }
+});
+exports.addDoctor = addDoctor;
+const loginAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email, password } = req.body;
+        const { token } = yield adminServiceInstance.loginAdmin(email, password);
+        res.status(statusCode_1.default.OK).json({ success: true, token });
+    }
+    catch (error) {
+        next(error);
     }
 });
 exports.loginAdmin = loginAdmin;
+/// Dashboard ///
+const adminDashboard = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const dashData = yield adminServiceInstance.getDashboardData();
+        res.status(statusCode_1.default.OK).json({ success: true, dashData });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.adminDashboard = adminDashboard;
+const userList = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const users = yield adminServiceInstance.getAllUsers();
+        res.status(statusCode_1.default.OK).json(users);
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.userList = userList;
+const blockUnblockUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const { action } = req.body;
+    try {
+        const result = yield adminServiceInstance.blockUnblockUser(id, action);
+        res.status(statusCode_1.default.OK).json(result);
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.blockUnblockUser = blockUnblockUser;
+const blockUnblockDoctor = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const { action } = req.body;
+    try {
+        const result = yield adminServiceInstance.blockUnblockDoctor(id, action);
+        res.status(statusCode_1.default.OK).json(result);
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.blockUnblockDoctor = blockUnblockDoctor;
+const doctorList = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { search, page = "1", limit = "8", speciality } = req.query;
+        const result = yield adminServiceInstance.doctorList({
+            search: search,
+            page: page,
+            limit: limit,
+            speciality: speciality,
+        });
+        res.status(statusCode_1.default.OK).json(result);
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.doctorList = doctorList;
+const allDoctors = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const doctors = yield adminServiceInstance.allDoctors();
+        res.status(statusCode_1.default.OK).json({ success: true, doctors });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.allDoctors = allDoctors;
+const getDoctors = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { doctorId } = req.params;
+    try {
+        const doctor = yield adminServiceInstance.getDoctor(doctorId);
+        if (!doctor) {
+            res.status(statusCode_1.default.NOT_FOUND).json({ success: false, message: "Doctor not found" });
+            return;
+        }
+        res.status(statusCode_1.default.OK).json({ success: true, doctor });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.getDoctors = getDoctors;
+/// All appointment list ///
+const appointmentsAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const appointments = yield adminServiceInstance.getAllAppointments();
+        res.status(statusCode_1.default.OK).json({ success: true, appointments });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.appointmentsAdmin = appointmentsAdmin;
+/// Cancel Appointment ///
+const cancelAppointment = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { appointmentId } = req.body;
+        const result = yield adminServiceInstance.cancelAppointment(appointmentId);
+        res.status(statusCode_1.default.OK).json({ success: true, message: result.message });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.cancelAppointment = cancelAppointment;

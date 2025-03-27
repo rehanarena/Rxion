@@ -1,18 +1,18 @@
 import { Request, Response } from "express";
 import { DoctorService } from '../../services/doctor/DoctorService';
 import specialityModel from "../../models/specialityModel";
+import HttpStatus from "../../utils/statusCode";
 
 const doctorService = new DoctorService();
-
 
 const loginDoctor = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
     const result = await doctorService.loginDoctor(email, password);
-    res.json(result);
+    res.status(HttpStatus.OK).json(result);
   } catch (error: any) {
     console.error(error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
   }
 };
 
@@ -20,10 +20,10 @@ export const doctorForgotPasswordOTP = async (req: Request, res: Response): Prom
   try {
     const { email } = req.body;
     const result = await doctorService.doctorForgotPasswordOTP(email);
-    res.status(200).json(result);
+    res.status(HttpStatus.OK).json(result);
   } catch (error: any) {
     console.error(error);
-    const status = error.status || 500;
+    const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
     res.status(status).json({ success: false, message: error.message || "Server error" });
   }
 };
@@ -32,10 +32,10 @@ export const verifyDoctorOtp = async (req: Request, res: Response): Promise<void
   try {
     const { otp, doctorId } = req.body;
     const result = await doctorService.verifyDoctorOtp(doctorId, otp);
-    res.json(result);
+    res.status(HttpStatus.OK).json(result);
   } catch (error: any) {
     console.error("Error verifying OTP:", error);
-    res.status(500).json({ success: false, message: "Something went wrong." });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Something went wrong." });
   }
 };
 
@@ -43,10 +43,10 @@ export const resendDoctorOtp = async (req: Request, res: Response): Promise<void
   try {
     const { doctorId } = req.body;
     const result = await doctorService.resendDoctorOtp(doctorId);
-    res.json(result);
+    res.status(HttpStatus.OK).json(result);
   } catch (error: any) {
     console.error("Error resending OTP:", error);
-    const status = error.status || 500;
+    const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
     res.status(status).json({
       success: false,
       message: error.message || "An error occurred while resending the OTP. Please try again later."
@@ -59,49 +59,43 @@ export const doctorResetPassword = async (req: Request, res: Response): Promise<
     const { email, token, password } = req.body;
     const result = await doctorService.doctorResetPassword(email, token, password);
     if (!result.success) {
-      res.status(400).json(result);
+      res.status(HttpStatus.BAD_REQUEST).json(result);
     } else {
-      res.status(200).json(result);
+      res.status(HttpStatus.OK).json(result);
     }
   } catch (error: any) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };
-
-
-
 
 const doctorDashboard = async (req: Request, res: Response): Promise<void> => {
   try {
     const { docId } = req.body;
     if (!docId) {
-      res.status(400).json({ success: false, message: "docId is required" });
+      res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: "docId is required" });
       return;
     }
     
     const dashData = await doctorService.getDashboardData(docId);
-    res.json({ success: true, dashData });
+    res.status(HttpStatus.OK).json({ success: true, dashData });
   } catch (error: any) {
     console.error(error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
   }
 };
 
-const changeAvailability = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+const changeAvailability = async (req: Request, res: Response): Promise<void> => {
   try {
     const { docId } = req.body;
     const newAvailability = await doctorService.changeAvailability(docId);
-    res.json({ success: true, message: "Availability Changed", available: newAvailability });
+    res.status(HttpStatus.OK).json({ success: true, message: "Availability Changed", available: newAvailability });
   } catch (error: any) {
     console.error(error);
     if (error.message === "Doctor not found") {
-      res.status(404).json({ success: false, message: error.message });
+      res.status(HttpStatus.NOT_FOUND).json({ success: false, message: error.message });
     } else {
-      res.status(500).json({ success: false, message: "Server error while changing availability." });
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error while changing availability." });
     }
   }
 };
@@ -109,21 +103,22 @@ const changeAvailability = async (
 const doctorList = async (req: Request, res: Response): Promise<void> => {
   try {
     const doctors = await doctorService.listDoctors();
-    res.json({ success: true, doctors });
+    res.status(HttpStatus.OK).json({ success: true, doctors });
   } catch (error) {
     console.log(error);
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Server error while fetching doctors.",
     });
   }
 };
-export const getSpeciality = async(req: Request, res: Response): Promise<void> => {
+
+export const getSpeciality = async (req: Request, res: Response): Promise<void> => {
   try {
     const specialties = await specialityModel.find({});
-    res.json({ success: true, specialties });
+    res.status(HttpStatus.OK).json({ success: true, specialties });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Unable to fetch specialties" });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Unable to fetch specialties" });
   }
 };
 
@@ -131,41 +126,38 @@ export const doctorProfile = async (req: Request, res: Response): Promise<void> 
   try {
     const { docId } = req.body;
     const profileData = await doctorService.getDoctorProfile(docId);
-    res.json({ success: true, profileData });
+    res.status(HttpStatus.OK).json({ success: true, profileData });
   } catch (error: any) {
     console.error(error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
   }
 };
 
 export const updateDoctorProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     const { docId, fees, address, available } = req.body;
-
     const updatedDoctor = await doctorService.updateDoctorProfile(docId, { fees, address, available });
-    res.json({ success: true, message: "Profile Updated", updatedDoctor });
+    res.status(HttpStatus.OK).json({ success: true, message: "Profile Updated", updatedDoctor });
   } catch (error: any) {
     console.error(error);
     if (error.message === "Doctor ID is required") {
-      res.status(400).json({ success: false, message: error.message });
+      res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: error.message });
     } else if (error.message === "Doctor not found") {
-      res.status(404).json({ success: false, message: error.message });
+      res.status(HttpStatus.NOT_FOUND).json({ success: false, message: error.message });
     } else {
-      res.status(500).json({ success: false, message: "Server error while updating profile." });
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error while updating profile." });
     }
   }
 };
 
-const fileUpload = async(req: Request, res: Response): Promise<void>=>{
+const fileUpload = async (req: Request, res: Response): Promise<void> => {
   if (!req.file) {
-     res.status(400).json({ error: 'No file uploaded' })
-     return
+    res.status(HttpStatus.BAD_REQUEST).json({ error: 'No file uploaded' });
+    return;
   }
-  // Construct the file URL. Adjust the URL based on your static file serving setup.
   const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
-  res.json({ url: fileUrl });
-}
-
+  res.status(HttpStatus.OK).json({ url: fileUrl });
+};
 
 export {
   loginDoctor,

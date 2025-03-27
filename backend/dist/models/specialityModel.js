@@ -33,11 +33,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+// specialty.model.ts
 const mongoose_1 = __importStar(require("mongoose"));
-const otpSchema = new mongoose_1.Schema({
-    otp: { type: String, required: true },
-    userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true },
-    expiresAt: { type: Date, required: true },
-});
-const OTP = mongoose_1.default.model("OTP", otpSchema);
-exports.default = OTP;
+const SpecialtySchema = new mongoose_1.Schema({
+    name: { type: String, required: true, unique: true },
+    description: { type: String },
+}, { timestamps: true });
+exports.default = mongoose_1.default.model('Specialty', SpecialtySchema);

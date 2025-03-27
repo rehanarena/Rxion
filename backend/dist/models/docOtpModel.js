@@ -36,8 +36,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const otpSchema = new mongoose_1.Schema({
     otp: { type: String, required: true },
-    userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true },
+    doctorId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "Doctor",
+        required: true,
+    },
     expiresAt: { type: Date, required: true },
 });
-const OTP = mongoose_1.default.model("OTP", otpSchema);
-exports.default = OTP;
+const DoctorOTP = mongoose_1.default.models.DoctorOTP || mongoose_1.default.model("DoctorOTP", otpSchema);
+exports.default = DoctorOTP;

@@ -13,31 +13,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const authAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+// Doctor authentication middleware
+const authDoctor = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { atoken } = req.headers;
-        if (!atoken) {
-            res.status(401).json({
+        const { dtoken } = req.headers;
+        if (!dtoken) {
+            res.json({
                 success: false,
-                message: "Not Authorized. Login Again.",
+                message: "Not Authorized Login Again",
             });
             return;
         }
-        const token_decode = jsonwebtoken_1.default.verify(atoken, process.env.JWT_SECRET);
-        const isValid = `${process.env.ADMIN_EMAIL}${process.env.ADMIN_PASSWORD}` ===
-            `${token_decode.email}${token_decode.password}`;
-        if (!isValid) {
-            res.status(401).json({
-                success: false,
-                message: "Not Authorized. Login Again.",
-            });
-            return;
-        }
+        // Type assertion to specify the token content structure
+        const token_decode = jsonwebtoken_1.default.verify(dtoken, process.env.JWT_SECRET);
+        req.body.docId = token_decode.id;
         next();
     }
     catch (error) {
-        console.error("Authentication Error:", error.message || error);
-        res.status(500).json({ success: false, message: error.message });
+        console.log(error);
+        res.json({ success: false, message: 'Internal Error' });
     }
 });
-exports.default = authAdmin;
+exports.default = authDoctor;

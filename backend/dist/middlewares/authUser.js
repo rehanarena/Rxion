@@ -13,31 +13,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const authAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const authUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { atoken } = req.headers;
-        if (!atoken) {
-            res.status(401).json({
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            res.json({
                 success: false,
-                message: "Not Authorized. Login Again.",
+                message: "Not Authorized. Please log in again.",
             });
             return;
         }
-        const token_decode = jsonwebtoken_1.default.verify(atoken, process.env.JWT_SECRET);
-        const isValid = `${process.env.ADMIN_EMAIL}${process.env.ADMIN_PASSWORD}` ===
-            `${token_decode.email}${token_decode.password}`;
-        if (!isValid) {
-            res.status(401).json({
-                success: false,
-                message: "Not Authorized. Login Again.",
-            });
+        const token = authHeader.split(" ")[1];
+        if (!token) {
+            res.json({ success: false, message: "Token not found." });
             return;
         }
+        const token_decode = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+        req.body.userId = token_decode.id;
         next();
     }
     catch (error) {
-        console.error("Authentication Error:", error.message || error);
-        res.status(500).json({ success: false, message: error.message });
+        console.error(error);
+        res.json({ success: false, message: error.message });
     }
 });
-exports.default = authAdmin;
+exports.default = authUser;
