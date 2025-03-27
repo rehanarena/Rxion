@@ -1,6 +1,6 @@
 import { DoctorRepository } from "../../repositories/doctor/DoctorRepository";
 import { DoctorOTPRepository } from "../../repositories/doctor/DoctorOTPRepository";
-import bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs"
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
@@ -83,7 +83,7 @@ export class DoctorService {
         message: "Your account has been blocked by the admin.",
       };
     }
-    const isMatch = await bcrypt.compare(password, doctor.password);
+    const isMatch = await bcryptjs.compare(password, doctor.password);
     if (isMatch) {
       const token = jwt.sign(
         { id: doctor._id },
@@ -184,7 +184,7 @@ Rxion Team
     if (!doctor) {
       return { success: false, message: "Invalid or expired reset token" };
     }
-    doctor.password = await bcrypt.hash(password, 10);
+    doctor.password = await bcryptjs.hash(password, 10);
     doctor.resetPasswordToken = null;
     doctor.resetPasswordExpire = null;
     await this.doctorRepository.saveDoctor(doctor);

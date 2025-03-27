@@ -1,5 +1,5 @@
 import validator from "validator";
-import bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs"
 import jwt from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
 import { adminRepository } from "../../repositories/admin/adminRepository";
@@ -61,8 +61,8 @@ export class AdminService {
       throw new Error("Weak password");
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(password, salt);
 
     const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
       resource_type: "image",

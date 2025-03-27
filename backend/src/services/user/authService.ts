@@ -1,7 +1,7 @@
 import { UserRepository } from "../../repositories/user/UserRepository";
 import { OTPRepository } from "../../repositories/user/OTPRepository";
 import { TokenRepository } from "../../repositories/user/TokenRepository";
-import bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs"
 import validator from "validator";
 import { generateOTP } from "../../utils/generateOTP";
 import { sendOtpEmail } from "../../helper/mailer";
@@ -56,8 +56,8 @@ export class AuthService {
       throw new Error("Email already registered");
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(password, salt);
 
     const user = await this.userRepository.createUser({
       name,
@@ -166,7 +166,7 @@ export class AuthService {
       throw new Error("Please verify your email first.");
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcryptjs.compare(password, user.password);
     if (!isMatch) {
       throw new Error("Invalid credentials");
     }
@@ -193,7 +193,7 @@ export class AuthService {
       const generatedPassword =
         Math.random().toString(36).slice(-8) +
         Math.random().toString(36).slice(-8);
-      const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
+      const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
 
       const username =
         name.split(" ").join("").toLowerCase() +
@@ -284,13 +284,13 @@ export class AuthService {
       throw new Error("User not found.");
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const isMatch = await bcryptjs.compare(currentPassword, user.password);
     if (!isMatch) {
       throw new Error("Current password is incorrect.");
     }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    const salt = await bcryptjs.genSalt(10);
+    user.password = await bcryptjs.hash(newPassword, salt);
     await this.userRepository.updateUser(user);
 
     return "Password changed successfully.";
