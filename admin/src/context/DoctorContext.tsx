@@ -77,7 +77,8 @@ interface DoctorContextProviderProps {
 }
 
 const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+  console.log(backendUrl)
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [dToken, setDToken] = useState<string>(
