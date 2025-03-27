@@ -16,7 +16,7 @@ exports.AuthService = void 0;
 const UserRepository_1 = require("../../repositories/user/UserRepository");
 const OTPRepository_1 = require("../../repositories/user/OTPRepository");
 const TokenRepository_1 = require("../../repositories/user/TokenRepository");
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const validator_1 = __importDefault(require("validator"));
 const generateOTP_1 = require("../../utils/generateOTP");
 const mailer_1 = require("../../helper/mailer");
@@ -50,8 +50,8 @@ class AuthService {
             if (existingUser) {
                 throw new Error("Email already registered");
             }
-            const salt = yield bcrypt_1.default.genSalt(10);
-            const hashedPassword = yield bcrypt_1.default.hash(password, salt);
+            const salt = yield bcryptjs_1.default.genSalt(10);
+            const hashedPassword = yield bcryptjs_1.default.hash(password, salt);
             const user = yield this.userRepository.createUser({
                 name,
                 email,
@@ -133,7 +133,7 @@ class AuthService {
             if (!user.isVerified) {
                 throw new Error("Please verify your email first.");
             }
-            const isMatch = yield bcrypt_1.default.compare(password, user.password);
+            const isMatch = yield bcryptjs_1.default.compare(password, user.password);
             if (!isMatch) {
                 throw new Error("Invalid credentials");
             }
@@ -157,7 +157,7 @@ class AuthService {
             else {
                 const generatedPassword = Math.random().toString(36).slice(-8) +
                     Math.random().toString(36).slice(-8);
-                const hashedPassword = bcrypt_1.default.hashSync(generatedPassword, 10);
+                const hashedPassword = bcryptjs_1.default.hashSync(generatedPassword, 10);
                 const username = name.split(" ").join("").toLowerCase() +
                     Math.random().toString(36).slice(-8);
                 const newUser = yield this.userRepository.createUser({
@@ -231,12 +231,12 @@ class AuthService {
             if (!user) {
                 throw new Error("User not found.");
             }
-            const isMatch = yield bcrypt_1.default.compare(currentPassword, user.password);
+            const isMatch = yield bcryptjs_1.default.compare(currentPassword, user.password);
             if (!isMatch) {
                 throw new Error("Current password is incorrect.");
             }
-            const salt = yield bcrypt_1.default.genSalt(10);
-            user.password = yield bcrypt_1.default.hash(newPassword, salt);
+            const salt = yield bcryptjs_1.default.genSalt(10);
+            user.password = yield bcryptjs_1.default.hash(newPassword, salt);
             yield this.userRepository.updateUser(user);
             return "Password changed successfully.";
         });

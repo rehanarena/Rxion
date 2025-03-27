@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminService = void 0;
 const validator_1 = __importDefault(require("validator"));
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const cloudinary_1 = require("cloudinary");
 const adminRepository_1 = require("../../repositories/admin/adminRepository");
@@ -43,8 +43,8 @@ class AdminService {
             if (password.length < 8) {
                 throw new Error("Weak password");
             }
-            const salt = yield bcrypt_1.default.genSalt(10);
-            const hashedPassword = yield bcrypt_1.default.hash(password, salt);
+            const salt = yield bcryptjs_1.default.genSalt(10);
+            const hashedPassword = yield bcryptjs_1.default.hash(password, salt);
             const imageUpload = yield cloudinary_1.v2.uploader.upload(imageFile.path, {
                 resource_type: "image",
             });

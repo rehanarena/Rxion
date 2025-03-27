@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DoctorService = void 0;
 const DoctorRepository_1 = require("../../repositories/doctor/DoctorRepository");
 const DoctorOTPRepository_1 = require("../../repositories/doctor/DoctorOTPRepository");
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const crypto_1 = __importDefault(require("crypto"));
@@ -73,7 +73,7 @@ class DoctorService {
                     message: "Your account has been blocked by the admin.",
                 };
             }
-            const isMatch = yield bcrypt_1.default.compare(password, doctor.password);
+            const isMatch = yield bcryptjs_1.default.compare(password, doctor.password);
             if (isMatch) {
                 const token = jsonwebtoken_1.default.sign({ id: doctor._id }, process.env.JWT_SECRET);
                 return { success: true, token };
@@ -176,7 +176,7 @@ Rxion Team
             if (!doctor) {
                 return { success: false, message: "Invalid or expired reset token" };
             }
-            doctor.password = yield bcrypt_1.default.hash(password, 10);
+            doctor.password = yield bcryptjs_1.default.hash(password, 10);
             doctor.resetPasswordToken = null;
             doctor.resetPasswordExpire = null;
             yield this.doctorRepository.saveDoctor(doctor);
