@@ -1,7 +1,7 @@
 import { UserRepository } from "../../repositories/user/UserRepository";
 import { OTPRepository } from "../../repositories/user/OTPRepository";
 import { TokenRepository } from "../../repositories/user/TokenRepository";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import validator from "validator";
 import { generateOTP } from "../../utils/generateOTP";
 import { sendOtpEmail } from "../../helper/mailer";

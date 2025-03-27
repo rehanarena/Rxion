@@ -1,6 +1,6 @@
 import { DoctorRepository } from "../../repositories/doctor/DoctorRepository";
 import { DoctorOTPRepository } from "../../repositories/doctor/DoctorOTPRepository";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
