@@ -21,7 +21,7 @@ const DoctorCardList = () => {
   const [doctorsPerPage] = useState<number>(8);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedSpeciality, setSelectedSpeciality] = useState<string>("");
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
 
   useEffect(() => {
     const fetchDoctors = async () => {

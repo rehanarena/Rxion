@@ -18,7 +18,7 @@ interface DoctorContextType {
 export const DoctorContext = createContext<DoctorContextType | undefined>(undefined);
 
 const DoctorContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
   const [docSlots, setDocSlots] = useState<Slot[]>([]);
 
   const fetchSlots = async (docId: string) => {

@@ -1,11 +1,9 @@
-import { useState, useContext } from "react";
+import { useState} from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { AppContext } from "../context/AppContext"; 
 
 const ForgotPassword = () => {
-  const context = useContext(AppContext);
-  const backendUrl = context?.backendUrl;
+  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");

@@ -44,7 +44,7 @@ export interface UserData {
 }
 
 const AppContextProvider = ({ children }: AppContextProviderProps) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
 
   const [token, setToken] = useState<string | null>(
     localStorage.getItem("accessToken") || null

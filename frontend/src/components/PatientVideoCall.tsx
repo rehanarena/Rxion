@@ -8,8 +8,8 @@ import { Phone, X, Mic, MicOff, Video, VideoOff, Clock, Wifi, MonitorSmartphone 
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-const BACKEND_URL = import.meta.env.NODE_ENV==="PRODUCTION"? import.meta.env.PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
-const socket = io(BACKEND_URL)
+const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+const socket = io(backendUrl)
 
 interface PatientVideoCallProps {
   roomId: string
