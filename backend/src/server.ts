@@ -55,6 +55,8 @@ io.on('connection', (socket) => {
   videoCallHandler(socket, io);
   chatHandler(socket, io);
 
+  console.log("checking the log")
+
   socket.on('disconnect', () => {
     console.log("Client disconnected:", socket.id);
   });
