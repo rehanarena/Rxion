@@ -8,6 +8,9 @@ import PaymentService from "../services/user/PaymentService";
 import UserService from "../services/user/UserService";
 import { Types } from "mongoose";
 import HttpStatus from "../utils/statusCode";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 interface UpdateProfileRequestBody {
   userId: string;
@@ -28,6 +31,8 @@ interface CustomRequest extends Request {
     id: string;
   };
 }
+const backendUrl = process.env.NODE_ENV==="PRODUCTION"? process.env.PRODUCTION_URL_BACKEND: process.env.PRODUCTION_DEV_BACKEND
+
 
 /// Register User ///
 const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -336,7 +341,7 @@ const fileUpload = async (req: Request, res: Response): Promise<void> => {
     return;
   }
   // Construct the file URL. Adjust the URL based on your static file serving setup.
-  const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+  const fileUrl = `${backendUrl}/uploads/${req.file.filename}`;
   res.status(HttpStatus.OK).json({ url: fileUrl });
 };
 

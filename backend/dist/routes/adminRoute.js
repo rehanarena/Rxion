@@ -26,4 +26,5 @@ adminRouter.get("/doctor/:doctorId", authAdmin_1.default, adminController_1.getD
 adminRouter.post("/change-availability", authAdmin_1.default, doctorController_1.changeAvailability);
 adminRouter.get("/appointments", authAdmin_1.default, adminController_1.appointmentsAdmin);
 adminRouter.post("/cancel-appointment", authAdmin_1.default, adminController_1.cancelAppointment);
+// adminRouter.get("/reports")
 exports.default = adminRouter;

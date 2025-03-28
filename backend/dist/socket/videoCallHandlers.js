@@ -1,8 +1,6 @@
 "use strict";
-// socket/videoCallHandler.ts
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.videoCallHandler = videoCallHandler;
-// In-memory store for active calls
 const activeCalls = {};
 function videoCallHandler(socket, io) {
     socket.on('join-room', (roomId) => {

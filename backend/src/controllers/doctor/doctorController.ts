@@ -2,8 +2,13 @@ import { Request, Response } from "express";
 import { DoctorService } from '../../services/doctor/DoctorService';
 import specialityModel from "../../models/specialityModel";
 import HttpStatus from "../../utils/statusCode";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const doctorService = new DoctorService();
+const backendUrl = process.env.NODE_ENV==="PRODUCTION"? process.env.PRODUCTION_URL_BACKEND: process.env.PRODUCTION_DEV_BACKEND
+
 
 const loginDoctor = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -155,7 +160,7 @@ const fileUpload = async (req: Request, res: Response): Promise<void> => {
     res.status(HttpStatus.BAD_REQUEST).json({ error: 'No file uploaded' });
     return;
   }
-  const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+  const fileUrl = `${backendUrl}/uploads/${req.file.filename}`;
   res.status(HttpStatus.OK).json({ url: fileUrl });
 };
 

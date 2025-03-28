@@ -31,6 +31,9 @@ const PaymentService_1 = __importDefault(require("../services/user/PaymentServic
 const UserService_1 = __importDefault(require("../services/user/UserService"));
 const mongoose_1 = require("mongoose");
 const statusCode_1 = __importDefault(require("../utils/statusCode"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+const backendUrl = process.env.NODE_ENV === "PRODUCTION" ? process.env.PRODUCTION_URL_BACKEND : process.env.PRODUCTION_DEV_BACKEND;
 /// Register User ///
 const registerUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -326,7 +329,7 @@ const fileUpload = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         return;
     }
     // Construct the file URL. Adjust the URL based on your static file serving setup.
-    const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+    const fileUrl = `${backendUrl}/uploads/${req.file.filename}`;
     res.status(statusCode_1.default.OK).json({ url: fileUrl });
 });
 exports.fileUpload = fileUpload;

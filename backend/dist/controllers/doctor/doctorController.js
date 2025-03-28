@@ -16,7 +16,10 @@ exports.fileUpload = exports.doctorList = exports.changeAvailability = exports.d
 const DoctorService_1 = require("../../services/doctor/DoctorService");
 const specialityModel_1 = __importDefault(require("../../models/specialityModel"));
 const statusCode_1 = __importDefault(require("../../utils/statusCode"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const doctorService = new DoctorService_1.DoctorService();
+const backendUrl = process.env.NODE_ENV === "PRODUCTION" ? process.env.PRODUCTION_URL_BACKEND : process.env.PRODUCTION_DEV_BACKEND;
 const loginDoctor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
@@ -181,7 +184,7 @@ const fileUpload = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         res.status(statusCode_1.default.BAD_REQUEST).json({ error: 'No file uploaded' });
         return;
     }
-    const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+    const fileUrl = `${backendUrl}/uploads/${req.file.filename}`;
     res.status(statusCode_1.default.OK).json({ url: fileUrl });
 });
 exports.fileUpload = fileUpload;
