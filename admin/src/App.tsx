@@ -3,7 +3,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AdminContext } from './context/AdminContext';
 import { DoctorContext } from './context/DoctorContext';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import Login from './pages/Login';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
@@ -44,54 +44,52 @@ const App = () => {
 
   return (
     <div className='bg-[#F8F9FD]'>
-      <Router>
-        <ToastContainer />
-        {(aToken || dToken) ? (
-          <>
-            <Navbar />
-            <div className='flex items-start'>
-              <Sidebar />
-              <Routes>
-                {/* Admin Routes */}
-                <Route path='/' element={<Dashboard />} />
-                <Route path='/admin-dashboard' element={<Dashboard />} />
-                <Route path='/all-appoinments' element={<AllAppoinments />} />
-                <Route path='/add-doctor' element={<AddDoctor />} />
-                <Route path='/add-speciality' element={<AddSpeciality />} />
-                <Route path='/speciality' element={<Speciality />} />
-                <Route path='/doctor-list' element={<DoctorList />} />
-                <Route path='/all-doctors' element={<AllDoctors />} />
-                <Route path='/doctor-details/:doctorId' element={<DoctorDetails />} />
-                <Route path='/user-list' element={<UserList />} />
-                <Route path='/reports' element={<Reports />} />
+      <ToastContainer />
+      {(aToken || dToken) ? (
+        <>
+          <Navbar />
+          <div className='flex items-start'>
+            <Sidebar />
+            <Routes>
+              {/* Admin Routes */}
+              <Route path='/' element={<Dashboard />} />
+              <Route path='/admin-dashboard' element={<Dashboard />} />
+              <Route path='/all-appoinments' element={<AllAppoinments />} />
+              <Route path='/add-doctor' element={<AddDoctor />} />
+              <Route path='/add-speciality' element={<AddSpeciality />} />
+              <Route path='/speciality' element={<Speciality />} />
+              <Route path='/doctor-list' element={<DoctorList />} />
+              <Route path='/all-doctors' element={<AllDoctors />} />
+              <Route path='/doctor-details/:doctorId' element={<DoctorDetails />} />
+              <Route path='/user-list' element={<UserList />} />
+              <Route path='/reports' element={<Reports />} />
 
-                {/* Doctor Routes */}
-                <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
-                <Route path='/doctor-appoinments' element={<DoctorAppoinments />} />
-                <Route path="/doctor/video-call/:appointmentId" element={<DoctorVideoCallPage />} />
-                <Route path="/doctor-patient-list" element={<PatientList />} />
-                <Route path="/doctor-chat" element={<DoctorChat />} />
-                <Route path='/doctor-profile' element={<DoctorProfile />} />
-                <Route path='/doctor-slots' element={<AddSlots />} />
-                <Route path='/doctor-slot-manage' element={<ManageSlot />} />
+              {/* Doctor Routes */}
+              <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
+              <Route path='/doctor-appoinments' element={<DoctorAppoinments />} />
+              <Route path="/doctor/video-call/:appointmentId" element={<DoctorVideoCallPage />} />
+              <Route path="/doctor-patient-list" element={<PatientList />} />
+              <Route path="/doctor-chat" element={<DoctorChat />} />
+              <Route path='/doctor-profile' element={<DoctorProfile />} />
+              <Route path='/doctor-slots' element={<AddSlots />} />
+              <Route path='/doctor-slot-manage' element={<ManageSlot />} />
 
-                {/* Fallback for unknown routes */}
-                <Route path='*' element={<NotFound />} />
-              </Routes>
-            </div>
-          </>
-        ) : (
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/verify-otp" element={<VerifyOtp />} />
-            <Route path="/doctor/forgot-password-otp" element={<DoctorForgotPasswordOTP />} />
-            <Route path="/doctor/reset-password-otp" element={<DoctorResetPasswordOTP />} />
-            {/* Fallback route: any unknown URL redirects to Login */}
-            <Route path="*" element={<Login />} />
-          </Routes>
-        )}
-      </Router>
+              {/* Fallback for unknown routes */}
+              <Route path='*' element={<NotFound />} />
+            </Routes>
+          </div>
+        </>
+      ) : (
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/doctor/forgot-password-otp" element={<DoctorForgotPasswordOTP />} />
+          <Route path="/doctor/reset-password-otp" element={<DoctorResetPasswordOTP />} />
+          {/* Fallback route: any unknown URL redirects to Login */}
+          <Route path="*" element={<Login />} />
+        </Routes>
+      )}
     </div>
   );
 };
