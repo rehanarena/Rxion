@@ -41,7 +41,7 @@ interface DoctorStatus {
 
 const ChatComponent: React.FC = () => {
   const { userData, doctors } = useAppContext();
-  const BACKEND_URL = import.meta.env.NODE_ENV==="PRODUCTION"? import.meta.env.PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
   const { doctorId } = useParams<{ doctorId: string }>();
   console.log("doctorId from URL:", doctorId);
 
@@ -71,7 +71,7 @@ const ChatComponent: React.FC = () => {
   // Connect to the socket server on mount and emit our own online status.
   useEffect(() => {
     
-    const newSocket = io(BACKEND_URL);
+    const newSocket = io(backendUrl);
     setSocket(newSocket);
     if (userData?._id) {
       newSocket.emit("user-online", userData._id);
@@ -207,7 +207,7 @@ const ChatComponent: React.FC = () => {
       formData.append("file", file);
       formData.append("room", room);
 
-      const response = await fetch(`${BACKEND_URL}/api/user/upload`, {
+      const response = await fetch(`${backendUrl}/api/user/upload`, {
         method: "POST",
         body: formData,
       });

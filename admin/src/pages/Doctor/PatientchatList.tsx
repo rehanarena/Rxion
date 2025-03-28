@@ -28,8 +28,8 @@ const DoctorMessages: React.FC = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const BACKEND_URL = import.meta.env.NODE_ENV==="PRODUCTION"? import.meta.env.PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
-    const socket = io(BACKEND_URL)
+    const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+    const socket = io(backendUrl)
 
     // Request existing chat history
     socket.emit("get-chat-history")

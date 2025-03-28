@@ -101,7 +101,7 @@ const DoctorCardList = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-semibold mb-6">Doctor Card List</h1>
+      <h1 className="text-3xl font-semibold mb-6">Doctor List</h1>
 
       {/* Search & Filter Controls */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">

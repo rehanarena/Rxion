@@ -47,8 +47,8 @@ const DoctorChatComponent: React.FC = () => {
 
   // Connect to socket server on mount and emit our online status (as doctor)
   useEffect(() => {
-    const BACKEND_URL = import.meta.env.NODE_ENV==="PRODUCTION"? import.meta.env.PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
-    const newSocket = io(BACKEND_URL)
+    const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+    const newSocket = io(backendUrl)
     setSocket(newSocket)
     // Optionally, doctor can also emit online status if needed:
     newSocket.emit("user-online", sender)
@@ -169,8 +169,8 @@ const DoctorChatComponent: React.FC = () => {
       formData.append("file", file)
       formData.append("room", room)
 
-      const BACKEND_URL = import.meta.env.NODE_ENV==="PRODUCTION"? import.meta.env.PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
-      const response = await fetch(`${BACKEND_URL}/api/doctor/upload`, {
+      const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+      const response = await fetch(`${backendUrl}/api/doctor/upload`, {
         method: "POST",
         body: formData,
       })
