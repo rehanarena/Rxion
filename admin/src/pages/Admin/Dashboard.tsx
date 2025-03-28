@@ -63,7 +63,7 @@ const Dashboard: React.FC = () => {
       getDashData();
       getAllAppointments();
     }
-  }, [aToken, getDashData, getAllAppointments]);
+  }, [aToken]);
 
   if (!dashData) {
     return (

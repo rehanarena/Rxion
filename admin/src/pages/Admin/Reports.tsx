@@ -17,6 +17,7 @@ export default function AppointmentsReport() {
   const [reportData, setReportData] = useState<AppointmentReport[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
 
   const handleSearch = async () => {
     if (!startDate || !endDate) {
@@ -27,7 +28,7 @@ export default function AppointmentsReport() {
     setLoading(true);
     try {
       const response = await fetch(
-        `/reports?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+        `${backendUrl}/reports?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
       );
       const result = await response.json();
       if (result.success) {

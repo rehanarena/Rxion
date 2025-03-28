@@ -46,7 +46,7 @@ const DoctorAppointments = () => {
     if (dToken) {
       getAppointments()
     }
-  }, [dToken, getAppointments])
+  }, [dToken])
 
   const handleVideoChat = (appointment: Appointment) => {
     navigate(`/doctor/video-call/${appointment._id}`);
