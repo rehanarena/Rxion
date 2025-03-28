@@ -71,9 +71,33 @@ const SpecialtyManagement = () => {
     setIsEditing(true);
   };
 
-  // Update the specialty details
+  // Update the specialty details with validation
   const handleUpdate = async () => {
     if (!currentSpecialty) return;
+
+    // Validation: Required fields
+    if (name.trim() === "" || description.trim() === "") {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    // Validation: Minimum length for description
+    if (description.trim().length < 10) {
+      toast.error("Description should be at least 10 characters long");
+      return;
+    }
+
+    // Validation: Duplicate check (ignoring current specialty in edit mode)
+    const duplicate = specialties.find(
+      (spec) =>
+        spec.name.toLowerCase() === name.trim().toLowerCase() &&
+        spec._id !== currentSpecialty._id
+    );
+    if (duplicate) {
+      toast.error("A specialty with this name already exists");
+      return;
+    }
+
     try {
       const response = await fetch(`${backendUrl}/api/admin/edit-specialties/${currentSpecialty._id}`, {
         method: "PUT",
