@@ -10,7 +10,7 @@ export default defineConfig({
   build: {
     outDir: 'dist'
   },
-  base: '/admin',
+  base: '/',
   resolve: {
     alias: {
       '@': '/src' // Optional: for cleaner imports
