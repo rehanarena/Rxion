@@ -56,7 +56,7 @@ const AllAppointments = () => {
   if (!appContext) {
     throw new Error("AppContext is not available");
   }
-  const { calculateAge, currencySymbol } = appContext as AppContextType;
+  const { calculateAge, currencySymbol, slotDateFormat } = appContext as AppContextType;
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -65,7 +65,7 @@ const AllAppointments = () => {
     if (aToken) {
       getAllAppointments();
     }
-  }, [aToken, getAllAppointments]);
+  }, [aToken]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -117,7 +117,7 @@ const AllAppointments = () => {
             </div>
             <p className="hidden sm:block">{calculateAge(item.userData.dob)}</p>
             <p className="text-gray-600">
-              {(item.slotDate, item.slotTime)}
+              {slotDateFormat(item.slotDate, item.slotTime)}
             </p>
             <div className="flex items-center gap-3">
               {item.doctData ? (

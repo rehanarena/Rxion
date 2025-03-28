@@ -64,7 +64,7 @@ const Doctors: React.FC = () => {
   }, [speciality, debouncedSearchTerm, sortBy, currentPage]);
 
   const specialtyList = [
-    "General Physician",
+    "GeneralPhysician",
     "Gynecologist",
     "Dermatologist",
     "Neurologist",
@@ -109,10 +109,10 @@ const Doctors: React.FC = () => {
             <p
               key={spec}
               onClick={() => {
-                if (speciality?.replace("-", " ") === spec) {
+                if (speciality === spec) {
                   navigate("/doctors");
                 } else {
-                  navigate(`/doctors/${spec.replace(" ", "-")}`);
+                  navigate(`/doctors/${spec}`);
                 }
                 setCurrentPage(1);
               }}

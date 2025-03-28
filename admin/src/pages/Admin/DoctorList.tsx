@@ -92,7 +92,7 @@ const DoctorCardList = () => {
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   const specialityOptions = [
-    "General Physician",
+    "General physician",
     "Gynecologist",
     "Dermatologist",
     "Neurologist",
