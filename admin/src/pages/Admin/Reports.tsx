@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import { TDocumentDefinitions } from "pdfmake/interfaces";
+import { AdminContext } from "../../context/AdminContext";
 pdfMake.vfs = pdfFonts.vfs;
 
 interface AppointmentReport {
@@ -21,6 +22,7 @@ export default function AppointmentsReport() {
   const [reportData, setReportData] = useState<AppointmentReport[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+   const { aToken } = useContext(AdminContext)!;
   const backendUrl =
     import.meta.env.VITE_NODE_ENV === "PRODUCTION"
       ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
@@ -35,8 +37,10 @@ export default function AppointmentsReport() {
     setLoading(true);
     try {
       const response = await fetch(
-        `${backendUrl}/api/admin/reports?startDate=${startDate}&endDate=${endDate}`
-      );
+        `${backendUrl}/api/admin/reports?startDate=${startDate}&endDate=${endDate}`,{
+          headers: {
+            atoken: aToken,  
+          },})
 
       if (!response.ok) {
         const errorText = await response.text();

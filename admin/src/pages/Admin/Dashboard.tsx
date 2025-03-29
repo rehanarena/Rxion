@@ -375,7 +375,7 @@ const AdminDashboard: React.FC = () => {
           },
           {
             title: "Total Earnings",
-            value: `$${metrics.totalEarnings.toLocaleString()}`,
+            value: `₹${metrics.totalEarnings.toLocaleString()}`,
             color: "from-indigo-400 to-indigo-600",
             icon: (
               <svg
@@ -467,7 +467,7 @@ const AdminDashboard: React.FC = () => {
                   },
                   ticks: {
                     callback: function(value) {
-                      return "$" + value;
+                      return "₹" + value;
                     },
                   },
                 },
