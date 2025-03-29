@@ -1,14 +1,15 @@
 "use client"
 
-import type React from "react"
-import { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import io from "socket.io-client"
 import { Phone, X, Mic, MicOff, Video, VideoOff, Clock, Wifi, MonitorSmartphone } from "lucide-react"
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"
+  ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
+  : import.meta.env.VITE_BACKEND_URL
 const socket = io(backendUrl)
 
 interface PatientVideoCallProps {
@@ -45,9 +46,8 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
       .then((stream) => {
         console.log("Local stream captured:", stream)
         localStreamRef.current = stream
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream
-        }
+        // Initially the local video element may not be mounted,
+        // so we set the stream again once it mounts (see effect below)
         initPeerConnection(stream)
       })
       .catch((err) => console.error("Error accessing media devices", err))
@@ -91,6 +91,14 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
     }
   }, [roomId])
 
+  // When the call is accepted and the local video element is mounted,
+  // assign the captured local stream to the video element.
+  useEffect(() => {
+    if (localVideoRef.current && localStreamRef.current) {
+      localVideoRef.current.srcObject = localStreamRef.current;
+    }
+  }, [callAccepted])
+
   const startCallTimer = () => {
     setCallDuration(0)
     timerRef.current = setInterval(() => {
@@ -127,13 +135,10 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
 
   const acceptCall = async () => {
     console.log("acceptCall() triggered")
-    // Prevent multiple calls to accept if the button is clicked twice
     if (callAccepted) return
     setCallAccepted(true)
     if (!incomingCall || !pc.current) return
-    // Set remote description from the doctor's offer
     await pc.current.setRemoteDescription(incomingCall.signalData)
-    // Process any queued ICE candidates
     for (const candidate of pendingCandidates.current) {
       try {
         await pc.current.addIceCandidate(candidate)
@@ -148,8 +153,6 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
 
     socket.emit("make-answer", { room: roomId, signalData: answer, from: socket.id })
     setIncomingCall(null)
-
-    // Start the call timer
     startCallTimer()
   }
 
@@ -164,7 +167,6 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
       pc.current = null
     }
   
-    // Stop all local media tracks (camera/mic)
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => {
         track.stop()
@@ -204,7 +206,7 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-4">
       <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
-      <ToastContainer position="top-right" autoClose={5000} />
+        <ToastContainer position="top-right" autoClose={5000} />
         {/* Header */}
         <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 text-white">
           <h2 className="text-xl font-semibold">
@@ -232,7 +234,7 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
           </div>
         )}
 
-        {/* Incoming Call Notification – renders only if incomingCall exists and call not accepted */}
+        {/* Incoming Call Notification */}
         {!callAccepted && incomingCall && (
           <div className="p-6 flex flex-col items-center">
             <div className="w-20 h-20 rounded-full bg-violet-100 flex items-center justify-center mb-4 animate-pulse">
@@ -339,4 +341,3 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
 }
 
 export default PatientVideoCall
-

@@ -1,15 +1,17 @@
 "use client"
 
-import type React from "react"
-import { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import io from "socket.io-client"
 import { Phone, X, Mic, MicOff, Video, VideoOff, ArrowLeft, User, Clock, Wifi } from "lucide-react"
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
-const socket = io (backendUrl)
+const backendUrl =
+  import.meta.env.VITE_NODE_ENV === "PRODUCTION"
+    ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
+    : import.meta.env.VITE_BACKEND_URL
+const socket = io(backendUrl)
 
 interface DoctorVideoCallProps {
   roomId: string
@@ -24,9 +26,10 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
   const pc = useRef<RTCPeerConnection | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
+  // Store remote stream in a ref so it can be assigned later
+  const remoteStreamRef = useRef<MediaStream | null>(null)
   const [callDuration, setCallDuration] = useState(0)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
-  // Create a queue to store ICE candidates arriving before remoteDescription is set
   const pendingCandidates = useRef<RTCIceCandidateInit[]>([])
 
   useEffect(() => {
@@ -36,6 +39,7 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
         localStreamRef.current = stream
+        // If the local video element is mounted, assign the stream immediately.
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream
         }
@@ -52,17 +56,17 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
             console.error("Error adding ICE candidate:", err)
           }
         } else {
-          console.warn("Remote description is not set. Queue candidate for later addition.")
+          console.warn("Remote description not set; queuing candidate.")
           pendingCandidates.current.push(candidate)
         }
       }
     })
 
     socket.on("answer-made", async (data) => {
-      console.log("Answer made received:", data.signalData)
+      console.log("Answer received:", data.signalData)
       if (pc.current) {
         await pc.current.setRemoteDescription(data.signalData)
-        // Process queued ICE candidates once remote description is set
+        // Add any queued ICE candidates
         for (const candidate of pendingCandidates.current) {
           try {
             await pc.current.addIceCandidate(candidate)
@@ -81,13 +85,12 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
       toast.error("Call was declined by the patient.")
       endCall()
     })
-    
+
     socket.on("call-ended", () => {
       setCallStatus("ended")
       toast.info("Call has been ended.")
       endCall()
     })
-    
 
     return () => {
       socket.off("ice-candidate")
@@ -95,16 +98,23 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
       socket.off("call-declined")
       socket.off("call-ended")
 
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-      }
+      if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [roomId])
 
-  const startCallTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
+  // When the call becomes active, assign the streams to their video elements.
+  useEffect(() => {
+    if (callStatus === "in-call") {
+      if (localVideoRef.current && localStreamRef.current) {
+        localVideoRef.current.srcObject = localStreamRef.current
+      }
+      if (remoteVideoRef.current && remoteStreamRef.current) {
+        remoteVideoRef.current.srcObject = remoteStreamRef.current
+      }
     }
+  }, [callStatus])
+
+  const startCallTimer = () => {
     setCallDuration(0)
     timerRef.current = setInterval(() => {
       setCallDuration((prev) => prev + 1)
@@ -121,11 +131,18 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
     pc.current = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     })
+
     stream.getTracks().forEach((track) => pc.current?.addTrack(track, stream))
 
     pc.current.ontrack = (event) => {
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = event.streams[0]
+      console.log("Remote stream received:", event.streams)
+      // Store the remote stream so we can set it on the video element later
+      if (event.streams[0]) {
+        remoteStreamRef.current = event.streams[0]
+        // If the remote video element is already rendered, assign the stream.
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = event.streams[0]
+        }
       }
     }
 
@@ -149,40 +166,28 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
       pc.current.close()
       pc.current = null
     }
-  
+
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => {
-        track.stop()
-      })
+      localStreamRef.current.getTracks().forEach((track) => track.stop())
     }
-  
+
     socket.emit("end-call", { room: roomId })
     setCallStatus("ended")
-  
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-    }
-  
+
+    if (timerRef.current) clearInterval(timerRef.current)
     navigate("/doctor-appoinments")
   }
-  
 
   const toggleMute = () => {
     if (localStreamRef.current) {
-      const audioTracks = localStreamRef.current.getAudioTracks()
-      audioTracks.forEach((track) => {
-        track.enabled = !track.enabled
-      })
+      localStreamRef.current.getAudioTracks().forEach((track) => (track.enabled = !track.enabled))
       setIsMuted(!isMuted)
     }
   }
 
   const toggleVideo = () => {
     if (localStreamRef.current) {
-      const videoTracks = localStreamRef.current.getVideoTracks()
-      videoTracks.forEach((track) => {
-        track.enabled = !track.enabled
-      })
+      localStreamRef.current.getVideoTracks().forEach((track) => (track.enabled = !track.enabled))
       setIsVideoOff(!isVideoOff)
     }
   }
@@ -190,7 +195,7 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-4">
       <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
-      <ToastContainer position="top-right" autoClose={5000} />
+        <ToastContainer position="top-right" autoClose={5000} />
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 text-white">
           <h2 className="text-xl font-semibold">
@@ -342,4 +347,3 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
 }
 
 export default DoctorVideoCall
-
