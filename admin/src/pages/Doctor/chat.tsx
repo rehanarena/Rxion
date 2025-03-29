@@ -35,6 +35,7 @@ const DoctorChatComponent: React.FC = () => {
   const patientImage = searchParams.get("patientImage") || "/default-user.png"
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
   const [input, setInput] = useState("")
   const [typingMessage, setTypingMessage] = useState("")
   const [uploading, setUploading] = useState(false)
@@ -169,23 +170,17 @@ const DoctorChatComponent: React.FC = () => {
       formData.append("file", file)
       formData.append("room", room)
 
-      const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
       const response = await fetch(`${backendUrl}/api/doctor/upload`, {
         method: "POST",
         body: formData,
       })
-      const data = await response.json()
-      const fileUrl = data.url
-
+      const resData = await response.json()
+      const fileData: ChatFile = resData.file;
       socket.emit("send-message", {
         room,
-        message: file.name,
+        message: "",
         sender,
-        file: {
-          url: fileUrl,
-          type: file.type,
-          fileName: file.name,
-        },
+        file: fileData,
       })
     } catch (error) {
       console.error("File upload failed:", error)

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { DoctorService } from '../../services/doctor/DoctorService';
 import specialityModel from "../../models/specialityModel";
 import HttpStatus from "../../utils/statusCode";
@@ -156,23 +156,30 @@ export const updateDoctorProfile = async (req: Request, res: Response): Promise<
   }
 };
 
-const fileUploadofDoc = async (req: Request, res: Response): Promise<void> => {
+const fileUploadofDoc = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!req.file) {
     res.status(HttpStatus.BAD_REQUEST).json({ error: 'No file uploaded' });
     return;
   }
-  const image = req.file;
+
   try {
-    const result = await cloudinary.uploader.upload(image.path, {
+    const result = await cloudinary.uploader.upload(req.file.path, {
           resource_type: "image", 
         });
-        const imageUrl = result.secure_url;
+
+        // const imageUrl = result.secure_url;
+        // const fileData = {
+        //   url: imageUrl,
+        //   type: image.mimetype,
+        //   fileName: image.originalname,
+        // };
+  
         const fileData = {
-          url: imageUrl,
-          type: image.mimetype,
-          fileName: image.originalname,
+          url: result.secure_url,
+          type: req.file.mimetype,        
+          fileName: result.original_filename || req.file.originalname,
         };
-    
+
         res.status(HttpStatus.OK).json({ file: fileData });
   } catch (error) {
     console.error("Cloudinary upload error:", error);
