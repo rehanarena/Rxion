@@ -25,8 +25,7 @@ connectCloudinary();
 app.use(express.json());
 app.use(cors());
 
-app.use(errorHandler);
-
+// Routes
 app.use('/api/admin', adminRouter);
 app.use('/api/user', userRouter);
 app.use('/api/doctor', doctorRouter);
@@ -42,6 +41,8 @@ if (!fs.existsSync(uploadDir)) {
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
+// Add the error handler as the last middleware
+app.use(errorHandler);
 
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
@@ -54,7 +55,6 @@ io.on('connection', (socket) => {
   // Initialize socket event handlers
   videoCallHandler(socket, io);
   chatHandler(socket, io);
-
 
   socket.on('disconnect', () => {
     console.log("Client disconnected:", socket.id);

@@ -12,6 +12,7 @@ import { Types } from "mongoose";
 import HttpStatus from "../utils/statusCode";
 import dotenv from 'dotenv';
 import ChatModel from "../models/ChatModel";
+import specialityModel from "../models/specialityModel";
 
 dotenv.config();
 
@@ -216,6 +217,18 @@ const getProfile = async (req: Request, res: Response, next: NextFunction): Prom
   }
 };
 
+
+export const getSpecialty = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const specialties = await specialityModel.find({});
+    res.status(200).json({ specialties });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
 /// Update Profile ///
 const updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -318,7 +331,7 @@ const verifyRazorpay = async (req: Request, res: Response, next: NextFunction): 
     const result = await PaymentService.verifyPayment(razorpay_payment_id, razorpay_order_id);
     res.status(HttpStatus.OK).json(result);
   } catch (error: any) {
-    next(error);
+    next(error.message);
   }
 };
 

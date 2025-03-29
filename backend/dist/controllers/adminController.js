@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancelAppointment = exports.appointmentsAdmin = exports.allDoctors = exports.doctorList = exports.blockUnblockDoctor = exports.blockUnblockUser = exports.userList = exports.adminDashboard = exports.loginAdmin = exports.addDoctor = exports.getDoctors = void 0;
+exports.cancelAppointment = exports.appointmentsAdmin = exports.allDoctors = exports.doctorList = exports.blockUnblockDoctor = exports.blockUnblockUser = exports.userList = exports.loginAdmin = exports.addDoctor = exports.getDoctors = void 0;
 const adminService_1 = require("../services/admin/adminService");
 const statusCode_1 = __importDefault(require("../utils/statusCode"));
 const adminServiceInstance = new adminService_1.AdminService();
@@ -47,16 +47,14 @@ const loginAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.loginAdmin = loginAdmin;
 /// Dashboard ///
-const adminDashboard = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const dashData = yield adminServiceInstance.getDashboardData();
-        res.status(statusCode_1.default.OK).json({ success: true, dashData });
-    }
-    catch (error) {
-        next(error);
-    }
-});
-exports.adminDashboard = adminDashboard;
+// const adminDashboard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+//   try {
+//     const dashData = await adminServiceInstance.getDashboardData(next);
+//     res.status(HttpStatus.OK).json({ success: true, dashData });
+//   } catch (error: any) {
+//     next(error);
+//   }
+// };
 const userList = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield adminServiceInstance.getAllUsers();

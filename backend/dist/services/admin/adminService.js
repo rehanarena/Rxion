@@ -83,11 +83,13 @@ class AdminService {
             return { token };
         });
     }
-    getDashboardData() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.adminRepository.getDashboardData();
-        });
-    }
+    // async getDashboardData(next: NextFunction): Promise<any> {
+    //   try {
+    //     return await this.adminRepository.getAdminDashboardData();
+    //   } catch (error:any) {
+    //     next(error)
+    //   }
+    // }
     getAllUsers() {
         return __awaiter(this, void 0, void 0, function* () {
             return this.adminRepository.getAllUsers();

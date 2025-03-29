@@ -18,6 +18,7 @@ import {
   changePassword,
   getWalletBalance,
   fileUploadofuser,
+  getSpecialty,
 } from "../controllers/userController";
 import authUser from "../middlewares/authUser";
 import upload from "../middlewares/multer";
@@ -39,6 +40,7 @@ userRouter.put(
   updateProfile
 );
 userRouter.get("/doctors", doctorSearch);
+userRouter.get("/specialty",getSpecialty);
 userRouter.post("/book-appointment", authUser, bookAppointment);
 userRouter.get("/appointments", authUser, listAppointments);
 userRouter.post("/upload", upload.single("image"), fileUploadofuser);

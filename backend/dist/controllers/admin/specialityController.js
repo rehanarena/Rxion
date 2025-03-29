@@ -67,6 +67,7 @@ const addSpecialty = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 exports.addSpecialty = addSpecialty;
 const getSpecialties = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log("GET /specialties called");
         const specialties = yield specialtyService.getSpecialties();
         res.status(statusCode_1.default.OK).json({ success: true, specialties });
     }

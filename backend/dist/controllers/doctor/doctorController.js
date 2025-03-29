@@ -12,10 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fileUpload = exports.doctorList = exports.changeAvailability = exports.doctorDashboard = exports.loginDoctor = exports.updateDoctorProfile = exports.doctorProfile = exports.getSpeciality = exports.doctorResetPassword = exports.resendDoctorOtp = exports.verifyDoctorOtp = exports.doctorForgotPasswordOTP = void 0;
+exports.fileUploadofDoc = exports.doctorList = exports.changeAvailability = exports.doctorDashboard = exports.loginDoctor = exports.updateDoctorProfile = exports.doctorProfile = exports.getSpeciality = exports.doctorResetPassword = exports.resendDoctorOtp = exports.verifyDoctorOtp = exports.doctorForgotPasswordOTP = void 0;
 const DoctorService_1 = require("../../services/doctor/DoctorService");
 const specialityModel_1 = __importDefault(require("../../models/specialityModel"));
 const statusCode_1 = __importDefault(require("../../utils/statusCode"));
+const cloudinary_1 = require("cloudinary");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const doctorService = new DoctorService_1.DoctorService();
@@ -179,12 +180,31 @@ const updateDoctorProfile = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.updateDoctorProfile = updateDoctorProfile;
-const fileUpload = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const fileUploadofDoc = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.file) {
         res.status(statusCode_1.default.BAD_REQUEST).json({ error: 'No file uploaded' });
         return;
     }
-    const fileUrl = `${backendUrl}/uploads/${req.file.filename}`;
-    res.status(statusCode_1.default.OK).json({ url: fileUrl });
+    try {
+        const result = yield cloudinary_1.v2.uploader.upload(req.file.path, {
+            resource_type: "image",
+        });
+        // const imageUrl = result.secure_url;
+        // const fileData = {
+        //   url: imageUrl,
+        //   type: image.mimetype,
+        //   fileName: image.originalname,
+        // };
+        const fileData = {
+            url: result.secure_url,
+            type: req.file.mimetype,
+            fileName: result.original_filename || req.file.originalname,
+        };
+        res.status(statusCode_1.default.OK).json({ file: fileData });
+    }
+    catch (error) {
+        console.error("Cloudinary upload error:", error);
+        res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({ error: "File upload failed." });
+    }
 });
-exports.fileUpload = fileUpload;
+exports.fileUploadofDoc = fileUploadofDoc;

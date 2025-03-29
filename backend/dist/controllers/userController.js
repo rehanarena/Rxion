@@ -23,15 +23,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fileUpload = exports.getWalletBalance = exports.verifyRazorpay = exports.paymentRazorpay = exports.cancelAppointment = exports.listAppointments = exports.bookAppointment = exports.doctorSearch = exports.updateProfile = exports.getProfile = exports.changePassword = exports.forgotPassword = exports.refreshAccessToken = exports.google = exports.loginUser = exports.resendOtp = exports.verifyOtp = exports.registerUser = void 0;
+exports.getWalletBalance = exports.verifyRazorpay = exports.paymentRazorpay = exports.cancelAppointment = exports.listAppointments = exports.bookAppointment = exports.doctorSearch = exports.updateProfile = exports.getProfile = exports.changePassword = exports.forgotPassword = exports.refreshAccessToken = exports.google = exports.loginUser = exports.resendOtp = exports.verifyOtp = exports.registerUser = exports.fileUploadofuser = exports.getSpecialty = void 0;
 const authService_1 = require("../services/user/authService");
 const DoctorService_1 = require("../services/doctor/DoctorService");
 const AppointmentService_1 = require("../services/user/AppointmentService");
 const PaymentService_1 = __importDefault(require("../services/user/PaymentService"));
 const UserService_1 = __importDefault(require("../services/user/UserService"));
+const cloudinary_1 = require("cloudinary");
 const mongoose_1 = require("mongoose");
 const statusCode_1 = __importDefault(require("../utils/statusCode"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const specialityModel_1 = __importDefault(require("../models/specialityModel"));
 dotenv_1.default.config();
 const backendUrl = process.env.NODE_ENV === "PRODUCTION" ? process.env.PRODUCTION_URL_BACKEND : process.env.PRODUCTION_DEV_BACKEND;
 /// Register User ///
@@ -204,6 +206,16 @@ const getProfile = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.getProfile = getProfile;
+const getSpecialty = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const specialties = yield specialityModel_1.default.find({});
+        res.status(200).json({ specialties });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.getSpecialty = getSpecialty;
 /// Update Profile ///
 const updateProfile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -302,7 +314,7 @@ const verifyRazorpay = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         res.status(statusCode_1.default.OK).json(result);
     }
     catch (error) {
-        next(error);
+        next(error.message);
     }
 });
 exports.verifyRazorpay = verifyRazorpay;
@@ -323,13 +335,27 @@ const getWalletBalance = (req, res, next) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.getWalletBalance = getWalletBalance;
-const fileUpload = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const fileUploadofuser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.file) {
         res.status(statusCode_1.default.BAD_REQUEST).json({ error: 'No file uploaded' });
         return;
     }
-    // Construct the file URL. Adjust the URL based on your static file serving setup.
-    const fileUrl = `${backendUrl}/uploads/${req.file.filename}`;
-    res.status(statusCode_1.default.OK).json({ url: fileUrl });
+    try {
+        const result = yield cloudinary_1.v2.uploader.upload(req.file.path, {
+            resource_type: "image",
+        });
+        // const imageUrl = result.secure_url;
+        // Build a file object that includes additional details
+        const fileData = {
+            url: result.secure_url,
+            type: req.file.mimetype,
+            fileName: result.original_filename || req.file.originalname,
+        };
+        res.status(statusCode_1.default.OK).json({ file: fileData });
+    }
+    catch (error) {
+        next(error);
+        res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({ error: "File upload failed." });
+    }
 });
-exports.fileUpload = fileUpload;
+exports.fileUploadofuser = fileUploadofuser;

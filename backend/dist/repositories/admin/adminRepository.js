@@ -31,58 +31,101 @@ class adminRepository {
                 password === process.env.ADMIN_PASSWORD);
         });
     }
-    getDashboardData() {
-        return __awaiter(this, void 0, void 0, function* () {
-            // Basic counts
-            const doctors = yield doctorModel_1.default.find({});
-            const patients = yield userModel_1.default.find({});
-            const latestAppointments = yield appoinmentModel_1.default
-                .find({})
-                .sort({ createdAt: -1 })
-                .limit(5);
-            // Calculate "today" and "7 days ahead"
-            const today = new Date();
-            const sevenDaysAhead = new Date();
-            sevenDaysAhead.setDate(today.getDate() + 7);
-            // Aggregate appointments that are scheduled between today and 7 days ahead
-            // converting slotTime (a string) to a Date using $dateFromString
-            const appointmentAggregation = yield appoinmentModel_1.default.aggregate([
-                {
-                    $addFields: {
-                        convertedSlotTime: {
-                            $dateFromString: {
-                                dateString: "$slotTime"
-                            }
-                        }
-                    }
-                },
-                {
-                    $match: {
-                        convertedSlotTime: { $gte: today, $lte: sevenDaysAhead },
-                    }
-                },
-                {
-                    $group: {
-                        _id: { $dateToString: { format: "%m-%d", date: "$convertedSlotTime" } },
-                        count: { $sum: 1 }
-                    }
-                },
-                { $sort: { _id: 1 } }
-            ]);
-            // console.log("Today is:", today);
-            // console.log("Seven days ahead:", sevenDaysAhead);
-            // console.log("Aggregation result:", appointmentAggregation);
-            // Build labels & data arrays for the chart
-            const labels = appointmentAggregation.map((item) => item._id);
-            const data = appointmentAggregation.map((item) => item.count);
-            return {
-                doctors: doctors.length,
-                patients: patients.length,
-                latestAppointments,
-                appointmentChartData: { labels, data },
-            };
-        });
-    }
+    // Repository method
+    // async getAdminDashboardData(): Promise<
+    //   any
+    // > {
+    //   try {
+    //     // Calculate total counts
+    //     // const [doctors, patients, totalAppointments] = await Promise.all([
+    //     //   doctorModel.countDocuments({}),
+    //     //   userModel.countDocuments({}),
+    //     //   appointmentModel.countDocuments({ cancelled: { $ne: true } })
+    //     // ]);
+    //     // Calculate total earnings (only for non-cancelled, paid appointments)
+    //     // const earningsAgg = await appointmentModel.aggregate([
+    //     //   {
+    //     //     $match: {
+    //     //       cancelled: { $ne: true },
+    //     //       payment: true
+    //     //     }
+    //     //   },
+    //     //   {
+    //     //     $group: {
+    //     //       _id: null,
+    //     //       totalEarnings: { $sum: "$amount" }
+    //     //     }
+    //     //   }
+    //     // ]);
+    //     // console.log(earningsAgg)
+    //     // const totalEarnings = earningsAgg[0]?.totalEarnings || 0;
+    //     // Monthly earnings for the last 7 months
+    //     // const monthlyEarningsAgg = await appointmentModel.aggregate([
+    //     //   {
+    //     //     $match: {
+    //     //       cancelled: { $ne: true },
+    //     //       payment: true
+    //     //     }
+    //     //   },
+    //     //   {
+    //     //     $group: {
+    //     //       _id: {
+    //     //         $dateToString: { 
+    //     //           format: "%Y-%m", 
+    //     //           date: "$createdAt" 
+    //     //         }
+    //     //       },
+    //     //       monthEarnings: { $sum: "$amount" }
+    //     //     }
+    //     //   },
+    //     //   { $sort: { _id: 1 } },
+    //     //   { $limit: 7 }
+    //     // ]);
+    //     // Prepare monthly earnings data with padding
+    //     // let monthlyEarnings = monthlyEarningsAgg.map(item => item.monthEarnings);
+    //     // while (monthlyEarnings.length < 7) {
+    //     //   monthlyEarnings.unshift(0);
+    //     // }
+    //     // Appointment trend for the last 7 days (non-cancelled)
+    //     // const today = new Date();
+    //     // const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    //     // const appointmentTrendAgg = await appointmentModel.aggregate([
+    //     //   {
+    //     //     $match: {
+    //     //       createdAt: { 
+    //     //         $gte: sevenDaysAgo, 
+    //     //         $lte: today 
+    //     //       },
+    //     //       cancelled: { $ne: true }
+    //     //     }
+    //     //   },
+    //     //   {
+    //     //     $group: {
+    //     //       _id: { $dateToString: { format: "%m-%d", date: "$createdAt" } },
+    //     //       count: { $sum: 1 }
+    //     //     }
+    //     //   },
+    //     //   { $sort: { _id: 1 } }
+    //     // ]);
+    //     // const appointmentTrend = {
+    //     //   labels: appointmentTrendAgg.map(item => item._id),
+    //     //   data: appointmentTrendAgg.map(item => item.count)
+    //     // };
+    //     // return {
+    //     //   doctors,
+    //     //   patients,
+    //     //   appointments: totalAppointments,
+    //     //   earnings: totalEarnings,
+    //     //   monthlyEarnings,
+    //     //   appointmentChartData: appointmentTrend,
+    //     //   success: "rena"
+    //     // };
+    //     return true;
+    //   } catch (error) {
+    //     console.error("Error fetching dashboard data:", error);
+    //     throw new Error("Failed to fetch dashboard data");
+    //   }
+    // }
     getAllUsers() {
         return __awaiter(this, void 0, void 0, function* () {
             return userModel_1.default.find();

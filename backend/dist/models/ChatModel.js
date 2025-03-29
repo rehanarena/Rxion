@@ -8,11 +8,7 @@ const ChatSchema = new mongoose_1.Schema({
     message: { type: String, default: "" },
     timestamp: { type: Date, default: Date.now },
     read: { type: Boolean, default: false },
-    file: {
-        url: String,
-        type: String,
-        fileName: String,
-    },
+    file: { type: mongoose_1.Schema.Types.Mixed, default: undefined },
     patientName: { type: String, default: "" },
     patientImage: { type: String, default: "" },
 });

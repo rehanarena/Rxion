@@ -25,7 +25,7 @@ const port = parseInt(process.env.PORT || '4000', 10);
 (0, cloudinary_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)());
-app.use(errorHandler_1.errorHandler);
+// Routes
 app.use('/api/admin', adminRoute_1.default);
 app.use('/api/user', userRoute_1.default);
 app.use('/api/doctor', doctorRoute_1.default);
@@ -37,6 +37,8 @@ if (!fs_1.default.existsSync(uploadDir)) {
     fs_1.default.mkdirSync(uploadDir, { recursive: true });
 }
 app.use("/uploads", express_1.default.static(path_1.default.join(__dirname, "../uploads")));
+// Add the error handler as the last middleware
+app.use(errorHandler_1.errorHandler);
 const httpServer = http_1.default.createServer(app);
 const io = new socket_io_1.Server(httpServer, {
     cors: { origin: "*" }
@@ -46,7 +48,6 @@ io.on('connection', (socket) => {
     // Initialize socket event handlers
     (0, videoCallHandlers_1.videoCallHandler)(socket, io);
     (0, chatHandlers_1.chatHandler)(socket, io);
-    console.log("checking the log");
     socket.on('disconnect', () => {
         console.log("Client disconnected:", socket.id);
     });

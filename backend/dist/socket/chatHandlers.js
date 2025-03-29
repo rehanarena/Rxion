@@ -57,6 +57,7 @@ function chatHandler(socket, io) {
      * SEND-MESSAGE
      */
     socket.on("send-message", (data) => __awaiter(this, void 0, void 0, function* () {
+        console.log("Received message data:", data);
         const { room, message, sender, file, patientName, patientImage } = data;
         const msg = {
             room,
@@ -70,6 +71,7 @@ function chatHandler(socket, io) {
         };
         try {
             const savedMsg = yield ChatModel_1.default.create(msg);
+            console.log("Saved message:", savedMsg);
             io.to(room).emit("receive-message", savedMsg);
         }
         catch (error) {

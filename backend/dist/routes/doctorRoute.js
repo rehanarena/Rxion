@@ -25,7 +25,7 @@ doctorRouter.put("/slots/:slotId/edit", slotController_1.editSlot);
 doctorRouter.get("/profile", authDoctor_1.default, doctorController_1.doctorProfile);
 doctorRouter.get("/specialties", doctorController_1.getSpeciality);
 doctorRouter.post("/update-profile", authDoctor_1.default, doctorController_1.updateDoctorProfile);
-doctorRouter.post('/upload', multer_1.default.single('file'), doctorController_1.fileUpload);
+doctorRouter.post('/upload', multer_1.default.single('file'), doctorController_1.fileUploadofDoc);
 doctorRouter.get("/appointments", authDoctor_1.default, appointmentController_1.appoinmentsDoctor);
 doctorRouter.post("/complete-appointment", authDoctor_1.default, appointmentController_1.appoinmentComplete);
 doctorRouter.post("/cancel-appointment", authDoctor_1.default, appointmentController_1.appoinmentCancel);

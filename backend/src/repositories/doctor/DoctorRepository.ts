@@ -1,6 +1,7 @@
 import doctorModel from "../../models/doctorModel";
 import appointmentModel from "../../models/appoinmentModel";
 import { IDoctor } from "../../models/doctorModel";
+import specialityModel from "../../models/specialityModel";
 
 export class DoctorRepository {
   async searchDoctors(

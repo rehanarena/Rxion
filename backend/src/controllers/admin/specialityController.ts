@@ -19,6 +19,7 @@ export const addSpecialty = async (req: Request, res: Response): Promise<void> =
 
 export const getSpecialties = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log("GET /specialties called");
     const specialties = await specialtyService.getSpecialties();
     res.status(HttpStatus.OK).json({ success: true, specialties });
   } catch (error: any) {

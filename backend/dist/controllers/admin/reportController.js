@@ -21,18 +21,20 @@ const appoinmentModel_1 = __importDefault(require("../../models/appoinmentModel"
 const getAppointmentsReport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { startDate, endDate } = req.query;
-        // Build filter for appointments based on the numeric 'date' field
         const query = {};
         if (startDate && endDate) {
-            // Convert incoming date strings to timestamps.
-            // If your slotDate is stored differently, adjust the logic accordingly.
             const startTimestamp = new Date(startDate).getTime();
             const endTimestamp = new Date(endDate).getTime();
+            if (isNaN(startTimestamp) || isNaN(endTimestamp)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Invalid date provided',
+                });
+                return;
+            }
             query.date = { $gte: startTimestamp, $lte: endTimestamp };
         }
-        // Query the appointments (sorted descending by date)
         const appointments = yield appoinmentModel_1.default.find(query).sort({ date: -1 });
-        // Map the appointments into the desired report format
         const reportData = appointments.map((appt) => {
             return {
                 appointmentId: appt._id,
@@ -44,14 +46,14 @@ const getAppointmentsReport = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 fees: appt.amount,
             };
         });
-        return res.json({
+        res.json({
             success: true,
             data: reportData,
         });
     }
     catch (error) {
         console.error("Error fetching appointment report:", error);
-        return res.status(500).json({
+        res.status(500).json({
             success: false,
             message: "Failed to fetch appointment report",
         });
