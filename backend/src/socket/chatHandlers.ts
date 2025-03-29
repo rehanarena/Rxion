@@ -68,6 +68,7 @@ export function chatHandler(socket: Socket, io: Server) {
       patientImage?: string;
       file?: ChatFile;
     }) => {
+      console.log("Received message data:", data);
       const { room, message, sender, file, patientName, patientImage } = data;
       const msg: Partial<IChatMessage> = {
         room,
@@ -82,6 +83,7 @@ export function chatHandler(socket: Socket, io: Server) {
 
       try {
         const savedMsg = await ChatMessage.create(msg);
+        console.log("Saved message:", savedMsg);
         io.to(room).emit("receive-message", savedMsg);
       } catch (error) {
         console.error("Error saving message:", error);

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { Express } from 'express';
 import { RequestWithUser } from "../middlewares/authUser";
 import IBookedSlot from "../models/doctorModel";
 import { AuthService } from "../services/user/authService";
@@ -6,9 +7,11 @@ import { DoctorService } from "../services/doctor/DoctorService";
 import { AppointmentService } from "../services/user/AppointmentService";
 import PaymentService from "../services/user/PaymentService";
 import UserService from "../services/user/UserService";
+import {v2 as cloudinary } from 'cloudinary';
 import { Types } from "mongoose";
 import HttpStatus from "../utils/statusCode";
 import dotenv from 'dotenv';
+import ChatModel from "../models/ChatModel";
 
 dotenv.config();
 
@@ -335,16 +338,30 @@ const getWalletBalance = async (req: CustomRequest, res: Response, next: NextFun
   }
 };
 
-const fileUpload = async (req: Request, res: Response): Promise<void> => {
+export const fileUploadofuser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!req.file) {
     res.status(HttpStatus.BAD_REQUEST).json({ error: 'No file uploaded' });
     return;
   }
-  // Construct the file URL. Adjust the URL based on your static file serving setup.
-  const fileUrl = `${backendUrl}/uploads/${req.file.filename}`;
-  res.status(HttpStatus.OK).json({ url: fileUrl });
-};
+  try {    
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "image", 
+    });
+    // const imageUrl = result.secure_url;
+    
+    // Build a file object that includes additional details
+    const fileData = {
+      url: result.secure_url,
+      type: req.file.mimetype,        
+      fileName: result.original_filename || req.file.originalname,
+    };
 
+    res.status(HttpStatus.OK).json({ file: fileData });
+  } catch (error) {
+   next(error)
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: "File upload failed." });
+  }
+};
 export {
   registerUser,
   verifyOtp,
@@ -363,5 +380,4 @@ export {
   paymentRazorpay,
   verifyRazorpay,
   getWalletBalance,
-  fileUpload
 };

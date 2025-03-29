@@ -7,11 +7,7 @@ export interface IChatMessage extends Document {
   message: string;
   timestamp: Date;
   read: boolean;
-  file?: {
-    url: string;
-    type: string;
-    fileName: string;
-  };
+  file?: any; // Using 'any' for flexibility
   patientName?: string;
   patientImage?: string;
 }
@@ -22,11 +18,7 @@ const ChatSchema = new Schema<IChatMessage>({
   message: { type: String, default: "" },
   timestamp: { type: Date, default: Date.now },
   read: { type: Boolean, default: false },
-  file: {
-    url: String,
-    type: String,
-    fileName: String,
-  },
+  file: { type: Schema.Types.Mixed, default: undefined },
   patientName: { type: String, default: "" },
   patientImage: { type: String, default: "" },
 });

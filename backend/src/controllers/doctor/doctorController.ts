@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { DoctorService } from '../../services/doctor/DoctorService';
 import specialityModel from "../../models/specialityModel";
 import HttpStatus from "../../utils/statusCode";
+import {v2 as cloudinary} from 'cloudinary';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -155,19 +156,34 @@ export const updateDoctorProfile = async (req: Request, res: Response): Promise<
   }
 };
 
-const fileUpload = async (req: Request, res: Response): Promise<void> => {
+const fileUploadofDoc = async (req: Request, res: Response): Promise<void> => {
   if (!req.file) {
     res.status(HttpStatus.BAD_REQUEST).json({ error: 'No file uploaded' });
     return;
   }
-  const fileUrl = `${backendUrl}/uploads/${req.file.filename}`;
-  res.status(HttpStatus.OK).json({ url: fileUrl });
-};
+  const image = req.file;
+  try {
+    const result = await cloudinary.uploader.upload(image.path, {
+          resource_type: "image", 
+        });
+        const imageUrl = result.secure_url;
+        const fileData = {
+          url: imageUrl,
+          type: image.mimetype,
+          fileName: image.originalname,
+        };
+    
+        res.status(HttpStatus.OK).json({ file: fileData });
+  } catch (error) {
+    console.error("Cloudinary upload error:", error);
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: "File upload failed." });
+  }
+  }
 
 export {
   loginDoctor,
   doctorDashboard,
   changeAvailability,
   doctorList,
-  fileUpload
+  fileUploadofDoc
 };

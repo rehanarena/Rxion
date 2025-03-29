@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import React, { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useAppContext } from "../context/AppContext";
 import {
@@ -41,7 +40,10 @@ interface DoctorStatus {
 
 const ChatComponent: React.FC = () => {
   const { userData, doctors } = useAppContext();
-  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+  const backendUrl =
+    import.meta.env.VITE_NODE_ENV === "PRODUCTION"
+      ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
+      : import.meta.env.VITE_BACKEND_URL;
   const { doctorId } = useParams<{ doctorId: string }>();
   console.log("doctorId from URL:", doctorId);
 
@@ -63,14 +65,12 @@ const ChatComponent: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // New state for doctor's online status
   const [doctorStatus, setDoctorStatus] = useState<DoctorStatus>({
     online: false,
   });
 
   // Connect to the socket server on mount and emit our own online status.
   useEffect(() => {
-    
     const newSocket = io(backendUrl);
     setSocket(newSocket);
     if (userData?._id) {
@@ -88,7 +88,7 @@ const ChatComponent: React.FC = () => {
       "user-status",
       (data: { userId: string; online: boolean; lastSeen?: string }) => {
         console.log("Received user-status:", data);
-        if (data.userId === doctorId) {
+        if (data.userId === room) {
           setDoctorStatus({
             online: data.online,
             lastSeen: data.lastSeen ? new Date(data.lastSeen) : undefined,
@@ -111,14 +111,10 @@ const ChatComponent: React.FC = () => {
     if (!socket || !room) return;
     socket.emit("join-chat", room);
 
-    // Updated to expect an object with patient info and messages
-    // In your useEffect where you set up socket listeners:
     socket.on("chat-history", (data: ChatHistoryResponse | ChatMessage[]) => {
       if (Array.isArray(data)) {
-        // If data is already an array, use it directly.
         setMessages(data);
       } else if (data && data.messages) {
-        // If data is an object, extract messages from it.
         setMessages(data.messages);
       } else {
         setMessages([]);
@@ -137,7 +133,6 @@ const ChatComponent: React.FC = () => {
       setTypingMessage("");
     });
 
-    // Update read receipts when the doctor marks messages as read
     socket.on("messages-read", (data: { room: string; sender: string }) => {
       if (sender && data.sender !== sender) {
         setMessages((prevMessages) =>
@@ -204,27 +199,34 @@ const ChatComponent: React.FC = () => {
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("image", file);
       formData.append("room", room);
+      formData.append("sender", sender);
 
       const response = await fetch(`${backendUrl}/api/user/upload`, {
         method: "POST",
         body: formData,
       });
-      const data = await response.json();
-      const fileUrl = data.url; // returned file URL
-
+      const resData = await response.json();
+      console.log("Upload response:", resData);
+      // Expecting the backend to return an object like { file: { url, type, fileName } }
+      const fileData: ChatFile = resData.file;
+      console.log("Data sent with socket event:", {
+        room,
+        message: "",
+        sender,
+        patientName: userData.name,
+        patientImage: userData.image,
+        file: fileData,
+      });
+      
       socket.emit("send-message", {
         room,
         message: "",
         sender,
         patientName: userData.name,
         patientImage: userData.image,
-        file: {
-          url: fileUrl,
-          type: file.type,
-          fileName: file.name,
-        },
+        file: fileData,
       });
     } catch (error) {
       console.error("File upload failed:", error);
@@ -310,14 +312,12 @@ const ChatComponent: React.FC = () => {
                     : "bg-white border border-gray-100 rounded-bl-none"
                 }`}
               >
-                {/* Show the sender's name if it's not the current user */}
                 {!isCurrentUser(msg.sender) && (
                   <div className="font-medium text-xs text-gray-500 mb-1">
                     {msg.sender}
                   </div>
                 )}
 
-                {/* Message text or file */}
                 <div className="break-words">
                   {msg.file ? (
                     msg.file.type.startsWith("image/") ? (
@@ -362,7 +362,6 @@ const ChatComponent: React.FC = () => {
                   )}
                 </div>
 
-                {/* Timestamp and read receipt */}
                 <div className="flex items-center justify-end gap-1 mt-1">
                   <span
                     className={`text-xs ${
@@ -412,7 +411,6 @@ const ChatComponent: React.FC = () => {
               placeholder={`Message ${doctorName}...`}
               className="flex-1 bg-transparent py-2 outline-none text-gray-700 placeholder-gray-400"
             />
-
             <button
               onClick={sendMessage}
               disabled={input.trim() === ""}
@@ -425,7 +423,6 @@ const ChatComponent: React.FC = () => {
               <Send className="h-4 w-4" />
             </button>
           </div>
-          {/* File Upload Button */}
           <div>
             <label
               htmlFor="file-upload"
@@ -442,7 +439,8 @@ const ChatComponent: React.FC = () => {
             <input
               id="file-upload"
               type="file"
-              accept="*/*"
+              name="image"
+              accept="image/*"
               ref={fileInputRef}
               className="hidden"
               onChange={handleFileChange}

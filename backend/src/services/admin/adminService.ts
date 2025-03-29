@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
 import { adminRepository } from "../../repositories/admin/adminRepository";
 import { sendPasswordEmail } from "../../helper/mailer";
+import { NextFunction } from "express";
 
 interface AddDoctorRequestBody {
   name: string;
@@ -114,14 +115,14 @@ export class AdminService {
   }
 
 
-async getDashboardData(): Promise<{
-  doctors: number;
-  patients: number;
-  latestAppointments: any[];
-  appointmentChartData: { labels: string[]; data: number[] };
-}> {
-  return this.adminRepository.getDashboardData();
-}
+  // async getDashboardData(next: NextFunction): Promise<any> {
+  //   try {
+  //     return await this.adminRepository.getAdminDashboardData();
+  //   } catch (error:any) {
+  //     next(error)
+  //   }
+    
+  // }
 
   
   

@@ -1,11 +1,17 @@
 import React, { useContext } from "react"
 import { AdminContext } from "../context/AdminContext"
 import { NavLink } from "react-router-dom"
-import home_icon from '../assets/home_icon.svg';
-import appoinment_icon from '../assets/appointment_icon.svg';
-import add_icon from '../assets/add_icon.svg'
-import people_icon from '../assets/people_icon.svg'
-import time_icon from '../assets/time_icon.svg'
+import { 
+  Home, 
+  Users, 
+  Calendar, 
+  PlusCircle, 
+  BookOpen, 
+  Stethoscope, 
+  FileText, 
+  UserPlus, 
+  MessageCircle,
+} from 'lucide-react';
 import { DoctorContext } from "../context/DoctorContext";
 
 interface AdminContextType{
@@ -20,6 +26,11 @@ const Sidebar: React.FC = () => {
   const {aToken} = useContext(AdminContext)as AdminContextType
   const {dToken} = useContext(DoctorContext)as DoctorContextType
 
+  const iconProps = {
+    size: 24,
+    className: "text-gray-600"
+  };
+
   return (
     <div className="min-h-screen bg-white border-r">
       {
@@ -29,7 +40,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/admin-dashboard'}>
-            <img src={home_icon} alt="" />
+            <Home {...iconProps} />
             <p className="hidden md:block">Dashboard</p>
           </NavLink>
 
@@ -38,7 +49,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/user-list'}>
-            <img src={people_icon} alt="" />
+            <Users {...iconProps} />
             <p className="hidden md:block">UserList</p>
           </NavLink>
 
@@ -47,7 +58,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/all-appoinments'}>
-            <img src={appoinment_icon} alt="" />
+            <Calendar {...iconProps} />
             <p className="hidden md:block">Appoinments</p>
           </NavLink>
           <NavLink  className={({ isActive }) =>
@@ -55,7 +66,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/speciality'}>
-            <img src={add_icon} alt="" />
+            <BookOpen {...iconProps} />
             <p className="hidden md:block">Speciality</p>
           </NavLink>
           <NavLink  className={({ isActive }) =>
@@ -63,7 +74,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/add-doctor'}>
-            <img src={add_icon} alt="" />
+            <UserPlus {...iconProps} />
             <p className="hidden md:block">Add Doctor</p>
           </NavLink>
 
@@ -72,7 +83,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/doctor-list'}>
-            <img src={people_icon} alt="" />
+            <Stethoscope {...iconProps} />
             <p className="hidden md:block">Doctor List</p>
           </NavLink>
 
@@ -81,7 +92,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/reports'}>
-            <img src={people_icon} alt="" />
+            <FileText {...iconProps} />
             <p className="hidden md:block">Reports</p>
           </NavLink>
 
@@ -95,7 +106,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/doctor-dashboard'}>
-            <img src={home_icon} alt="" />
+            <Home {...iconProps} />
             <p className="hidden md:block">Dashboard</p>
           </NavLink>
 
@@ -105,7 +116,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/doctor-appoinments'}>
-            <img src={appoinment_icon} alt="" />
+            <Calendar {...iconProps} />
             <p className="hidden md:block">Appoinments</p>
           </NavLink>
 
@@ -114,7 +125,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/doctor-profile'}>
-            <img src={people_icon} alt="" />
+            <Users {...iconProps} />
             <p className="hidden md:block">Profile</p>
           </NavLink>
 
@@ -123,7 +134,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/doctor-slot-manage'}>
-            <img src= {add_icon} alt="" />
+            <PlusCircle {...iconProps} />
             <p className="hidden md:block">SlotManagement</p>
           </NavLink>
 
@@ -132,7 +143,7 @@ const Sidebar: React.FC = () => {
                 isActive ? "bg-[#F2F3FF] border-r-4 border-primary" : ""
               }`
             } to={'/doctor-patient-list'}>
-            <img src={time_icon} alt="" />
+            <MessageCircle {...iconProps} />
             <p className="hidden md:block">message</p>
           </NavLink>
         </ul>

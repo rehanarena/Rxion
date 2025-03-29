@@ -11,7 +11,8 @@ import {
   resendDoctorOtp,
   doctorResetPassword,
   getSpeciality,
-  fileUpload,
+  fileUploadofDoc,
+  
 } from "../controllers/doctor/doctorController";
 import {
   addSlots,
@@ -46,7 +47,7 @@ doctorRouter.put("/slots/:slotId/edit", editSlot);
 doctorRouter.get("/profile", authDoctor, doctorProfile);
 doctorRouter.get("/specialties", getSpeciality)
 doctorRouter.post("/update-profile", authDoctor, updateDoctorProfile);
-doctorRouter.post('/upload',upload.single('file'),fileUpload)
+doctorRouter.post('/upload',upload.single('file'),fileUploadofDoc)
 doctorRouter.get("/appointments", authDoctor, appoinmentsDoctor);
 doctorRouter.post("/complete-appointment", authDoctor, appoinmentComplete);
 doctorRouter.post("/cancel-appointment", authDoctor, appoinmentCancel);

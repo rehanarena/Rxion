@@ -9,6 +9,7 @@ interface Doctor {
   image: string;
   available: boolean;
 }
+
 interface UserData {
   _id: string;
   name: string;
@@ -16,7 +17,7 @@ interface UserData {
   dob: string;
 }
 
-interface Appointment {
+export interface Appointment {
   _id: string;
   userId: string;
   docId: string;
@@ -31,18 +32,25 @@ interface Appointment {
   isCompleted?: boolean;
 }
 
-interface DashDataType {
-  appointments: number;
-  doctors: number;
-  patients: number;
-}
+// Updated dashboard data type to include additional fields for charts & earnings.
+// interface DashDataType {
+//   appointments: number;
+//   doctors: number;
+//   patients: number;
+//   earnings: number;
+//   monthlyEarnings: number[];
+//   appointmentChartData: {
+//     labels: string[];
+//     data: number[];
+//   };
+// }
 
 interface AdminContextType {
   aToken: string;
   setAToken: React.Dispatch<React.SetStateAction<string>>;
   backendUrl: string;
-  dashData: DashDataType | boolean;
-  getDashData: () => Promise<void>;
+  // dashData: DashDataType | false;
+  // getDashData: () => Promise<void>;
   doctors: Doctor[];
   getAllDoctors: () => Promise<void>;
   changeAvailability: (docId: string) => Promise<void>;
@@ -57,26 +65,24 @@ interface AdminContextType {
   ) => Promise<{ success: boolean; message: string }>;
 }
 
-export const AdminContext = createContext<AdminContextType | undefined>(
-  undefined
-);
+export const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 interface AdminContextProviderProps {
   children: ReactNode;
 }
 
-const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
-  children,
-}) => {
-  const [aToken, setAToken] = useState<string>(
-    localStorage.getItem("aToken") ?? ""
-  );
-  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
-  console.log(backendUrl)
+const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children }) => {
+  const [aToken, setAToken] = useState<string>(localStorage.getItem("aToken") ?? "");
+  const backendUrl =
+    import.meta.env.VITE_NODE_ENV === "PRODUCTION"
+      ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
+      : import.meta.env.VITE_BACKEND_URL;
+  console.log("Backend URL:", backendUrl);
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [dashData, setDashData] = useState<DashDataType | boolean>(false);
+  // Initially set dashData to false so we know when it's been loaded.
+  // const [dashData, setDashData] = useState<DashDataType | false>(false);
 
   const handleError = (error: unknown) => {
     if (error instanceof Error) {
@@ -86,24 +92,23 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
     }
   };
 
-  const getDashData = async (): Promise<void> => {
-    if (dashData !== false) return;
-    try {
-      const { data } = await axios.get<{
-        success: boolean;
-        dashData: DashDataType;
-        message: string;
-      }>(`${backendUrl}/api/admin/dashboard`, { headers: { aToken } });
+  // const getDashData = async (): Promise<void> => {
+  //   try {
+  //     const { data } = await axios.get(`${backendUrl}/api/admin/dashboardAdmi`, { headers: { aToken } });
+  //     console.log("API Response:", data);
+  //     console.log(aToken)
 
-      if (data.success) {
-        setDashData(data.dashData);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      handleError(error);
-    }
-  };
+  //     console.log('dashdatachecking:',data.dashData)
+
+  //     if (data.success) {
+  //       setDashData(data.dashData);
+  //     } else {
+  //       toast.error(data.message);
+  //     }
+  //   } catch (error) {
+  //     handleError(error);
+  //   }
+  // };
 
   const getAllDoctors = async (): Promise<void> => {
     try {
@@ -111,11 +116,7 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
         success: boolean;
         doctors: Doctor[];
         message: string;
-      }>(
-        `${backendUrl}/api/admin/all-doctors`,
-        {},
-        { headers: { aToken } }
-      );
+      }>(`${backendUrl}/api/admin/all-doctors`, {}, { headers: { aToken } });
 
       if (data.success) {
         setDoctors(data.doctors);
@@ -145,7 +146,7 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
     }
   };
 
-  const getAllAppointments = async () => {
+  const getAllAppointments = async (): Promise<void> => {
     try {
       const { data } = await axios.get(
         `${backendUrl}/api/admin/appointments`,
@@ -181,17 +182,13 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
   };
 
   // New function: Get single doctor's details
-  const getDoctorDetails = async (
-    doctorId: string
-  ): Promise<Doctor | null> => {
+  const getDoctorDetails = async (doctorId: string): Promise<Doctor | null> => {
     try {
       const { data } = await axios.get<{
         success: boolean;
         doctor: Doctor;
         message: string;
-      }>(`${backendUrl}/api/admin/doctor/${doctorId}`, {
-        headers: { aToken },
-      });
+      }>(`${backendUrl}/api/admin/doctor/${doctorId}`, { headers: { aToken } });
       if (data.success) {
         return data.doctor;
       } else {
@@ -213,11 +210,7 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
       const { data } = await axios.post<{
         success: boolean;
         message: string;
-      }>(
-        `${backendUrl}/api/doctors/${doctorId}/update-password`,
-        { newPassword },
-        { headers: { aToken } }
-      );
+      }>(`${backendUrl}/api/doctors/${doctorId}/update-password`, { newPassword }, { headers: { aToken } });
       if (data.success) {
         toast.success(data.message);
       } else {
@@ -232,7 +225,7 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
 
   useEffect(() => {
     if (aToken) {
-      getDashData();
+      // getDashData();
       getAllDoctors();
       getAllAppointments();
     }
@@ -242,8 +235,8 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
     aToken,
     setAToken,
     backendUrl,
-    dashData,
-    getDashData,
+    // dashData,
+    // getDashData,
     doctors,
     getAllDoctors,
     changeAvailability,
@@ -251,7 +244,6 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({
     setAppointments,
     getAllAppointments,
     cancelAppointment,
-    // Added functions:
     getDoctorDetails,
     updateDoctorPassword,
   };

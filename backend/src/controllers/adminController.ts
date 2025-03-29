@@ -41,14 +41,14 @@ const loginAdmin = async (req: Request, res: Response, next: NextFunction): Prom
 };
 
 /// Dashboard ///
-const adminDashboard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const dashData = await adminServiceInstance.getDashboardData();
-    res.status(HttpStatus.OK).json({ success: true, dashData });
-  } catch (error: any) {
-    next(error);
-  }
-};
+// const adminDashboard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+//   try {
+//     const dashData = await adminServiceInstance.getDashboardData(next);
+//     res.status(HttpStatus.OK).json({ success: true, dashData });
+//   } catch (error: any) {
+//     next(error);
+//   }
+// };
 
 const userList = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -143,7 +143,7 @@ const cancelAppointment = async (req: Request, res: Response, next: NextFunction
 export {
   addDoctor,
   loginAdmin,
-  adminDashboard,
+  // adminDashboard,
   userList,
   blockUnblockUser,
   blockUnblockDoctor,
