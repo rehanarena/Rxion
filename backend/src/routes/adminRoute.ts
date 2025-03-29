@@ -20,8 +20,6 @@ adminRouter.get("/specialties",getSpecialties);
 adminRouter.post ("/add-specialties",addSpecialty);
 adminRouter.delete("/delete-specialties/:specialtyId" ,deleteSpecialty)
 adminRouter.put("/edit-specialties/:specialtyId", editSpecialty);
-// adminRouter.get("/dashboard",authAdmin,adminDashboard);
-// adminRouter.get("/dashboard",authAdmin, getAdminDashboardData);
 adminRouter.get("/users",authAdmin, userList);
 adminRouter.patch("/users/block-unblock/:id",authAdmin, blockUnblockUser);
 adminRouter.patch("/doctors/block-unblock/:id",authAdmin, blockUnblockDoctor);

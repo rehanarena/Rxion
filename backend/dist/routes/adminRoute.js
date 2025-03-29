@@ -23,8 +23,6 @@ adminRouter.get("/specialties", specialityController_1.getSpecialties);
 adminRouter.post("/add-specialties", specialityController_1.addSpecialty);
 adminRouter.delete("/delete-specialties/:specialtyId", specialityController_1.deleteSpecialty);
 adminRouter.put("/edit-specialties/:specialtyId", specialityController_1.editSpecialty);
-// adminRouter.get("/dashboard",authAdmin,adminDashboard);
-// adminRouter.get("/dashboard",authAdmin, getAdminDashboardData);
 adminRouter.get("/users", authAdmin_1.default, adminController_1.userList);
 adminRouter.patch("/users/block-unblock/:id", authAdmin_1.default, adminController_1.blockUnblockUser);
 adminRouter.patch("/doctors/block-unblock/:id", authAdmin_1.default, adminController_1.blockUnblockDoctor);
