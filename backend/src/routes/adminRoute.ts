@@ -10,6 +10,11 @@ import { getPaymentStatus, getRevenue, getStatusAppointment, getTopDoctors, getT
 const adminRouter = express.Router();
 
 adminRouter.post("/login", loginAdmin)
+adminRouter.get("/metrics",authAdmin,getTotal);
+adminRouter.get("/revenue",authAdmin,getRevenue);
+adminRouter.get("/appointments-status",authAdmin,getStatusAppointment)
+adminRouter.get("/appointments-payment",authAdmin,getPaymentStatus)
+adminRouter.get("/top-doctors",authAdmin,getTopDoctors)
 adminRouter.post("/add-doctor",authAdmin,upload.single('image'), addDoctor);
 adminRouter.get("/specialties",getSpecialties);
 adminRouter.post ("/add-specialties",addSpecialty);
@@ -26,15 +31,11 @@ adminRouter.get("/doctor/:doctorId",authAdmin,getDoctors);
 adminRouter.post("/change-availability",authAdmin,changeAvailability);
 adminRouter.get("/appointments",authAdmin,appointmentsAdmin);
 adminRouter.post("/cancel-appointment", authAdmin, cancelAppointment);
-adminRouter.get("/reports",getAppointmentsReport)
+adminRouter.get("/reports",authAdmin,getAppointmentsReport)
 
 
 
 
-adminRouter.get("/metrics",getTotal);
-adminRouter.get("/revenue",getRevenue);
-adminRouter.get("/appointments-status",getStatusAppointment)
-adminRouter.get("/appointments-payment",getPaymentStatus)
-adminRouter.get("/top-doctors",getTopDoctors)
+
 
 export default adminRouter;
