@@ -27,7 +27,10 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 const Doctors: React.FC = () => {
-  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+  const backendUrl =
+    import.meta.env.VITE_NODE_ENV === "PRODUCTION"
+      ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
+      : import.meta.env.VITE_BACKEND_URL;
   const { speciality } = useParams<{ speciality: string }>();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,6 +38,7 @@ const Doctors: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [doctorsPerPage] = useState(8);
+  const [specialties, setSpecialties] = useState<string[]>([]);
 
   const navigate = useNavigate();
 
@@ -59,17 +63,24 @@ const Doctors: React.FC = () => {
     }
   };
 
+  const fetchSpecialties = async () => {
+    try {
+      const response = await fetch(`${backendUrl}/api/user/specialty`);
+      const data = await response.json();
+      // Assuming the specialties are stored as an array of strings.
+      setSpecialties(data.specialties);
+    } catch (error) {
+      console.error("Error fetching specialties:", error);
+    }
+  };
+
   useEffect(() => {
     fetchDoctors();
   }, [speciality, debouncedSearchTerm, sortBy, currentPage]);
 
-  const specialtyList = [
-    "GeneralPhysician",
-    "Gynecologist",
-    "Dermatologist",
-    "Neurologist",
-    "Gastroenterologist",
-  ];
+  useEffect(() => {
+    fetchSpecialties();
+  }, [backendUrl]);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -105,7 +116,7 @@ const Doctors: React.FC = () => {
 
       <div className="flex flex-col sm:flex-row gap-6">
         <div className="flex flex-col gap-4 text-sm text-gray-600 w-full sm:w-[20%]">
-          {specialtyList.map((spec) => (
+          {specialties.map((spec) => (
             <p
               key={spec}
               onClick={() => {

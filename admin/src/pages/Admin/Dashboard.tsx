@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { Line, Pie, Bar } from "react-chartjs-2";
 import {
@@ -13,6 +13,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { AdminContext } from "../../context/AdminContext";
 
 ChartJS.register(
   CategoryScale,
@@ -84,6 +85,8 @@ const AdminDashboard: React.FC = () => {
   const [period, setPeriod] = useState<string>("daily");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { aToken } = useContext(AdminContext)!;
+
 
   // Fetch all dashboard data
   useEffect(() => {
@@ -100,11 +103,23 @@ const AdminDashboard: React.FC = () => {
           paymentResponse,
           topDoctorsResponse,
         ] = await Promise.all([
-          axios.get(`${backendUrl}/api/admin/metrics`),
-          axios.get(`${backendUrl}/api/admin/revenue?period=${period}`),
-          axios.get(`${backendUrl}/api/admin/appointments-status`),
-          axios.get(`${backendUrl}/api/admin/appointments-payment`),
-          axios.get(`${backendUrl}/api/admin/top-doctors`),
+          axios.get(`${backendUrl}/api/admin/metrics`,{
+            headers: {
+              atoken: aToken,  
+            },}),
+          axios.get(`${backendUrl}/api/admin/revenue?period=${period}`,{headers:{aToken}}),
+          axios.get(`${backendUrl}/api/admin/appointments-status`,{
+            headers: {
+              atoken: aToken,  
+            },}),
+          axios.get(`${backendUrl}/api/admin/appointments-payment`,{
+            headers: {
+              atoken: aToken,  
+            },}),
+          axios.get(`${backendUrl}/api/admin/top-doctors`,{
+            headers: {
+              atoken: aToken,  
+            },}),
         ]);
 
         // Set states with error checking
@@ -281,7 +296,7 @@ const AdminDashboard: React.FC = () => {
             Admin Dashboard
           </h1>
           <p className="text-gray-600">
-            Hospital Management System | Healthcare Analytics
+            Hospital Management System | Rxion Analytics
           </p>
         </div>
         <div className="mt-4 md:mt-0 bg-indigo-50 rounded-xl p-3 shadow">
@@ -593,7 +608,7 @@ const AdminDashboard: React.FC = () => {
 
       {/* Footer */}
       <div className="text-center text-gray-500 mt-8 pb-6">
-        <p>© {new Date().getFullYear()} Healthcare Admin Dashboard</p>
+        <p>© {new Date().getFullYear()}Rxion Admin Dashboard</p>
       </div>
     </div>
   );
