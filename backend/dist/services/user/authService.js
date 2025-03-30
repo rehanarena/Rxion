@@ -22,6 +22,7 @@ const generateOTP_1 = require("../../utils/generateOTP");
 const mailer_1 = require("../../helper/mailer");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const cloudinary_1 = require("cloudinary");
+const crypto_1 = __importDefault(require("crypto"));
 class AuthService {
     constructor() {
         this.userRepository = new UserRepository_1.UserRepository();
@@ -77,13 +78,22 @@ class AuthService {
             if (!user) {
                 throw new Error("User not found");
             }
+            // Mark user as verified
             user.isVerified = true;
             yield this.userRepository.updateUser(user);
+            // Delete the used OTP
             yield this.otpRepository.deleteOtp(otp);
+            // Generate reset token
+            const resetToken = crypto_1.default.randomBytes(20).toString("hex");
+            user.resetPasswordToken = resetToken;
+            user.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+            yield this.userRepository.saveUser(user);
             return {
                 userId,
                 isForPasswordReset: true,
-                message: "User verified successfully. You can log in now.",
+                message: "User verified successfully. You can reset your password now.",
+                email: user.email, // Return the user's email
+                token: resetToken, // Return the generated reset token
             };
         });
     }
@@ -201,19 +211,37 @@ class AuthService {
             yield this.otpRepository.createOTP(String(user._id), otp, new Date(Date.now() + 10 * 60 * 1000));
             const emailBody = `
       Hello ${user.name || "User"},
-
+  
       Your OTP code for resetting your password is: ${otp}
       This OTP is valid for the next 10 minutes.
-
+  
       If you did not request this, please ignore this email.
-
+  
       Regards,
       Rxion Team
     `;
             yield (0, mailer_1.sendOtpEmail)(email, emailBody);
             return {
                 message: "OTP sent to your email. Please verify to reset password.",
+                userId: String(user._id) // Include the userId here
             };
+        });
+    }
+    userResetPassword(email, token, password) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const user = yield this.userRepository.findOne({
+                email,
+                resetPasswordToken: token,
+                resetPasswordExpire: { $gt: new Date() },
+            });
+            if (!user) {
+                return { success: false, message: "Invalid or expired reset token" };
+            }
+            user.password = yield bcryptjs_1.default.hash(password, 10);
+            user.resetPasswordToken = null;
+            user.resetPasswordExpire = null;
+            yield this.userRepository.saveUser(user);
+            return { success: true, message: "Password updated successfully" };
         });
     }
     changePassword(userId, currentPassword, newPassword, confirmPassword) {

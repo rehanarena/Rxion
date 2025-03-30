@@ -20,6 +20,16 @@ class UserRepository {
             return yield userModel_1.default.findOne({ email });
         });
     }
+    findOne(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield userModel_1.default.findOne(query);
+        });
+    }
+    saveUser(user) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield user.save();
+        });
+    }
     createUser(userData) {
         return __awaiter(this, void 0, void 0, function* () {
             const newUser = new userModel_1.default(userData);

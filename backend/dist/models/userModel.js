@@ -55,6 +55,8 @@ const userSchema = new mongoose_1.Schema({
     otpExpires: { type: Date, default: null },
     isBlocked: { type: Boolean, default: false },
     walletBalance: { type: Number, default: 0 },
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpire: { type: Date, default: null },
 });
 const userModel = mongoose_1.default.models.user || mongoose_1.default.model("User", userSchema);
 exports.default = userModel;

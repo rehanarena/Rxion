@@ -200,6 +200,31 @@ Rxion Team
             });
         });
     }
+    changeDoctorPassword(doctorId, currentPassword, newPassword, confirmPassword) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!doctorId) {
+                throw new Error("Doctor ID is required.");
+            }
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                throw new Error("All fields are required.");
+            }
+            if (newPassword !== confirmPassword) {
+                throw new Error("Passwords do not match.");
+            }
+            const doctor = yield this.doctorRepository.findById(doctorId);
+            if (!doctor) {
+                throw new Error("Doctor not found.");
+            }
+            const isMatch = yield bcryptjs_1.default.compare(currentPassword, doctor.password);
+            if (!isMatch) {
+                throw new Error("Current password is incorrect.");
+            }
+            const salt = yield bcryptjs_1.default.genSalt(10);
+            doctor.password = yield bcryptjs_1.default.hash(newPassword, salt);
+            yield this.doctorRepository.updatingDoctor(doctor);
+            return "Password changed successfully.";
+        });
+    }
     getDashboardData(docId) {
         return __awaiter(this, void 0, void 0, function* () {
             const appointments = yield this.doctorRepository.getAppointments(docId);
@@ -243,12 +268,14 @@ Rxion Team
             return this.doctorRepository.getDoctorProfile(docId);
         });
     }
-    updateDoctorProfile(docId, data) {
+    updateDoctorProfile(docId, data // Make sure UpdateDoctorProfileData interface now includes experience and about
+    ) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!docId) {
                 throw new Error("Doctor ID is required");
             }
             const updatedDoctor = yield this.doctorRepository.updateDoctorProfile(docId, data);
+            console.log("Updated Doctor:", updatedDoctor);
             if (!updatedDoctor) {
                 throw new Error("Doctor not found");
             }

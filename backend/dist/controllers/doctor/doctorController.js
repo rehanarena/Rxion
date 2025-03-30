@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fileUploadofDoc = exports.doctorList = exports.changeAvailability = exports.doctorDashboard = exports.loginDoctor = exports.updateDoctorProfile = exports.doctorProfile = exports.getSpeciality = exports.doctorResetPassword = exports.resendDoctorOtp = exports.verifyDoctorOtp = exports.doctorForgotPasswordOTP = void 0;
+exports.fileUploadofDoc = exports.doctorList = exports.changeAvailability = exports.doctorDashboard = exports.loginDoctor = exports.updateDoctorProfile = exports.doctorProfile = exports.getSpeciality = exports.changeDoctorPassword = exports.doctorResetPassword = exports.resendDoctorOtp = exports.verifyDoctorOtp = exports.doctorForgotPasswordOTP = void 0;
 const DoctorService_1 = require("../../services/doctor/DoctorService");
 const specialityModel_1 = __importDefault(require("../../models/specialityModel"));
 const statusCode_1 = __importDefault(require("../../utils/statusCode"));
@@ -91,6 +91,17 @@ const doctorResetPassword = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.doctorResetPassword = doctorResetPassword;
+const changeDoctorPassword = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { doctorId, currentPassword, newPassword, confirmPassword } = req.body;
+        const message = yield doctorService.changeDoctorPassword(doctorId, currentPassword, newPassword, confirmPassword);
+        res.status(statusCode_1.default.OK).json({ success: true, message });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.changeDoctorPassword = changeDoctorPassword;
 const doctorDashboard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { docId } = req.body;
@@ -162,21 +173,15 @@ const doctorProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.doctorProfile = doctorProfile;
 const updateDoctorProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { docId, fees, address, available } = req.body;
-        const updatedDoctor = yield doctorService.updateDoctorProfile(docId, { fees, address, available });
+        const { docId, fees, address, available, experience, about } = req.body;
+        console.log("Received update:", req.body); // Debug log
+        const updatedDoctor = yield doctorService.updateDoctorProfile(docId, { fees, address, available, experience, about });
         res.status(statusCode_1.default.OK).json({ success: true, message: "Profile Updated", updatedDoctor });
     }
     catch (error) {
-        console.error(error);
-        if (error.message === "Doctor ID is required") {
-            res.status(statusCode_1.default.BAD_REQUEST).json({ success: false, message: error.message });
-        }
-        else if (error.message === "Doctor not found") {
-            res.status(statusCode_1.default.NOT_FOUND).json({ success: false, message: error.message });
-        }
-        else {
-            res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error while updating profile." });
-        }
+        console.error("Error in updateDoctorProfile controller:", error);
+        // Error handling...
+        res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error while updating profile." });
     }
 });
 exports.updateDoctorProfile = updateDoctorProfile;

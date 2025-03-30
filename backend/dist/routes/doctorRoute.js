@@ -15,6 +15,7 @@ doctorRouter.post("/verify-otp", doctorController_1.verifyDoctorOtp);
 doctorRouter.post("/resend-otp", doctorController_1.resendDoctorOtp);
 doctorRouter.post("/forgotPasswordOTP", doctorController_1.doctorForgotPasswordOTP);
 doctorRouter.put("/resetPasswordWithToken", doctorController_1.doctorResetPassword);
+doctorRouter.put("/change-password", doctorController_1.changeDoctorPassword);
 doctorRouter.get("/dashboard", authDoctor_1.default, doctorController_1.doctorDashboard);
 doctorRouter.get("/list", doctorController_1.doctorList);
 doctorRouter.get("/slot/:docId", slotController_1.slot);

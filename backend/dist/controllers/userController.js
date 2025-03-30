@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getWalletBalance = exports.verifyRazorpay = exports.paymentRazorpay = exports.cancelAppointment = exports.listAppointments = exports.bookAppointment = exports.doctorSearch = exports.updateProfile = exports.getProfile = exports.changePassword = exports.forgotPassword = exports.refreshAccessToken = exports.google = exports.loginUser = exports.resendOtp = exports.verifyOtp = exports.registerUser = exports.fileUploadofuser = exports.getSpecialty = void 0;
+exports.getWalletBalance = exports.verifyRazorpay = exports.paymentRazorpay = exports.cancelAppointment = exports.listAppointments = exports.bookAppointment = exports.doctorSearch = exports.updateProfile = exports.getProfile = exports.changePassword = exports.forgotPassword = exports.refreshAccessToken = exports.google = exports.loginUser = exports.resendOtp = exports.verifyOtp = exports.registerUser = exports.fileUploadofuser = exports.getSpecialty = exports.resetPassword = void 0;
 const authService_1 = require("../services/user/authService");
 const DoctorService_1 = require("../services/doctor/DoctorService");
 const AppointmentService_1 = require("../services/user/AppointmentService");
@@ -35,7 +35,6 @@ const statusCode_1 = __importDefault(require("../utils/statusCode"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const specialityModel_1 = __importDefault(require("../models/specialityModel"));
 dotenv_1.default.config();
-const backendUrl = process.env.NODE_ENV === "PRODUCTION" ? process.env.PRODUCTION_URL_BACKEND : process.env.PRODUCTION_DEV_BACKEND;
 /// Register User ///
 const registerUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -173,6 +172,7 @@ const forgotPassword = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         const { email } = req.body;
         const authService = new authService_1.AuthService();
         const result = yield authService.forgotPassword(email);
+        console.log("forgotPassword result:", result);
         res.status(statusCode_1.default.OK).json(Object.assign({ success: true }, result));
     }
     catch (error) {
@@ -180,6 +180,24 @@ const forgotPassword = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.forgotPassword = forgotPassword;
+const resetPassword = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email, token, password } = req.body;
+        const authService = new authService_1.AuthService();
+        const result = yield authService.userResetPassword(email, token, password);
+        if (!result.success) {
+            res.status(statusCode_1.default.BAD_REQUEST).json(result);
+        }
+        else {
+            res.status(statusCode_1.default.OK).json(result);
+        }
+    }
+    catch (error) {
+        next(error);
+        res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
+    }
+});
+exports.resetPassword = resetPassword;
 /// Change Password ///
 const changePassword = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {

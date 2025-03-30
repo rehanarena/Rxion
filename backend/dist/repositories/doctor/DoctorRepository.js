@@ -77,7 +77,13 @@ class DoctorRepository {
     }
     updateDoctorProfile(docId, updateData) {
         return __awaiter(this, void 0, void 0, function* () {
-            return doctorModel_1.default.findByIdAndUpdate(docId, updateData, { new: true });
+            return doctorModel_1.default.findByIdAndUpdate(docId, { $set: updateData }, { new: true });
+        });
+    }
+    updatingDoctor(doctor) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Assuming doctor is a Mongoose document
+            return yield doctor.save();
         });
     }
 }
