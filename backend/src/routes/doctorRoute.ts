@@ -12,6 +12,7 @@ import {
   doctorResetPassword,
   getSpeciality,
   fileUploadofDoc,
+  changeDoctorPassword,
   
 } from "../controllers/doctor/doctorController";
 import {
@@ -35,6 +36,7 @@ doctorRouter.post("/resend-otp", resendDoctorOtp);
 
 doctorRouter.post("/forgotPasswordOTP", doctorForgotPasswordOTP);
 doctorRouter.put("/resetPasswordWithToken", doctorResetPassword);
+doctorRouter.put("/change-password", changeDoctorPassword);
 doctorRouter.get("/dashboard",authDoctor,doctorDashboard);
 doctorRouter.get("/list", doctorList);
 doctorRouter.get("/slot/:docId", slot);

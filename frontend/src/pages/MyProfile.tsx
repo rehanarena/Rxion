@@ -87,20 +87,28 @@ const MyProfile = () => {
   };
 
   const changePassword = async () => {
-    if (!currentPassword && !newPassword && !confirmPassword) {
+    if (!currentPassword || !newPassword || !confirmPassword) {
       toast.error("Please fill out all the password fields.");
       return;
     }
+  
+    if (newPassword.length < 7) {
+      toast.error("New password should be at least 7 characters long.");
+      return;
+    }
+  
     if (newPassword !== confirmPassword) {
       toast.error("New passwords do not match");
       return;
     }
-
+  
     if (!token || !userData) {
       toast.error("User is not authenticated. Please log in again.");
       return;
     }
+    
     setIsPasswordLoading(true);
+    
     try {
       const { data } = await axios.put(
         `${backendUrl}/api/user/change-password`,
@@ -117,7 +125,7 @@ const MyProfile = () => {
           },
         }
       );
-
+  
       if (data.success) {
         toast.success(data.message);
         setShowPasswordChange(false);
@@ -133,8 +141,10 @@ const MyProfile = () => {
         error instanceof Error ? error.message : "An unknown error occurred"
       );
     }
+    
     setIsPasswordLoading(false);
   };
+  
 
   if (!userData) return null;
 

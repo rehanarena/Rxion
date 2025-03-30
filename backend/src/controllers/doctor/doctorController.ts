@@ -75,6 +75,25 @@ export const doctorResetPassword = async (req: Request, res: Response): Promise<
   }
 };
 
+export const changeDoctorPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { doctorId, currentPassword, newPassword, confirmPassword } = req.body;
+    const message = await doctorService.changeDoctorPassword(
+      doctorId,
+      currentPassword,
+      newPassword,
+      confirmPassword
+    );
+    res.status(HttpStatus.OK).json({ success: true, message });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
 const doctorDashboard = async (req: Request, res: Response): Promise<void> => {
   try {
     const { docId } = req.body;
@@ -141,20 +160,17 @@ export const doctorProfile = async (req: Request, res: Response): Promise<void> 
 
 export const updateDoctorProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { docId, fees, address, available } = req.body;
-    const updatedDoctor = await doctorService.updateDoctorProfile(docId, { fees, address, available });
+    const { docId, fees, address, available, experience, about } = req.body;
+    console.log("Received update:", req.body); // Debug log
+    const updatedDoctor = await doctorService.updateDoctorProfile(docId, { fees, address, available, experience, about });
     res.status(HttpStatus.OK).json({ success: true, message: "Profile Updated", updatedDoctor });
   } catch (error: any) {
-    console.error(error);
-    if (error.message === "Doctor ID is required") {
-      res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: error.message });
-    } else if (error.message === "Doctor not found") {
-      res.status(HttpStatus.NOT_FOUND).json({ success: false, message: error.message });
-    } else {
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error while updating profile." });
-    }
+    console.error("Error in updateDoctorProfile controller:", error);
+    // Error handling...
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error while updating profile." });
   }
 };
+
 
 const fileUploadofDoc = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!req.file) {

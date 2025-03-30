@@ -1,56 +1,57 @@
-import { useContext, useEffect } from "react"
-import { DoctorContext } from "../../context/DoctorContext"
-import { AppContext } from "../../context/AppContext"
-import { Check, Video, X } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useContext, useEffect } from "react";
+import { DoctorContext } from "../../context/DoctorContext";
+import { AppContext } from "../../context/AppContext";
+import { Check, Video, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface userData {
-  name: string
-  image: string
-  dob: string
-  medicalHistory?: string 
+  name: string;
+  image: string;
+  dob: string;
+  medicalHistory?: string;
 }
+
 interface Appointment {
-  _id: string
-  userData: userData
-  amount: number
-  slotDate: string
-  slotTime: string
-  cancelled: boolean
-  payment: boolean
-  isCompleted: boolean
+  _id: string;
+  userData: userData;
+  amount: number;
+  slotDate: string;
+  slotTime: string;
+  cancelled: boolean;
+  payment: boolean;
+  isCompleted: boolean;
 }
 
 interface DoctorContextType {
-  dToken: string | null
-  appointments: Appointment[]
-  getAppointments: () => void
-  completeAppointment: (id: string) => void
-  cancelAppointment: (id: string) => void
+  dToken: string | null;
+  appointments: Appointment[];
+  getAppointments: () => void;
+  completeAppointment: (id: string) => void;
+  cancelAppointment: (id: string) => void;
 }
 
 interface AppContextType {
-  currencySymbol: string
-  slotDateFormat: (date: string, time: string) => string
-  calculateAge: (dob: string) => number
+  currencySymbol: string;
+  slotDateFormat: (date: string, time: string) => string;
+  calculateAge: (dob: string) => number;
 }
 
 const DoctorAppointments = () => {
   const { dToken, appointments, getAppointments, completeAppointment, cancelAppointment } =
-  useContext(DoctorContext) as unknown as DoctorContextType;
+    useContext(DoctorContext) as unknown as DoctorContextType;
 
-  const { calculateAge, slotDateFormat, currencySymbol } = useContext(AppContext) as AppContextType
-  const navigate = useNavigate()
+  const { calculateAge, slotDateFormat, currencySymbol } = useContext(AppContext) as AppContextType;
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (dToken) {
-      getAppointments()
+      getAppointments();
     }
-  }, [dToken])
+  }, [dToken]);
 
   const handleVideoChat = (appointment: Appointment) => {
     navigate(`/doctor/video-call/${appointment._id}`);
-  }
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto p-5">
@@ -64,11 +65,17 @@ const DoctorAppointments = () => {
           >
             {/* Status Banner */}
             {appointment.cancelled ? (
-              <div className="bg-red-500 text-white text-center py-1 text-sm font-medium">Cancelled</div>
+              <div className="bg-red-500 text-white text-center py-1 text-sm font-medium">
+                Cancelled
+              </div>
             ) : appointment.isCompleted ? (
-              <div className="bg-green-500 text-white text-center py-1 text-sm font-medium">Completed</div>
+              <div className="bg-green-500 text-white text-center py-1 text-sm font-medium">
+                Completed
+              </div>
             ) : (
-              <div className="bg-blue-500 text-white text-center py-1 text-sm font-medium">Upcoming</div>
+              <div className="bg-blue-500 text-white text-center py-1 text-sm font-medium">
+                Upcoming
+              </div>
             )}
 
             {/* Patient Info */}
@@ -80,7 +87,9 @@ const DoctorAppointments = () => {
               />
               <div>
                 <h3 className="font-semibold text-gray-800">{appointment.userData.name}</h3>
-                <p className="text-sm text-gray-500">Age: {calculateAge(appointment.userData.dob)}</p>
+                <p className="text-sm text-gray-500">
+                  Age: {calculateAge(appointment.userData.dob)}
+                </p>
                 {appointment.userData.medicalHistory && (
                   <p className="text-sm text-gray-600">
                     <strong>Medical History:</strong> {appointment.userData.medicalHistory}
@@ -102,7 +111,9 @@ const DoctorAppointments = () => {
                 <span className="text-sm text-gray-500">Payment</span>
                 <span
                   className={`text-sm font-medium px-2 py-1 rounded-full ${
-                    appointment.payment ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                    appointment.payment
+                      ? "bg-green-100 text-green-700"
+                      : "bg-yellow-100 text-yellow-700"
                   }`}
                 >
                   {appointment.payment ? "Paid" : "Pending"}
@@ -128,21 +139,25 @@ const DoctorAppointments = () => {
                   <span>Cancel</span>
                 </button>
 
-                <button
-                  onClick={() => completeAppointment(appointment._id)}
-                  className="flex-1 py-2 rounded-md bg-green-50 text-green-600 font-medium text-sm flex items-center justify-center gap-1 transition-colors hover:bg-green-100"
-                >
-                  <Check size={16} />
-                  <span>Complete</span>
-                </button>
+                {appointment.payment && (
+                  <>
+                    <button
+                      onClick={() => completeAppointment(appointment._id)}
+                      className="flex-1 py-2 rounded-md bg-green-50 text-green-600 font-medium text-sm flex items-center justify-center gap-1 transition-colors hover:bg-green-100"
+                    >
+                      <Check size={16} />
+                      <span>Complete</span>
+                    </button>
 
-                <button
-                  onClick={() => handleVideoChat(appointment)}
-                  className="flex-1 py-2 rounded-md bg-blue-50 text-blue-600 font-medium text-sm flex items-center justify-center gap-1 transition-colors hover:bg-blue-100"
-                >
-                  <Video size={16} />
-                  <span>Call</span>
-                </button>
+                    <button
+                      onClick={() => handleVideoChat(appointment)}
+                      className="flex-1 py-2 rounded-md bg-blue-50 text-blue-600 font-medium text-sm flex items-center justify-center gap-1 transition-colors hover:bg-blue-100"
+                    >
+                      <Video size={16} />
+                      <span>Call</span>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -155,7 +170,7 @@ const DoctorAppointments = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default DoctorAppointments
+export default DoctorAppointments;

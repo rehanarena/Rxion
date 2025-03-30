@@ -14,11 +14,18 @@ interface SearchParams {
   page?: string;
   limit?: string;
 }
+interface Address{
+  line1: string,
+  line2: string
+}
 interface UpdateDoctorProfileData {
   fees: number;
-  address: string;
+  address: Address; // or string, depending on your schema
   available: boolean;
+  experience: string;
+  about: string;
 }
+
 
 export class DoctorService {
   private doctorRepository: DoctorRepository;
@@ -206,6 +213,40 @@ Rxion Team
       text,
     });
   }
+
+  async changeDoctorPassword(
+    doctorId: string,
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ): Promise<string> {
+    if (!doctorId) {
+      throw new Error("Doctor ID is required.");
+    }
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      throw new Error("All fields are required.");
+    }
+    if (newPassword !== confirmPassword) {
+      throw new Error("Passwords do not match.");
+    }
+
+    const doctor = await this.doctorRepository.findById(doctorId);
+    if (!doctor) {
+      throw new Error("Doctor not found.");
+    }
+
+    const isMatch = await bcryptjs.compare(currentPassword, doctor.password);
+    if (!isMatch) {
+      throw new Error("Current password is incorrect.");
+    }
+
+    const salt = await bcryptjs.genSalt(10);
+    doctor.password = await bcryptjs.hash(newPassword, salt);
+    await this.doctorRepository.updatingDoctor(doctor);
+
+    return "Password changed successfully.";
+  }
+
   async getDashboardData(docId: string) {
     const appointments = await this.doctorRepository.getAppointments(docId);
 
@@ -247,20 +288,19 @@ Rxion Team
   }
   async updateDoctorProfile(
     docId: string,
-    data: UpdateDoctorProfileData
+    data: UpdateDoctorProfileData // Make sure UpdateDoctorProfileData interface now includes experience and about
   ): Promise<IDoctor> {
     if (!docId) {
       throw new Error("Doctor ID is required");
     }
-
-    const updatedDoctor = await this.doctorRepository.updateDoctorProfile(
-      docId,
-      data
-    );
+  
+    const updatedDoctor = await this.doctorRepository.updateDoctorProfile(docId, data);
+    console.log("Updated Doctor:", updatedDoctor);
     if (!updatedDoctor) {
       throw new Error("Doctor not found");
     }
-
+  
     return updatedDoctor;
   }
+  
 }

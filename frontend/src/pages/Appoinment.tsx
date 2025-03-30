@@ -1,225 +1,225 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useContext } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import { MessageSquare, Check } from "lucide-react"
-import axios from "axios"
-import { toast } from "react-toastify"
-import { AppContext } from "../context/AppContext"
-import { DoctorContext } from "../context/DoctorContext"
+import { useEffect, useState, useContext } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { MessageSquare, Check } from "lucide-react";
+// Import the custom axios instance with interceptor
+import api from "../api/axios"; 
+import { toast } from "react-toastify";
+import { AppContext } from "../context/AppContext";
+import { DoctorContext } from "../context/DoctorContext";
 
 interface BookedSlot {
-  date: string
-  time: string
+  date: string;
+  time: string;
 }
 
 interface Doctor {
-  _id: string
-  image: string
-  name: string
-  speciality: string
-  available: boolean
-  degree: string
-  experience: string
-  about: string
-  fees: number
-  slots_booked?: { [key: string]: BookedSlot[] }
+  _id: string;
+  image: string;
+  name: string;
+  speciality: string;
+  available: boolean;
+  degree: string;
+  experience: string;
+  about: string;
+  fees: number;
+  slots_booked?: { [key: string]: BookedSlot[] };
 }
 
 const Appointment = () => {
-  const { docId } = useParams<{ docId: string }>()
-  const navigate = useNavigate()
+  const { docId } = useParams<{ docId: string }>();
+  const navigate = useNavigate();
 
-  const { doctors, currencySymbol, backendUrl, token, getDoctorsData } = useContext(AppContext)!
-  const { docSlots, fetchSlots } = useContext(DoctorContext)!
+  const { doctors, currencySymbol, backendUrl, token, getDoctorsData } = useContext(AppContext)!;
+  const { docSlots, fetchSlots } = useContext(DoctorContext)!;
 
-  const [docInfo, setDocInfo] = useState<Doctor | null>(null)
-  // No date is selected by default
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [slotTime, setSlotTime] = useState<string>("")
-  const [isLoading, setIsLoading] = useState(true)
+  const [docInfo, setDocInfo] = useState<Doctor | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [slotTime, setSlotTime] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (docId && doctors.length > 0) {
-      fetchDocInfo()
-      fetchSlots(docId)
-      setIsLoading(false)
+      fetchDocInfo();
+      fetchSlots(docId);
+      setIsLoading(false);
     }
-  }, [docId, doctors, fetchSlots])
+  }, [docId, doctors, fetchSlots]);
 
   const fetchDocInfo = () => {
-    const doc = doctors.find((doctor: Doctor) => doctor._id === docId)
-    setDocInfo(doc || null)
-  }
+    const doc = doctors.find((doctor: Doctor) => doctor._id === docId);
+    setDocInfo(doc || null);
+  };
 
   const addBookedSlotToDocInfo = (newSlot: BookedSlot) => {
-    if (!docInfo) return
-    const updatedDocInfo = { ...docInfo }
+    if (!docInfo) return;
+    const updatedDocInfo = { ...docInfo };
     if (!updatedDocInfo.slots_booked) {
-      updatedDocInfo.slots_booked = {}
+      updatedDocInfo.slots_booked = {};
     }
     if (!updatedDocInfo.slots_booked[newSlot.date]) {
-      updatedDocInfo.slots_booked[newSlot.date] = []
+      updatedDocInfo.slots_booked[newSlot.date] = [];
     }
-    updatedDocInfo.slots_booked[newSlot.date].push(newSlot)
-    setDocInfo(updatedDocInfo)
-  }
+    updatedDocInfo.slots_booked[newSlot.date].push(newSlot);
+    setDocInfo(updatedDocInfo);
+  };
 
   const bookAppointment = async () => {
     if (!token) {
-      toast.warn("Login to book appointment")
-      return navigate("/login")
+      toast.warn("Login to book appointment");
+      return navigate("/login");
     }
 
     if (!slotTime) {
-      toast.warn("Please select a time slot")
-      return
+      toast.warn("Please select a time slot");
+      return;
     }
 
     try {
       const selectedSlot = docSlots.find((slot) => {
-        const slotStartTime = new Date(slot.startTime)
-        const slotEndTime = new Date(slot.endTime)
-        const selectedTime = new Date(slotTime)
-        return selectedTime >= slotStartTime && selectedTime <= slotEndTime
-      })
+        const slotStartTime = new Date(slot.startTime);
+        const slotEndTime = new Date(slot.endTime);
+        const selectedTime = new Date(slotTime);
+        return selectedTime >= slotStartTime && selectedTime <= slotEndTime;
+      });
 
       if (!selectedSlot) {
-        toast.warn("Please select a valid slot.")
-        return
+        toast.warn("Please select a valid slot.");
+        return;
       }
 
-      const slotDate = new Date(selectedSlot.startTime).toISOString().split("T")[0]
+      const slotDate = new Date(selectedSlot.startTime).toISOString().split("T")[0];
 
-      const { data } = await axios.post(
+      // Use the custom axios instance (api) here
+      const { data } = await api.post(
         `${backendUrl}/api/user/book-appointment`,
         { docId, slotDate, slotTime },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
-      )
+        }
+      );
 
       if (data.success) {
-        toast.success(data.message)
+        toast.success(data.message);
 
-        const formattedSlotTime = new Date(slotTime).toISOString()
-        const slotDatePart = formattedSlotTime.split("T")[0]
+        const formattedSlotTime = new Date(slotTime).toISOString();
+        const slotDatePart = formattedSlotTime.split("T")[0];
         const slotTimePart = new Date(formattedSlotTime).toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
-        })
+        });
 
         const newSlot: BookedSlot = {
           date: slotDatePart,
           time: slotTimePart,
-        }
+        };
 
-        addBookedSlotToDocInfo(newSlot)
-
-        getDoctorsData()
-        navigate("/my-appointments")
+        addBookedSlotToDocInfo(newSlot);
+        getDoctorsData();
+        navigate("/my-appointments");
       } else {
-        toast.error(data.message)
+        toast.error(data.message);
       }
     } catch (error) {
-      toast.error((error as Error).message)
+      // The interceptor handles errors and shows a toast,
+      // so this catch block is for any additional error handling if needed.
+      console.error(error);
     }
-  }
+  };
 
   const generateHalfHourSlots = (startTime: string, endTime: string) => {
-    const slots: Date[] = []
-    const start = new Date(startTime)
-    const end = new Date(endTime)
+    const slots: Date[] = [];
+    const start = new Date(startTime);
+    const end = new Date(endTime);
     while (start < end) {
-      slots.push(new Date(start))
-      start.setMinutes(start.getMinutes() + 30)
+      slots.push(new Date(start));
+      start.setMinutes(start.getMinutes() + 30);
     }
-    return slots
-  }
+    return slots;
+  };
 
   const getBookedSlots = (): BookedSlot[] => {
-    const booked: BookedSlot[] = []
+    const booked: BookedSlot[] = [];
     if (docInfo?.slots_booked) {
       Object.values(docInfo.slots_booked).forEach((slotArray) => {
         if (Array.isArray(slotArray)) {
           slotArray.forEach((slot: BookedSlot) => {
             if (slot.date && slot.time) {
-              booked.push(slot)
+              booked.push(slot);
             }
-          })
+          });
         } else {
-          console.warn("Expected an array but got:", slotArray)
+          console.warn("Expected an array but got:", slotArray);
         }
-      })
+      });
     }
-    return booked
-  }
+    return booked;
+  };
 
-  const today = new Date()
-  const sevenDaysLater = new Date()
-  sevenDaysLater.setDate(today.getDate() + 7)
+  const today = new Date();
+  const sevenDaysLater = new Date();
+  sevenDaysLater.setDate(today.getDate() + 7);
 
-  const bookedSlots = getBookedSlots()
-  const bookedSlotSet = new Set(bookedSlots.map((b) => `${b.date} ${b.time}`))
+  const bookedSlots = getBookedSlots();
+  const bookedSlotSet = new Set(bookedSlots.map((b) => `${b.date} ${b.time}`));
 
   const availableDocSlots = docSlots.filter((slot) => {
-    const slotDateObj = new Date(slot.startTime)
-    const slotDate = slotDateObj.toISOString().split("T")[0]
+    const slotDateObj = new Date(slot.startTime);
+    const slotDate = slotDateObj.toISOString().split("T")[0];
     const slotTimeFormatted = slotDateObj.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-    })
-    const slotDateTime = `${slotDate} ${slotTimeFormatted}`
-    return slotDateObj >= today && slotDateObj <= sevenDaysLater && !bookedSlotSet.has(slotDateTime)
-  })
+    });
+    const slotDateTime = `${slotDate} ${slotTimeFormatted}`;
+    return slotDateObj >= today && slotDateObj <= sevenDaysLater && !bookedSlotSet.has(slotDateTime);
+  });
 
   const groupedSlots = availableDocSlots.reduce(
     (acc, slot) => {
-      const slotDateStr = new Date(slot.startTime).toDateString()
+      const slotDateStr = new Date(slot.startTime).toDateString();
       if (!acc[slotDateStr]) {
-        acc[slotDateStr] = []
+        acc[slotDateStr] = [];
       }
-      acc[slotDateStr].push(slot)
-      return acc
+      acc[slotDateStr].push(slot);
+      return acc;
     },
-    {} as { [key: string]: typeof docSlots },
-  )
+    {} as { [key: string]: typeof docSlots }
+  );
 
   // Only compute slots if a date is selected
-  const slotsForSelectedDate = selectedDate
-    ? groupedSlots[selectedDate.toDateString()] || []
-    : []
-    const timeSlotsSet = new Set<string>()
-    const timeSlots: Date[] = []
-    const bookedSlotTimes = new Set(bookedSlots.map(b => new Date(`${b.date}T${b.time}`).toISOString()))
-    
-    slotsForSelectedDate.forEach((slot) => {
-      const halfHourSlots = generateHalfHourSlots(slot.startTime, slot.endTime)
-      halfHourSlots.forEach((time) => {
-        const iso = time.toISOString()
-        if (!timeSlotsSet.has(iso) && !bookedSlotTimes.has(iso)) { // Exclude booked slots
-          timeSlotsSet.add(iso)
-          timeSlots.push(time)
-        }
-      })
-    })
-    
-  timeSlots.sort((a, b) => a.getTime() - b.getTime())
+  const slotsForSelectedDate = selectedDate ? groupedSlots[selectedDate.toDateString()] || [] : [];
+  const timeSlotsSet = new Set<string>();
+  const timeSlots: Date[] = [];
+  const bookedSlotTimes = new Set(bookedSlots.map((b) => new Date(`${b.date}T${b.time}`).toISOString()));
+
+  slotsForSelectedDate.forEach((slot) => {
+    const halfHourSlots = generateHalfHourSlots(slot.startTime, slot.endTime);
+    halfHourSlots.forEach((time) => {
+      const iso = time.toISOString();
+      if (!timeSlotsSet.has(iso) && !bookedSlotTimes.has(iso)) {
+        timeSlotsSet.add(iso);
+        timeSlots.push(time);
+      }
+    });
+  });
+
+  timeSlots.sort((a, b) => a.getTime() - b.getTime());
 
   const formatDate = (date: Date) => {
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     return {
       day: days[date.getDay()],
       date: date.getDate(),
       month: months[date.getMonth()],
-    }
-  }
+    };
+  };
 
   if (isLoading) {
     return (
@@ -238,7 +238,7 @@ const Appointment = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return docInfo ? (
@@ -299,8 +299,8 @@ const Appointment = () => {
           {Object.keys(groupedSlots).length > 0 ? (
             <div className="flex gap-3 overflow-x-auto pb-2">
               {Object.keys(groupedSlots).map((dateStr, index) => {
-                const date = new Date(dateStr)
-                const { day, date: dateNum, month } = formatDate(date)
+                const date = new Date(dateStr);
+                const { day, date: dateNum, month } = formatDate(date);
                 return (
                   <button
                     key={index}
@@ -315,7 +315,7 @@ const Appointment = () => {
                     <span className="text-lg font-bold my-1">{dateNum}</span>
                     <span className="text-xs">{month}</span>
                   </button>
-                )
+                );
               })}
             </div>
           ) : (
@@ -323,7 +323,6 @@ const Appointment = () => {
           )}
         </div>
 
-        {/* Render Available Time Slots only when a date is selected */}
         {selectedDate && (
           <div className="p-6">
             <h3 className="text-xl font-semibold mb-4">Available Time Slots</h3>
@@ -332,22 +331,22 @@ const Appointment = () => {
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                 {timeSlots.map((slot, idx) => {
-                  const slotDate = slot.toISOString().split("T")[0]
+                  const slotDate = slot.toISOString().split("T")[0];
                   const slotTime24 = slot.toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                     hour12: false,
-                  })
+                  });
                   const slotTime12 = slot.toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                     hour12: true,
-                  })
-                  const slotDateTime = `${slotDate} ${slotTime24}`
+                  });
+                  const slotDateTime = `${slotDate} ${slotTime24}`;
 
-                  if (bookedSlotSet.has(slotDateTime)) return null
+                  if (bookedSlotSet.has(slotDateTime)) return null;
 
-                  const isSelected = slotTime === slot.toISOString()
+                  const isSelected = slotTime === slot.toISOString();
 
                   return (
                     <button
@@ -366,7 +365,7 @@ const Appointment = () => {
                         </span>
                       )}
                     </button>
-                  )
+                  );
                 })}
               </div>
             )}
@@ -390,7 +389,7 @@ const Appointment = () => {
     <div className="flex justify-center items-center h-[70vh]">
       <p className="text-xl">Doctor not found</p>
     </div>
-  )
-}
+  );
+};
 
-export default Appointment
+export default Appointment;

@@ -3,6 +3,12 @@ import appointmentModel from "../../models/appoinmentModel";
 import { IDoctor } from "../../models/doctorModel";
 import specialityModel from "../../models/specialityModel";
 
+interface Address {
+  line1: string;
+  line2: string;
+}
+
+
 export class DoctorRepository {
   async searchDoctors(
     query: any,
@@ -54,8 +60,13 @@ export class DoctorRepository {
   }
   async updateDoctorProfile(
     docId: string,
-    updateData: { fees: number; address: string; available: boolean }
+    updateData: { fees: number; address: Record<string, any>; available: boolean; experience: string; about: string }
   ): Promise<IDoctor | null> {
-    return doctorModel.findByIdAndUpdate(docId, updateData, { new: true });
+    return doctorModel.findByIdAndUpdate(docId, { $set: updateData }, { new: true });
   }
+  async updatingDoctor(doctor: IDoctor): Promise<IDoctor> {
+    // Assuming doctor is a Mongoose document
+    return await doctor.save();
+  }
+  
 }
