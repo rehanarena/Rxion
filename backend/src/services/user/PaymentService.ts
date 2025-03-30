@@ -78,8 +78,19 @@ class PaymentService {
   }
 
   async verifyPayment(razorpay_payment_id: string, razorpay_order_id: string) {
+    // Fetch order details from Razorpay
     const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id);
+    
     if (orderInfo.status === "paid") {
+      // Retrieve the appointment using the receipt value (assumed to be the appointment ID)
+      const appointment = await this.appointmentRepository.findOne({ _id: orderInfo.receipt });
+      
+      // Check if the payment is already marked as true
+      if (appointment && appointment.payment) {
+        return { success: false, message: "Already paid" };
+      }
+      
+      // Update the payment status if not already paid
       await this.appointmentRepository.updatePaymentStatus(
         orderInfo.receipt as string,
         { payment: true }
@@ -89,6 +100,7 @@ class PaymentService {
       return { success: false, message: "Payment Failed" };
     }
   }
+  
 }
 
 export default new PaymentService();

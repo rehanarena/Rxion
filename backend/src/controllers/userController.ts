@@ -11,7 +11,6 @@ import {v2 as cloudinary } from 'cloudinary';
 import { Types } from "mongoose";
 import HttpStatus from "../utils/statusCode";
 import dotenv from 'dotenv';
-import ChatModel from "../models/ChatModel";
 import specialityModel from "../models/specialityModel";
 
 dotenv.config();
@@ -345,11 +344,16 @@ const verifyRazorpay = async (req: Request, res: Response, next: NextFunction): 
   try {
     const { razorpay_payment_id, razorpay_order_id } = req.body;
     const result = await PaymentService.verifyPayment(razorpay_payment_id, razorpay_order_id);
-    res.status(HttpStatus.OK).json(result);
+    if (result.message === "Already paid") {
+      res.status(409).json(result);
+    } else {
+      res.status(200).json(result);
+    }
   } catch (error: any) {
     next(error.message);
   }
 };
+
 
 /// Get Wallet Balance ///
 const getWalletBalance = async (req: CustomRequest, res: Response, next: NextFunction): Promise<void> => {

@@ -25,4 +25,7 @@ export class AppointmentRepository {
       new: true,
     });
   }
+  async findOne(query: object): Promise<IAppointment | null> {
+    return appointmentModel.findOne(query).exec();
+  }
 }
