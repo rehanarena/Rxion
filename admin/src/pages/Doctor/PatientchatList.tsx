@@ -45,24 +45,21 @@ const DoctorMessages: React.FC = () => {
       setMessageSummaries(formattedHistory)
     })
 
-    // Listen for new messages
     socket.on("receive-message", (msg) => {
       setMessageSummaries((prev) => {
-        const existingIndex = prev.findIndex((item) => item.patientId === msg.room)
-
+        const existingIndex = prev.findIndex((item) => item.patientId === msg.room);
+    
         if (existingIndex !== -1) {
-          // Preserve existing name & image if they are missing
-          const updated = [...prev]
+          // Only update lastMessage and timestamp, keeping original name and image
+          const updated = [...prev];
           updated[existingIndex] = {
             ...updated[existingIndex],
-            patientName: msg.patientName || updated[existingIndex].patientName,
-            patientImage: msg.patientImage?.startsWith("http") ? msg.patientImage : updated[existingIndex].patientImage,
             lastMessage: msg.message,
             timestamp: new Date(msg.timestamp),
-          }
-          return updated
+          };
+          return updated;
         } else {
-          // Add new entry with proper default handling
+          // Add new entry with provided name and image from msg
           return [
             ...prev,
             {
@@ -72,11 +69,11 @@ const DoctorMessages: React.FC = () => {
               lastMessage: msg.message,
               timestamp: new Date(msg.timestamp),
             },
-          ]
+          ];
         }
-      })
-    })
-
+      });
+    });
+    
     return () => {
       socket.disconnect()
     }

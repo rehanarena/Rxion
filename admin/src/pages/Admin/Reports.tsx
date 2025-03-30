@@ -4,6 +4,7 @@ import pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import { AdminContext } from "../../context/AdminContext";
+import { formatTime } from '../../Helper/formatTime'
 pdfMake.vfs = pdfFonts.vfs;
 
 interface AppointmentReport {
@@ -82,7 +83,7 @@ export default function AppointmentsReport() {
         report.doctor,
         report.patient,
         report.date,
-        report.time,
+        formatTime(report.time),
         report.paymentStatus,
         `₹${report.fees.toFixed(2)}`,
       ]),
@@ -280,7 +281,7 @@ export default function AppointmentsReport() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{report.doctor}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{report.patient}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{report.date}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{report.time}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatTime(report.time)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         report.paymentStatus === 'Paid' 
