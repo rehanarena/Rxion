@@ -13,6 +13,12 @@ export class UserRepository {
     return await userModel.findOne({ email });
   }
 
+   async findOne(query: object) {
+      return await userModel.findOne(query);
+    }
+    async saveUser(user: any): Promise<any> {
+      return await user.save();
+    }
   async createUser(userData: UserData) {
     const newUser = new userModel(userData);
     return await newUser.save();

@@ -18,6 +18,8 @@ export interface IUser extends Document {
   otpExpires: Date | null;
   isBlocked: boolean;
   walletBalance: number;
+  resetPasswordToken: string | null;
+  resetPasswordExpire: Date | null;
 }
 
 const userSchema = new Schema<IUser>({
@@ -42,6 +44,8 @@ const userSchema = new Schema<IUser>({
   otpExpires: { type: Date, default: null },
   isBlocked: { type: Boolean, default: false },
   walletBalance: { type: Number, default: 0 },
+  resetPasswordToken: { type: String, default: null },
+    resetPasswordExpire: { type: Date, default: null },
 });
 
 const userModel: Model<IUser> =

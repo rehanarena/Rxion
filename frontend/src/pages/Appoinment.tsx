@@ -193,18 +193,21 @@ const Appointment = () => {
   const slotsForSelectedDate = selectedDate
     ? groupedSlots[selectedDate.toDateString()] || []
     : []
-  const timeSlotsSet = new Set<string>()
-  const timeSlots: Date[] = []
-  slotsForSelectedDate.forEach((slot) => {
-    const halfHourSlots = generateHalfHourSlots(slot.startTime, slot.endTime)
-    halfHourSlots.forEach((time) => {
-      const iso = time.toISOString()
-      if (!timeSlotsSet.has(iso)) {
-        timeSlotsSet.add(iso)
-        timeSlots.push(time)
-      }
+    const timeSlotsSet = new Set<string>()
+    const timeSlots: Date[] = []
+    const bookedSlotTimes = new Set(bookedSlots.map(b => new Date(`${b.date}T${b.time}`).toISOString()))
+    
+    slotsForSelectedDate.forEach((slot) => {
+      const halfHourSlots = generateHalfHourSlots(slot.startTime, slot.endTime)
+      halfHourSlots.forEach((time) => {
+        const iso = time.toISOString()
+        if (!timeSlotsSet.has(iso) && !bookedSlotTimes.has(iso)) { // Exclude booked slots
+          timeSlotsSet.add(iso)
+          timeSlots.push(time)
+        }
+      })
     })
-  })
+    
   timeSlots.sort((a, b) => a.getTime() - b.getTime())
 
   const formatDate = (date: Date) => {

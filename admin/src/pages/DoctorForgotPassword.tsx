@@ -1,13 +1,13 @@
-import { useState, useContext } from "react";
+import { useState} from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { AdminContext } from "../context/AdminContext";
+
 
 const DoctorForgotPasswordOTP = () => {
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const { backendUrl } = useContext(AdminContext)!;
+  const  backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
   const navigate = useNavigate();
 
   const handleClick = async () => {

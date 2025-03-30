@@ -1,13 +1,13 @@
-import { useState, FormEvent, useContext, useEffect } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { AdminContext } from "../context/AdminContext";
+
 
 const DoctorResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const { backendUrl } = useContext(AdminContext)!;
+  const backendUrl = process.env.NODE_ENV==="PRODUCTION"? process.env.PRODUCTION_URL_BACKEND: process.env.PRODUCTION_DEV_BACKEND
   const [loading, setLoading] = useState(false);
 
   const { state } = useLocation();

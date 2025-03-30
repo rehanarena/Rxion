@@ -1,80 +1,74 @@
-import { useState} from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 
-const ForgotPassword = () => {
-  const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+const PatientForgotPasswordOTP = () => {
+  const [email, setEmail] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const backendUrl =
+    import.meta.env.VITE_NODE_ENV === "PRODUCTION"
+      ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
+      : import.meta.env.VITE_BACKEND_URL;
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!backendUrl) {
-      setError("Backend URL is unavailable.");
-      return;
-    }
-
+  const handleClick = async () => {
+    if (loading) return;
+    setLoading(true);
     try {
-      const response = await axios.post(`${backendUrl}/api/user/forgot-password`, { email });
-      
-      if (response.data.success) {
-        setSuccess(response.data.message);
-        setError(null);
-        
-        const { userId } = response.data; 
-
-        setTimeout(() => {
-          if (userId) {
-            navigate("/verify-otp", { state: { userId } });
-          } else {
-            setError("User ID not found. Please try again.");
-          }
-        }, 3000);
+      const { data } = await axios.post(
+        `${backendUrl}/api/user/forgot-password`,
+        { email }
+      );
+      // After successful response:
+      if (data.success) {
+        console.log("Forgot password response:", data);
+        toast.success("OTP sent to your email.");
+        // Save the userId to localStorage
+        localStorage.setItem("userId", data.userId);
+        navigate("/verify-otp", {
+          state: {
+            userId: data.userId,
+            isForPasswordReset: true,
+            userType: "patient",
+          },
+        });
       } else {
-        setError(response.data.message);
-        setSuccess(null);
+        toast.error(data.message);
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "An error occurred. Please try again.");
-      } else {
-        setError("An unexpected error occurred.");
-      }
-      setSuccess(null);
+      console.error(error);
+      toast.error("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">Forgot Password</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input 
-              type="email" 
-              placeholder="Enter your email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button 
-            type="submit" 
-            className="w-full py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            Send OTP
-          </button>
-        </form>
-
-        {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
-        {success && <p className="mt-4 text-sm text-green-500">{success}</p>}
+    <div className="min-h-[80vh] flex items-center">
+      <div className="flex flex-col gap-3 m-auto items-start p-8 border rounded-xl shadow-lg">
+        <h2 className="text-2xl font-semibold">Patient Forgot Password</h2>
+        <div className="w-full">
+          <label className="block mb-1">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border p-2 rounded w-full"
+            required
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={loading}
+          className="bg-primary text-white rounded px-4 py-2 w-full"
+        >
+          {loading ? "Sending..." : "Send OTP"}
+        </button>
       </div>
     </div>
   );
 };
 
-export default ForgotPassword;
+export default PatientForgotPasswordOTP;

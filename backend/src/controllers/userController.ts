@@ -35,7 +35,6 @@ interface CustomRequest extends Request {
     id: string;
   };
 }
-const backendUrl = process.env.NODE_ENV==="PRODUCTION"? process.env.PRODUCTION_URL_BACKEND: process.env.PRODUCTION_DEV_BACKEND
 
 
 /// Register User ///
@@ -71,6 +70,7 @@ const verifyOtp = async (req: Request, res: Response, next: NextFunction): Promi
     next(error);
   }
 };
+
 
 /// Resend OTP ///
 const resendOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -178,11 +178,27 @@ const forgotPassword = async (req: Request, res: Response, next: NextFunction): 
     const { email } = req.body;
     const authService = new AuthService();
     const result = await authService.forgotPassword(email);
+    console.log("forgotPassword result:", result);
     res.status(HttpStatus.OK).json({ success: true, ...result });
   } catch (error: any) {
     next(error);
   }
 };
+export const resetPassword = async(req: Request, res: Response,next: NextFunction): Promise<void> =>{
+  try {
+    const { email, token, password } = req.body;
+    const authService = new AuthService();
+    const result = await  authService.userResetPassword(email, token, password);
+    if (!result.success) {
+      res.status(HttpStatus.BAD_REQUEST).json(result);
+    } else {
+      res.status(HttpStatus.OK).json(result);
+    }
+  } catch (error: any) {
+    next(error);
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
+  }
+}
 
 /// Change Password ///
 const changePassword = async (

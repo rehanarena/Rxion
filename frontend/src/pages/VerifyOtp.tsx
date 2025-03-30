@@ -1,32 +1,32 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
-import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
 
-interface AppContextType {
-  backendUrl: string;
-  token: string | null;
-  setToken: (token: string) => void;
-}
-
 const VerifyOtp = () => {
-  const { backendUrl } = useContext(AppContext) as AppContextType;
+  const backendUrl =
+    import.meta.env.VITE_NODE_ENV === "PRODUCTION"
+      ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
+      : import.meta.env.VITE_BACKEND_URL;
   const navigate = useNavigate();
   const [otpArray, setOtpArray] = useState(Array(6).fill("")); // Array for 6 OTP digits
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(30);
   const [isResendActive, setIsResendActive] = useState(false);
 
-  const { state } = useLocation();
-  const { userId, isForPasswordReset } = state || {};
+  const location = useLocation();
+  const stateUserId = location.state?.userId;
+  const userId = stateUserId || localStorage.getItem("userId");
+  const isForPasswordReset = location.state?.isForPasswordReset || true;
+
+  console.log("OTP Verification - userId:", userId);
 
   useEffect(() => {
     if (!userId) {
       toast.error("Invalid access! Redirecting to registration.");
       navigate("/register");
     }
-  }, [userId, navigate, state]);
+  }, [userId, navigate]);
 
   useEffect(() => {
     if (timer > 0) {
@@ -73,10 +73,13 @@ const VerifyOtp = () => {
         otp,
         userId,
       });
+      console.log("OTP verification response:", data);
       if (data.success) {
         toast.success(data.message);
         if (isForPasswordReset) {
-          navigate("/reset-password", { state: { userId } });
+          // Destructure email and token from the response data
+          const { email, token } = data;
+          navigate("/reset-password", { state: { userId, email, token } });
         } else {
           navigate("/login");
         }
