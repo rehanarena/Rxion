@@ -1,11 +1,6 @@
-// controllers/reportController.ts
 import { Request, Response } from "express";
 import Appointment from "../../models/appoinmentModel";
 
-/**
- * GET /api/reports/appointments?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
- * Returns a report of appointments filtered by a date range.
- */
 export const getAppointmentsReport = async (req: Request, res: Response): Promise<void> => {
   try {
     const { startDate, endDate } = req.query;

@@ -3,7 +3,6 @@ import { AdminContext } from "../../context/AdminContext";
 import { AppContext } from "../../context/AppContext";
 import cancel_icon from "../../assets/cancel_icon.svg";
 
-// Updated AdminContextType and related interfaces
 interface AdminContextType {
   aToken: string;
   appointments: Appointment[];
@@ -27,7 +26,7 @@ interface UserData {
 
 interface Appointment {
   _id: string;
-  doctData?: DoctorData; // Made optional to match the actual context data
+  doctData?: DoctorData; 
   userData: UserData;
   amount: number;
   slotDate: string;
@@ -36,7 +35,6 @@ interface Appointment {
   isCompleted: boolean;
 }
 
-// Updated AppContextType to match the actual implementation
 interface AppContextType {
   slotDateFormat: (slotDate: string, slotTime: string) => string;
   currencySymbol: string;
@@ -44,14 +42,12 @@ interface AppContextType {
 }
 
 const AllAppointments = () => {
-  // Check that AdminContext is available
   const adminContext = useContext(AdminContext);
   if (!adminContext) {
     throw new Error("AdminContext is not available");
   }
   const { aToken, appointments, getAllAppointments, cancelAppointment } = adminContext as AdminContextType;
 
-  // Check that AppContext is available
   const appContext = useContext(AppContext);
   if (!appContext) {
     throw new Error("AppContext is not available");

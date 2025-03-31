@@ -15,22 +15,14 @@ interface UserStatus {
 const userStatus: { [userId: string]: UserStatus } = {};
 
 export function chatHandler(socket: Socket, io: Server) {
-  /**
-   * USER CONNECTS
-   * - Update the user's status to online
-   */
+  
   socket.on("user-online", (userId: string) => {
-    // Store the userId on the socket for later reference.
     socket.data.userId = userId;
     userStatus[userId] = { online: true };
     io.emit("user-status", { userId, online: true });
   });
 
-  /**
-   * USER DISCONNECTS
-   * - Update last seen time
-   * - Set online to false
-   */
+
   socket.on("disconnect", () => {
     const userId = socket.data.userId;
     if (userId) {
@@ -39,9 +31,7 @@ export function chatHandler(socket: Socket, io: Server) {
     }
   });
 
-  /**
-   * JOIN-CHAT
-   */
+  
   socket.on("join-chat", async (room: string) => {
     socket.join(room);
     console.log(`Socket ${socket.id} joined chat room ${room}`);
@@ -55,9 +45,7 @@ export function chatHandler(socket: Socket, io: Server) {
     }
   });
 
-  /**
-   * SEND-MESSAGE
-   */
+  
   socket.on(
     "send-message",
     async (data: {
@@ -91,9 +79,7 @@ export function chatHandler(socket: Socket, io: Server) {
     }
   );
 
-  /**
-   * READ-MESSAGES
-   */
+  
   socket.on("read-messages", async (data: { room: string; sender: string }) => {
     const { room, sender } = data;
     try {
@@ -111,9 +97,7 @@ export function chatHandler(socket: Socket, io: Server) {
     }
   });
 
-  /**
-   * GET-CHAT-HISTORY
-   */
+  
   socket.on("get-chat-history", async () => {
     try {
       const summaries = await ChatMessage.aggregate([
@@ -129,9 +113,7 @@ export function chatHandler(socket: Socket, io: Server) {
     }
   });
 
-  /**
-   * TYPING / STOP-TYPING
-   */
+  
   socket.on("typing", (data: { room: string; sender: string }) => {
     const { room, sender } = data;
     socket.to(room).emit("typing", { sender });

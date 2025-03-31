@@ -12,7 +12,6 @@ import { errorHandler } from './middlewares/errorHandler';
 import fs from "fs";
 import path from "path";
 
-// Import socket handlers
 import { videoCallHandler } from './socket/videoCallHandlers';
 import { chatHandler } from './socket/chatHandlers';
 
@@ -24,6 +23,10 @@ connectCloudinary();
 
 app.use(express.json());
 app.use(cors());
+
+app.use(express.json({ limit: '50mb' })); 
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 
 // Routes
 app.use('/api/admin', adminRouter);
@@ -41,7 +44,6 @@ if (!fs.existsSync(uploadDir)) {
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// Add the error handler as the last middleware
 app.use(errorHandler);
 
 const httpServer = http.createServer(app);
@@ -52,7 +54,6 @@ const io = new Server(httpServer, {
 io.on('connection', (socket) => {
   console.log("Client connected:", socket.id);
 
-  // Initialize socket event handlers
   videoCallHandler(socket, io);
   chatHandler(socket, io);
 

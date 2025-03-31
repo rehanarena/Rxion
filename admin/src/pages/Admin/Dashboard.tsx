@@ -27,7 +27,6 @@ ChartJS.register(
   Legend
 );
 
-// Interfaces for type safety
 interface Metrics {
   totalPatients: number;
   totalDoctors: number;
@@ -67,7 +66,6 @@ interface TopDoctor {
 }
 
 const AdminDashboard: React.FC = () => {
-  // State management
   const [metrics, setMetrics] = useState<Metrics>({
     totalPatients: 0,
     totalDoctors: 0,
@@ -87,15 +85,12 @@ const AdminDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { aToken } = useContext(AdminContext)!;
 
-
-  // Fetch all dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        // Parallel data fetching
         const [
           metricsResponse,
           revenueResponse,
@@ -122,7 +117,6 @@ const AdminDashboard: React.FC = () => {
             },}),
         ]);
 
-        // Set states with error checking
         setMetrics(
           metricsResponse.data || {
             totalPatients: 0,
@@ -158,7 +152,6 @@ const AdminDashboard: React.FC = () => {
     fetchDashboardData();
   }, [period]);
 
-  // Prepare chart data with fallback
   const lineChartData = {
     labels:
       revenueData.length > 0
@@ -236,7 +229,6 @@ const AdminDashboard: React.FC = () => {
     ],
   };
 
-  // Loading state component
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -253,7 +245,6 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
-  // Error state component
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-red-50 to-pink-50">
@@ -287,7 +278,6 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
-  // Main dashboard render
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen p-6 space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-white rounded-2xl shadow-lg p-6">

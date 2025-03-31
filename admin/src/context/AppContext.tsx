@@ -64,8 +64,7 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
 
   const slotDateFormat = (slotDate: string, slotTime: string): string => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
-    // Parse slotDate which is in "YYYY-MM-DD" format
+
     const dateParts = slotDate.split('-');
     if (dateParts.length !== 3) {
       return "Invalid date";
@@ -74,7 +73,6 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
     const month = months[Number(dateParts[1]) - 1];
     const day = dateParts[2];
   
-    // Parse slotTime which is an ISO string like "2025-03-28T10:00:00.000Z"
     const timeObj = new Date(slotTime);
     if (isNaN(timeObj.getTime())) {
       return "Invalid date";
@@ -82,12 +80,11 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => 
     
     let hours = timeObj.getHours();
     const minutes = timeObj.getMinutes().toString().padStart(2, "0");
-    
-    // Determine AM or PM
+  
     const ampm = hours >= 12 ? "PM" : "AM";
-    // Convert hours to 12-hour format
+
     hours = hours % 12;
-    hours = hours ? hours : 12; // if hour is 0, set it to 12
+    hours = hours ? hours : 12; 
     
     const formattedHours = hours.toString().padStart(2, "0");
   

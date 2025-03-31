@@ -161,12 +161,11 @@ export const doctorProfile = async (req: Request, res: Response): Promise<void> 
 export const updateDoctorProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     const { docId, fees, address, available, experience, about } = req.body;
-    console.log("Received update:", req.body); // Debug log
+    console.log("Received update:", req.body); 
     const updatedDoctor = await doctorService.updateDoctorProfile(docId, { fees, address, available, experience, about });
     res.status(HttpStatus.OK).json({ success: true, message: "Profile Updated", updatedDoctor });
   } catch (error: any) {
     console.error("Error in updateDoctorProfile controller:", error);
-    // Error handling...
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error while updating profile." });
   }
 };
@@ -183,12 +182,6 @@ const fileUploadofDoc = async (req: Request, res: Response, next: NextFunction):
           resource_type: "image", 
         });
 
-        // const imageUrl = result.secure_url;
-        // const fileData = {
-        //   url: imageUrl,
-        //   type: image.mimetype,
-        //   fileName: image.originalname,
-        // };
   
         const fileData = {
           url: result.secure_url,

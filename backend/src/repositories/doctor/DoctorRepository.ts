@@ -65,7 +65,6 @@ export class DoctorRepository {
     return doctorModel.findByIdAndUpdate(docId, { $set: updateData }, { new: true });
   }
   async updatingDoctor(doctor: IDoctor): Promise<IDoctor> {
-    // Assuming doctor is a Mongoose document
     return await doctor.save();
   }
   

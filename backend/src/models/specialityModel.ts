@@ -1,4 +1,3 @@
-// specialty.model.ts
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISpecialty extends Document {

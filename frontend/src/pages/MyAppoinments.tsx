@@ -76,7 +76,9 @@ interface Order {
   receipt: string;
 }
 
-const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
+const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"
+  ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
+  : import.meta.env.VITE_BACKEND_URL;
 const socket = io(backendUrl);
 
 const MyAppointments = () => {
@@ -198,12 +200,21 @@ const MyAppointments = () => {
         { appointmentId },
         { headers: { token } },
       );
+
+      if (data.message === "Already paid") {
+        toast.info("Already paid");
+        getUsersAppointments();
+        return;
+      }
+
       if (data.success) {
         if (data.order) {
           initPay(data.order, appointmentId);
         } else {
           navigate("/payment-success", { state: { appointmentId } });
         }
+      } else {
+        toast.error(data.message);
       }
     } catch (error: unknown) {
       if (error instanceof Error) {

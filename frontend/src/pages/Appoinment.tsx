@@ -3,7 +3,6 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MessageSquare, Check } from "lucide-react";
-// Import the custom axios instance with interceptor
 import api from "../api/axios"; 
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
@@ -125,8 +124,6 @@ const Appointment = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      // The interceptor handles errors and shows a toast,
-      // so this catch block is for any additional error handling if needed.
       console.error(error);
     }
   };

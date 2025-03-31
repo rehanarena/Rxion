@@ -4,7 +4,6 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import upload_area from "../../assets/upload_area.svg";
 
-// Define a type for a Specialty
 interface Specialty {
   _id: string;
   name: string;
@@ -27,7 +26,6 @@ const AddDoctor: React.FC = () => {
 
   const { aToken, backendUrl } = useContext(AdminContext)!; 
 
-  // Fetch specialties from your database when the component mounts
   useEffect(() => {
     const fetchSpecialties = async () => {
       try {
@@ -36,7 +34,6 @@ const AddDoctor: React.FC = () => {
         });
         if (data.success) {
           setSpecialityOptions(data.specialties);
-          // Optionally set a default speciality if needed:
           if (data.specialties.length > 0) {
             setSpeciality(data.specialties[0].name);
           }
@@ -74,8 +71,6 @@ const AddDoctor: React.FC = () => {
         "address",
         JSON.stringify({ line1: address1, line2: address2 })
       );
-
-      // Debug: log form data
       formData.forEach((value, key) => {
         console.log(`${key}: ${value}`);
       });
@@ -88,7 +83,6 @@ const AddDoctor: React.FC = () => {
 
       if (data.success) {
         toast.success(data.message);
-        // Reset form fields after a successful submission
         setDocImg(null);
         setName("");
         setEmail("");
@@ -96,7 +90,6 @@ const AddDoctor: React.FC = () => {
         setExperience("1 Year");
         setFees("");
         setAbout("");
-        // Optionally reset speciality to the first option or leave it as is
         setDegree("");
         setAddress1("");
         setAddress2("");

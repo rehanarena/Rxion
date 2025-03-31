@@ -130,7 +130,6 @@ export class adminRepository {
     return userModel.find();
   }
 
-  // Method for blocking/unblocking a user
   async blockUnblockUser(id: string, action: string): Promise<{ message: string }> {
     const user = await userModel.findById(id);
     if (!user) {
@@ -147,7 +146,6 @@ export class adminRepository {
     return { message: `User has been ${action}ed successfully.` };
   }
 
-  // Method for blocking/unblocking a doctor
   async blockUnblockDoctor(id: string, action: string): Promise<{ message: string }> {
     const doctor = await doctorModel.findById(id);
     if (!doctor) {
@@ -164,44 +162,34 @@ export class adminRepository {
     return { message: `Doctor has been ${action}ed successfully.` };
   }
 
-  // New: Get doctors list with pagination & search
   async findDoctors(query: any, skip: number, limit: number) {
     return doctorModel.find(query).skip(skip).limit(limit);
   }
 
-  // New: Count the number of doctors matching a query
   async countDoctors(query: any) {
     return doctorModel.countDocuments(query);
   }
 
-  // New: Get all doctors excluding the password field
   async getAllDoctors() {
     return doctorModel.find({}).select("-password");
   }
 
-  // New: Get a single doctor by ID
   async getDoctorById(doctorId: string) {
     return doctorModel.findById(doctorId);
   }
 
-  // New: Appointment-related methods
-
-  // Get all appointments
   async getAllAppointments(): Promise<any[]> {
     return appointmentModel.find({});
   }
 
-  // Find an appointment by its ID
   async findAppointmentById(appointmentId: string): Promise<any> {
     return appointmentModel.findById(appointmentId);
   }
 
-  // Update an appointment with the given update object
   async updateAppointment(appointmentId: string, update: any): Promise<any> {
     return appointmentModel.findByIdAndUpdate(appointmentId, update, { new: true });
   }
 
-  // Update a doctor's booked slots (used during cancellation)
   async updateDoctorSlots(docId: string, slots_booked: any): Promise<any> {
     return doctorModel.findByIdAndUpdate(docId, { slots_booked }, { new: true });
   }

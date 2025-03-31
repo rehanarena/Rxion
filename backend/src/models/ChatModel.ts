@@ -1,4 +1,4 @@
-// models/ChatModel.ts
+
 import { Schema, model, Document } from "mongoose";
 
 export interface IChatMessage extends Document {
@@ -7,7 +7,7 @@ export interface IChatMessage extends Document {
   message: string;
   timestamp: Date;
   read: boolean;
-  file?: any; // Using 'any' for flexibility
+  file?: any; 
   patientName?: string;
   patientImage?: string;
 }

@@ -1,4 +1,3 @@
-// specialty.repository.ts
 import Specialty, { ISpecialty } from '../../models/specialityModel';
 
 export const findSpecialtyByName = async (name: string): Promise<ISpecialty | null> => {
