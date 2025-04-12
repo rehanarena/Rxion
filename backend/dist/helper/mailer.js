@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendAppointmentCancelledEmail = exports.sendAppointmentCompletedEmail = exports.sendPasswordEmail = exports.sendOtpEmail = void 0;
+exports.sendAppointmentBookedEmail = exports.sendAppointmentCancelledEmail = exports.sendAppointmentCompletedEmail = exports.sendPasswordEmail = exports.sendOtpEmail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const sendOtpEmail = (email, otp) => __awaiter(void 0, void 0, void 0, function* () {
     const transporter = nodemailer_1.default.createTransport({
@@ -92,3 +92,31 @@ Rxion Team`,
     yield transporter.sendMail(mailOptions);
 });
 exports.sendAppointmentCancelledEmail = sendAppointmentCancelledEmail;
+// In your mailer file (mailer.ts)
+const sendAppointmentBookedEmail = (email, patientName, slotDate, slotTime) => __awaiter(void 0, void 0, void 0, function* () {
+    const transporter = nodemailer_1.default.createTransport({
+        service: "gmail",
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+    });
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Appointment Confirmation",
+        text: `Hello ${patientName}, your appointment is booked on ${slotDate} at ${slotTime}.`,
+        html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h2>Appointment Confirmation</h2>
+        <p>Hello <strong>${patientName}</strong>,</p>
+        <p>Your appointment is successfully booked on <strong>${slotDate}</strong> at <strong>${slotTime}</strong>.</p>
+        <p>Thank you for choosing Rxion.</p>
+        <p>Best regards,<br>Rxion Team</p>
+      </div>
+    `,
+    };
+    const info = yield transporter.sendMail(mailOptions);
+    console.log(" Email sent: %s", info.messageId);
+});
+exports.sendAppointmentBookedEmail = sendAppointmentBookedEmail;

@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserRepository = void 0;
+const doctorModel_1 = __importDefault(require("../../models/doctorModel"));
 const userModel_1 = __importDefault(require("../../models/userModel"));
 class UserRepository {
     findByEmail(email) {
@@ -84,6 +85,20 @@ class UserRepository {
             if (!user)
                 throw new Error("User not found");
             return user.walletBalance;
+        });
+    }
+    searchDoctors(query, sortOptions, skip, limit) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield doctorModel_1.default
+                .find(query)
+                .sort(sortOptions)
+                .skip(skip)
+                .limit(limit);
+        });
+    }
+    countDoctors(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield doctorModel_1.default.countDocuments(query);
         });
     }
 }

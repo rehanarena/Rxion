@@ -36,8 +36,7 @@ const authAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         next();
     }
     catch (error) {
-        console.error("Authentication Error:", error.message || error);
-        res.status(500).json({ success: false, message: error.message });
+        next(error);
     }
 });
 exports.default = authAdmin;

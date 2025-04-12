@@ -13,24 +13,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.chatHandler = chatHandler;
-const ChatModel_1 = __importDefault(require("../models/ChatModel"));
+const chatModel_1 = __importDefault(require("../models/chatModel"));
 const userStatus = {};
 function chatHandler(socket, io) {
-    /**
-     * USER CONNECTS
-     * - Update the user's status to online
-     */
     socket.on("user-online", (userId) => {
-        // Store the userId on the socket for later reference.
         socket.data.userId = userId;
         userStatus[userId] = { online: true };
         io.emit("user-status", { userId, online: true });
     });
-    /**
-     * USER DISCONNECTS
-     * - Update last seen time
-     * - Set online to false
-     */
     socket.on("disconnect", () => {
         const userId = socket.data.userId;
         if (userId) {
@@ -38,14 +28,11 @@ function chatHandler(socket, io) {
             io.emit("user-status", { userId, online: false, lastSeen: userStatus[userId].lastSeen });
         }
     });
-    /**
-     * JOIN-CHAT
-     */
     socket.on("join-chat", (room) => __awaiter(this, void 0, void 0, function* () {
         socket.join(room);
         console.log(`Socket ${socket.id} joined chat room ${room}`);
         try {
-            const messages = yield ChatModel_1.default.find({ room }).sort({ timestamp: 1 });
+            const messages = yield chatModel_1.default.find({ room }).sort({ timestamp: 1 });
             socket.emit("chat-history", messages);
         }
         catch (error) {
@@ -53,9 +40,6 @@ function chatHandler(socket, io) {
             socket.emit("chat-history", []);
         }
     }));
-    /**
-     * SEND-MESSAGE
-     */
     socket.on("send-message", (data) => __awaiter(this, void 0, void 0, function* () {
         console.log("Received message data:", data);
         const { room, message, sender, file, patientName, patientImage } = data;
@@ -70,7 +54,7 @@ function chatHandler(socket, io) {
             patientImage: patientImage || "",
         };
         try {
-            const savedMsg = yield ChatModel_1.default.create(msg);
+            const savedMsg = yield chatModel_1.default.create(msg);
             console.log("Saved message:", savedMsg);
             io.to(room).emit("receive-message", savedMsg);
         }
@@ -78,13 +62,10 @@ function chatHandler(socket, io) {
             console.error("Error saving message:", error);
         }
     }));
-    /**
-     * READ-MESSAGES
-     */
     socket.on("read-messages", (data) => __awaiter(this, void 0, void 0, function* () {
         const { room, sender } = data;
         try {
-            const updateResult = yield ChatModel_1.default.updateMany({ room, sender: { $ne: sender }, read: false }, { $set: { read: true } });
+            const updateResult = yield chatModel_1.default.updateMany({ room, sender: { $ne: sender }, read: false }, { $set: { read: true } });
             console.log(`Messages in room ${room} marked as read by ${sender}. Updated:`, updateResult);
             io.to(room).emit("messages-read", { room, sender });
         }
@@ -92,12 +73,9 @@ function chatHandler(socket, io) {
             console.error("Error updating read messages:", error);
         }
     }));
-    /**
-     * GET-CHAT-HISTORY
-     */
     socket.on("get-chat-history", () => __awaiter(this, void 0, void 0, function* () {
         try {
-            const summaries = yield ChatModel_1.default.aggregate([
+            const summaries = yield chatModel_1.default.aggregate([
                 { $sort: { timestamp: -1 } },
                 { $group: { _id: "$room", latestMessage: { $first: "$$ROOT" } } },
                 { $replaceRoot: { newRoot: "$latestMessage" } },
@@ -110,9 +88,6 @@ function chatHandler(socket, io) {
             socket.emit("chat-history", []);
         }
     }));
-    /**
-     * TYPING / STOP-TYPING
-     */
     socket.on("typing", (data) => {
         const { room, sender } = data;
         socket.to(room).emit("typing", { sender });

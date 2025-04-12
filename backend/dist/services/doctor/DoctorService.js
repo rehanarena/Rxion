@@ -13,53 +13,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DoctorService = void 0;
-const DoctorRepository_1 = require("../../repositories/doctor/DoctorRepository");
-const DoctorOTPRepository_1 = require("../../repositories/doctor/DoctorOTPRepository");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const crypto_1 = __importDefault(require("crypto"));
 const mongodb_1 = require("mongodb");
 class DoctorService {
-    constructor() {
-        this.doctorRepository = new DoctorRepository_1.DoctorRepository();
-        this.doctorOTPRepository = new DoctorOTPRepository_1.DoctorOTPRepository();
-    }
-    searchDoctors(params) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { speciality, search, sortBy, page = "1", limit = "8" } = params;
-            let query = {};
-            if (speciality) {
-                query.speciality = speciality;
-            }
-            if (search) {
-                query.$or = [
-                    { name: { $regex: search, $options: "i" } },
-                    { speciality: { $regex: search, $options: "i" } },
-                ];
-            }
-            let sortOptions = {};
-            if (sortBy === "availability") {
-                query.available = true;
-            }
-            else if (sortBy === "fees") {
-                sortOptions.fees = 1;
-            }
-            else if (sortBy === "experience") {
-                sortOptions.experience = -1;
-            }
-            const pageNum = parseInt(page, 10) || 1;
-            const limitNum = parseInt(limit, 10) || 8;
-            const skip = (pageNum - 1) * limitNum;
-            const doctors = yield this.doctorRepository.searchDoctors(query, sortOptions, skip, limitNum);
-            const totalDoctors = yield this.doctorRepository.countDoctors(query);
-            return {
-                totalPages: Math.ceil(totalDoctors / limitNum),
-                currentPage: pageNum,
-                totalDoctors,
-                doctors,
-            };
-        });
+    constructor(doctorRepository, doctorOTPRepository) {
+        this.doctorRepository = doctorRepository;
+        this.doctorOTPRepository = doctorOTPRepository;
     }
     loginDoctor(email, password) {
         return __awaiter(this, void 0, void 0, function* () {

@@ -15,7 +15,7 @@ import { OTPRepository } from "../repositories/user/otpRepository";
 import { TokenRepository } from "../repositories/user/tokenRepository";
 
 import { AppointmentService } from "../services/user/appointmentService";
-import { PaymentService } from "../services/user/PaymentService";
+import { PaymentService } from "../services/user/paymentService";
 import { DoctorRepository } from "../repositories/doctor/doctorRepository";
 import { AppointmentRepository } from "../repositories/user/appointmentRepository";
 

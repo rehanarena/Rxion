@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// models/ChatModel.ts
 const mongoose_1 = require("mongoose");
 const ChatSchema = new mongoose_1.Schema({
     room: { type: String, required: true },

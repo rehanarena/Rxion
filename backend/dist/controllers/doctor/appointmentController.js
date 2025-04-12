@@ -12,54 +12,54 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.appoinmentCancel = exports.appoinmentComplete = exports.appoinmentsDoctor = void 0;
-const appointmentService_1 = require("../../services/doctor/appointmentService");
-const appointmentRepository_1 = require("../../repositories/doctor/appointmentRepository");
+exports.AppointmentController = void 0;
 const statusCode_1 = __importDefault(require("../../utils/statusCode"));
-const appointmentRepository = new appointmentRepository_1.AppointmentRepository();
-const appointmentService = new appointmentService_1.AppointmentService(appointmentRepository);
-const appoinmentsDoctor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { docId } = req.body;
-        const appointments = yield appointmentService.getAppointmentsByDoctor(docId);
-        res.status(statusCode_1.default.OK).json({ success: true, appointments });
+class AppointmentController {
+    constructor(appointmentService) {
+        this.appointmentService = appointmentService;
     }
-    catch (error) {
-        console.error(error);
-        res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            message: "Server error while fetching appointments.",
+    appoinmentsDoctor(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { docId } = req.body;
+                const appointments = yield this.appointmentService.getAppointmentsByDoctor(docId);
+                res.status(statusCode_1.default.OK).json({ success: true, appointments });
+            }
+            catch (error) {
+                console.error(error);
+                res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({
+                    success: false,
+                    message: "Server error while fetching appointments.",
+                });
+            }
         });
     }
-});
-exports.appoinmentsDoctor = appoinmentsDoctor;
-const appoinmentComplete = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { docId, appointmentId } = req.body;
-        yield appointmentService.completeAppointment(docId, appointmentId);
-        res.status(statusCode_1.default.OK).json({ success: true, message: "Appointment Completed" });
-    }
-    catch (error) {
-        console.error(error);
-        res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            message: error.message || "Server error while completing appointment.",
+    ;
+    appoinmentComplete(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { docId, appointmentId } = req.body;
+                yield this.appointmentService.completeAppointment(docId, appointmentId);
+                res.status(statusCode_1.default.OK).json({ success: true, message: "Appointment Completed" });
+            }
+            catch (error) {
+                next(error);
+            }
         });
     }
-});
-exports.appoinmentComplete = appoinmentComplete;
-const appoinmentCancel = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { docId, appointmentId } = req.body;
-        yield appointmentService.cancelAppointment(docId, appointmentId);
-        res.status(statusCode_1.default.OK).json({ success: true, message: "Appointment Cancelled" });
-    }
-    catch (error) {
-        console.error(error);
-        res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            message: error.message || "Server error while cancelling appointment.",
+    ;
+    appoinmentCancel(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { docId, appointmentId } = req.body;
+                yield this.appointmentService.cancelAppointment(docId, appointmentId);
+                res.status(statusCode_1.default.OK).json({ success: true, message: "Appointment Cancelled" });
+            }
+            catch (error) {
+                next(error);
+            }
         });
     }
-});
-exports.appoinmentCancel = appoinmentCancel;
+    ;
+}
+exports.AppointmentController = AppointmentController;

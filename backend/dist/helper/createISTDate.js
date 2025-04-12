@@ -8,7 +8,6 @@ const createISTDate = (baseDate, timeStr) => {
     const [hours, minutes] = timeStr.split(':').map(Number);
     const newDate = new Date(baseDate);
     newDate.setHours(hours, minutes, 0, 0);
-    // Format to a string like "10:00 AM"
     return (0, moment_1.default)(newDate).utcOffset(330).format("hh:mm A");
 };
 exports.default = createISTDate;

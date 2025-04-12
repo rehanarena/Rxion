@@ -33,8 +33,7 @@ const authUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
         next();
     }
     catch (error) {
-        console.error(error);
-        res.json({ success: false, message: error.message });
+        next(error);
     }
 });
 exports.default = authUser;

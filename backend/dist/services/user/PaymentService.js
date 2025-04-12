@@ -9,13 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const UserRepository_1 = require("../../repositories/user/UserRepository");
-const AppointmentRepository_1 = require("../../repositories/user/AppointmentRepository");
+exports.PaymentService = void 0;
+const userRepository_1 = require("../../repositories/user/userRepository");
+const appointmentRepository_1 = require("../../repositories/user/appointmentRepository");
 const razorpay_1 = require("../../config/razorpay");
 class PaymentService {
     constructor() {
-        this.appointmentRepository = new AppointmentRepository_1.AppointmentRepository();
-        this.userRepository = new UserRepository_1.UserRepository();
+        this.appointmentRepository = new appointmentRepository_1.AppointmentRepository();
+        this.userRepository = new userRepository_1.UserRepository();
     }
     processPayment(appointmentId) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -71,6 +72,12 @@ class PaymentService {
         return __awaiter(this, void 0, void 0, function* () {
             const orderInfo = yield razorpay_1.razorpayInstance.orders.fetch(razorpay_order_id);
             if (orderInfo.status === "paid") {
+                const appointment = yield this.appointmentRepository.findOne({
+                    _id: orderInfo.receipt,
+                });
+                if (appointment && appointment.payment) {
+                    return { success: false, message: "Already paid" };
+                }
                 yield this.appointmentRepository.updatePaymentStatus(orderInfo.receipt, { payment: true });
                 return { success: true, message: "Payment Successful" };
             }
@@ -80,4 +87,4 @@ class PaymentService {
         });
     }
 }
-exports.default = new PaymentService();
+exports.PaymentService = PaymentService;

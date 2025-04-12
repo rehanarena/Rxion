@@ -17,11 +17,10 @@ const validator_1 = __importDefault(require("validator"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const cloudinary_1 = require("cloudinary");
-const adminRepository_1 = require("../../repositories/admin/adminRepository");
 const mailer_1 = require("../../helper/mailer");
 class AdminService {
-    constructor() {
-        this.adminRepository = new adminRepository_1.adminRepository();
+    constructor(adminRepository) {
+        this.adminRepository = adminRepository;
     }
     addDoctor(data, imageFile) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -83,16 +82,9 @@ class AdminService {
             return { token };
         });
     }
-    // async getDashboardData(next: NextFunction): Promise<any> {
-    //   try {
-    //     return await this.adminRepository.getAdminDashboardData();
-    //   } catch (error:any) {
-    //     next(error)
-    //   }
-    // }
-    getAllUsers() {
+    getUsers(search, page, limit) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.adminRepository.getAllUsers();
+            return this.adminRepository.getUsers(search, page, limit);
         });
     }
     blockUnblockUser(id, action) {
@@ -141,11 +133,49 @@ class AdminService {
             return this.adminRepository.getDoctorById(doctorId);
         });
     }
-    getAllAppointments() {
+    getAllAppointments(options) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.adminRepository.getAllAppointments();
+            return this.adminRepository.getAllAppointments(options);
         });
     }
+    // async searchAppointments({
+    //   search,
+    //   sortBy,
+    //   page,
+    //   limit,
+    // }: {
+    //   search: string;
+    //   sortBy: string;
+    //   page: number;
+    //   limit: number;
+    // }) {
+    //   let query: any = {};
+    //   if (search) {
+    //     query.$or = [
+    //       { "user.name": { $regex: search, $options: "i" } },
+    //       { "doctor.name": { $regex: search, $options: "i" } },
+    //       { status: { $regex: search, $options: "i" } }
+    //     ];
+    //   }
+    //   let sortOptions: any = {};
+    //   if (sortBy === "date") {
+    //     sortOptions.date = -1;
+    //   } else if (sortBy === "status") {
+    //     sortOptions.status = 1;
+    //   }
+    //   const skip = (page - 1) * limit;
+    //   const appointments = await appointmentModel
+    //     .find(query)
+    //     .sort(sortOptions)
+    //     .skip(skip)
+    //     .limit(limit);
+    //   const totalAppointments = await appointmentModel.countDocuments(query);
+    //   return {
+    //     appointments,
+    //     totalPages: Math.ceil(totalAppointments / limit),
+    //     currentPage: page,
+    //   };
+    // }
     cancelAppointment(appointmentId) {
         return __awaiter(this, void 0, void 0, function* () {
             const appointmentData = yield this.adminRepository.findAppointmentById(appointmentId);

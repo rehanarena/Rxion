@@ -14,29 +14,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppointmentService = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const DoctorRepository_1 = require("../../repositories/doctor/DoctorRepository");
-const UserRepository_1 = require("../../repositories/user/UserRepository");
-const AppointmentRepository_1 = require("../../repositories/user/AppointmentRepository");
+const mailer_1 = require("../../helper/mailer");
 class AppointmentService {
-    constructor() {
-        this.doctorRepository = new DoctorRepository_1.DoctorRepository();
-        this.userRepository = new UserRepository_1.UserRepository();
-        this.appointmentRepository = new AppointmentRepository_1.AppointmentRepository();
+    constructor(doctorRepository, userRepository, appointmentRepository) {
+        this.doctorRepository = doctorRepository;
+        this.userRepository = userRepository;
+        this.appointmentRepository = appointmentRepository;
     }
     bookAppointment(token, docId, slotDate, slotTime) {
         return __awaiter(this, void 0, void 0, function* () {
             const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
             const userId = decoded.id;
             const docData = yield this.doctorRepository.findById(docId);
-            if (!docData) {
+            if (!docData)
                 throw new Error("Doctor not found");
-            }
-            if (!docData.available) {
+            if (!docData.available)
                 throw new Error("Doctor not available");
-            }
-            if (!docData.fees) {
+            if (!docData.fees)
                 throw new Error("Doctor fees not found");
-            }
             if (!docData.slots_booked || Array.isArray(docData.slots_booked)) {
                 docData.slots_booked = {};
             }
@@ -63,9 +58,8 @@ class AppointmentService {
                 slots_booked: docData.slots_booked,
             });
             const userData = yield this.userRepository.findById(userId);
-            if (!userData) {
+            if (!userData)
                 throw new Error("User not found");
-            }
             const appointmentData = {
                 userId,
                 docId,
@@ -77,6 +71,12 @@ class AppointmentService {
                 date: new Date(),
             };
             yield this.appointmentRepository.createAppointment(appointmentData);
+            try {
+                yield (0, mailer_1.sendAppointmentBookedEmail)(userData.email, userData.name, slotDatePart, slotTimePart);
+            }
+            catch (error) {
+                console.error(" Failed to send confirmation email:", error);
+            }
             return "Appointment booked successfully";
         });
     }

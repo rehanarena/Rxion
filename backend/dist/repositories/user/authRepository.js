@@ -12,39 +12,39 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SpecialityRepository = void 0;
-const specialityModel_1 = __importDefault(require("../../models/specialityModel"));
-class SpecialityRepository {
-    findSpecialtyByName(name) {
+exports.AuthRepository = void 0;
+const userModel_1 = __importDefault(require("../../models/userModel"));
+class AuthRepository {
+    findByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
-            return specialityModel_1.default.findOne({ name });
+            return yield userModel_1.default.findOne({ email });
         });
     }
-    ;
-    insertSpecialty(specialtyData) {
+    createUser(userData) {
         return __awaiter(this, void 0, void 0, function* () {
-            const specialty = new specialityModel_1.default(specialtyData);
-            return specialty.save();
+            const newUser = new userModel_1.default(userData);
+            return yield newUser.save();
         });
     }
-    ;
-    getSpecialties() {
+    findById(userId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return specialityModel_1.default.find();
+            return yield userModel_1.default.findById(userId);
         });
     }
-    ;
-    deleteSpecialty(specialtyId) {
+    updateUser(userId, update) {
         return __awaiter(this, void 0, void 0, function* () {
-            return specialityModel_1.default.findByIdAndDelete(specialtyId);
+            return yield userModel_1.default.findByIdAndUpdate(userId, update, { new: true });
         });
     }
-    ;
-    updateSpecialty(specialtyId, updateData) {
+    saveUser(user) {
         return __awaiter(this, void 0, void 0, function* () {
-            return specialityModel_1.default.findByIdAndUpdate(specialtyId, updateData, { new: true });
+            return yield user.save();
         });
     }
-    ;
+    findOne(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield userModel_1.default.findOne(query);
+        });
+    }
 }
-exports.SpecialityRepository = SpecialityRepository;
+exports.AuthRepository = AuthRepository;

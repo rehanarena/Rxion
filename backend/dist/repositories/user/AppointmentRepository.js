@@ -45,5 +45,10 @@ class AppointmentRepository {
             });
         });
     }
+    findOne(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return appoinmentModel_1.default.findOne(query).exec();
+        });
+    }
 }
 exports.AppointmentRepository = AppointmentRepository;

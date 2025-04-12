@@ -1,37 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -42,39 +9,46 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.editSpecialty = exports.deleteSpecialty = exports.getSpecialties = exports.addSpecialty = void 0;
-// specialty.service.ts
-const specialtyRepository = __importStar(require("../../repositories/admin/specialityRepository"));
-const addSpecialty = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name, description } = data;
-    if (!name.trim()) {
-        throw new Error("Specialty name is required.");
+exports.SpecialityService = void 0;
+class SpecialityService {
+    constructor(specialityRepository) {
+        this.specialityRepository = specialityRepository;
     }
-    // Optional: Check if the specialty already exists
-    const existingSpecialty = yield specialtyRepository.findSpecialtyByName(name);
-    if (existingSpecialty) {
-        return { message: "Specialty already exists" };
+    addSpecialty(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { name, description } = data;
+            if (!name.trim()) {
+                throw new Error("Specialty name is required.");
+            }
+            const existingSpecialty = yield this.specialityRepository.findSpecialtyByName(name);
+            if (existingSpecialty) {
+                return { message: "Specialty already exists" };
+            }
+            yield this.specialityRepository.insertSpecialty({ name, description });
+            return { message: "Specialty added successfully!" };
+        });
     }
-    yield specialtyRepository.insertSpecialty({ name, description });
-    return { message: "Specialty added successfully!" };
-});
-exports.addSpecialty = addSpecialty;
-const getSpecialties = () => __awaiter(void 0, void 0, void 0, function* () {
-    return specialtyRepository.getSpecialties();
-});
-exports.getSpecialties = getSpecialties;
-const deleteSpecialty = (specialtyId) => __awaiter(void 0, void 0, void 0, function* () {
-    const deletedSpecialty = yield specialtyRepository.deleteSpecialty(specialtyId);
-    if (!deletedSpecialty) {
-        throw new Error("Specialty not found");
+    getSpecialties() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.specialityRepository.getSpecialties();
+        });
     }
-});
-exports.deleteSpecialty = deleteSpecialty;
-const editSpecialty = (specialtyId, updateData) => __awaiter(void 0, void 0, void 0, function* () {
-    const updatedSpecialty = yield specialtyRepository.updateSpecialty(specialtyId, updateData);
-    if (!updatedSpecialty) {
-        throw new Error("Specialty not found");
+    deleteSpecialty(specialtyId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const deletedSpecialty = yield this.specialityRepository.deleteSpecialty(specialtyId);
+            if (!deletedSpecialty) {
+                throw new Error("Specialty not found");
+            }
+        });
     }
-    return updatedSpecialty;
-});
-exports.editSpecialty = editSpecialty;
+    editSpecialty(specialtyId, updateData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const updatedSpecialty = yield this.specialityRepository.updateSpecialty(specialtyId, updateData);
+            if (!updatedSpecialty) {
+                throw new Error("Specialty not found");
+            }
+            return updatedSpecialty;
+        });
+    }
+}
+exports.SpecialityService = SpecialityService;

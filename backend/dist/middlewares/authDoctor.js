@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-// Doctor authentication middleware
 const authDoctor = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { dtoken } = req.headers;
@@ -24,7 +23,6 @@ const authDoctor = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             });
             return;
         }
-        // Type assertion to specify the token content structure
         const token_decode = jsonwebtoken_1.default.verify(dtoken, process.env.JWT_SECRET);
         req.body.docId = token_decode.id;
         next();

@@ -16,20 +16,6 @@ exports.DoctorRepository = void 0;
 const doctorModel_1 = __importDefault(require("../../models/doctorModel"));
 const appoinmentModel_1 = __importDefault(require("../../models/appoinmentModel"));
 class DoctorRepository {
-    searchDoctors(query, sortOptions, skip, limit) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield doctorModel_1.default
-                .find(query)
-                .sort(sortOptions)
-                .skip(skip)
-                .limit(limit);
-        });
-    }
-    countDoctors(query) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield doctorModel_1.default.countDocuments(query);
-        });
-    }
     findById(docId) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield doctorModel_1.default.findById(docId);
@@ -82,7 +68,6 @@ class DoctorRepository {
     }
     updatingDoctor(doctor) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Assuming doctor is a Mongoose document
             return yield doctor.save();
         });
     }
