@@ -38,7 +38,7 @@ const paymentService = new (PaymentService)
 
 // Create the controller by injecting the service
 const authController = new AuthController(authService);
-const userController = new UserController(userService, appointmentService, paymentService)
+const userController = new UserController(userService, appointmentService, paymentService);
 
 
                   //  ***----auth---*** //

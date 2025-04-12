@@ -53,6 +53,7 @@ const rfs = __importStar(require("rotating-file-stream"));
 const path_1 = __importDefault(require("path"));
 const videoCallHandlers_1 = require("./socket/videoCallHandlers");
 const chatHandlers_1 = require("./socket/chatHandlers");
+const frontendUrl_1 = require("./config/frontendUrl");
 const app = (0, express_1.default)();
 const port = parseInt(process.env.PORT || '4000', 10);
 const logDirectory = path_1.default.join(__dirname, `logs`);
@@ -68,7 +69,19 @@ const errorLogstream = rfs.createStream("error.log", {
 (0, mongodb_1.default)();
 (0, cloudinary_1.default)();
 app.use(express_1.default.json());
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({
+    origin: [frontendUrl_1.link_one, frontendUrl_1.link_two],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+    ],
+    credentials: true,
+    optionsSuccessStatus: 200,
+}));
 app.use(express_1.default.json({ limit: '50mb' }));
 app.use(express_1.default.urlencoded({ limit: '50mb', extended: true }));
 // app.use(logger("dev"));
