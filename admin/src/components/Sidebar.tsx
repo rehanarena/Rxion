@@ -13,14 +13,8 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { DoctorContext } from "../context/DoctorContext";
-
-interface AdminContextType{
-  aToken: string| null
-}
-interface DoctorContextType{
-  dToken: string| null
-}
-
+import { AdminContextType } from "../Interfaces/AdminContext";
+import { DoctorContextType } from "../Interfaces/Doctor";
 const Sidebar: React.FC = () => {
 
   const {aToken} = useContext(AdminContext)as AdminContextType

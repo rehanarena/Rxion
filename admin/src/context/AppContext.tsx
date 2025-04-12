@@ -1,46 +1,13 @@
-import { createContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-
-interface Doctor {
-  _id: string;
-  name: string;
-  image: string;
-  degree: string;
-  speciality: string;
-  experience: string;
-  about: string;
-  fees: number;
-  slots_booked: Record<string, string[]> | null;
-}
-
-interface UserData {
-  _id: string;
-  name: string;
-  email: string;
-}
-
-interface AppContextType {
-  doctors: Doctor[];
-  getDoctorsData: () => void;
-  updateDoctorSlots: (doctorId: string, slotDate: string, slotTime: string) => void;
-  currencySymbol: string;
-  token: string | false;
-  setToken: React.Dispatch<React.SetStateAction<string | false>>;
-  backendUrl: string;
-  userData: UserData | false;
-  setUserData: React.Dispatch<React.SetStateAction<UserData | false>>;
-  loadUserProfileData: () => void;
-  calculateAge: (dob: string) => number;
-  slotDateFormat: (slotDate: string, slotTime: string) => string;
-  logout: () => void;
-}
+import { Doctor } from "../Interfaces/Doctor";
+import { UserData } from "../Interfaces/User";
+import { AppContextType, AppContextProviderProps } from "../Interfaces/AppContext";
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
-interface AppContextProviderProps {
-  children: ReactNode;
-}
+
 
 const AppContextProvider: React.FC<AppContextProviderProps> = ({ children }) => {
   const currencySymbol = "₹";

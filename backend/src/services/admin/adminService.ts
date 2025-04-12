@@ -1,28 +1,17 @@
 import validator from "validator";
-import bcryptjs from "bcryptjs"
+import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
-import { adminRepository } from "../../repositories/admin/adminRepository";
+import { AdminRepository } from "../../repositories/admin/adminRepository";
 import { sendPasswordEmail } from "../../helper/mailer";
-import { NextFunction } from "express";
-
-interface AddDoctorRequestBody {
-  name: string;
-  email: string;
-  password: string;
-  speciality: string;
-  degree: string;
-  experience: string;
-  about: string;
-  fees: string;
-  address: string;
-}
+import { AddDoctorRequestBody } from "../../interfaces/Doctor/doctor";
+import { AppointmentOptions } from "../../interfaces/Appointment/appointment";
 
 export class AdminService {
-  private adminRepository: adminRepository;
+  private adminRepository: AdminRepository;
 
-  constructor() {
-    this.adminRepository = new adminRepository();
+  constructor(adminRepository: AdminRepository) {
+    this.adminRepository = adminRepository;
   }
 
   async addDoctor(
@@ -114,21 +103,8 @@ export class AdminService {
     return { token };
   }
 
-
-  // async getDashboardData(next: NextFunction): Promise<any> {
-  //   try {
-  //     return await this.adminRepository.getAdminDashboardData();
-  //   } catch (error:any) {
-  //     next(error)
-  //   }
-    
-  // }
-
-  
-  
-
-  async getAllUsers() {
-    return this.adminRepository.getAllUsers();
+  async getUsers(search: string, page: number, limit: number) {
+    return this.adminRepository.getUsers(search, page, limit);
   }
 
   async blockUnblockUser(
@@ -188,9 +164,53 @@ export class AdminService {
     return this.adminRepository.getDoctorById(doctorId);
   }
 
-  async getAllAppointments(): Promise<any[]> {
-    return this.adminRepository.getAllAppointments();
+  async getAllAppointments(options: AppointmentOptions): Promise<any[]> {
+    return this.adminRepository.getAllAppointments(options);
   }
+  // async searchAppointments({
+  //   search,
+  //   sortBy,
+  //   page,
+  //   limit,
+  // }: {
+  //   search: string;
+  //   sortBy: string;
+  //   page: number;
+  //   limit: number;
+  // }) {
+
+  //   let query: any = {};
+
+  //   if (search) {
+  //     query.$or = [
+  //       { "user.name": { $regex: search, $options: "i" } },
+  //       { "doctor.name": { $regex: search, $options: "i" } },
+  //       { status: { $regex: search, $options: "i" } }
+  //     ];
+  //   }
+
+  //   let sortOptions: any = {};
+  //   if (sortBy === "date") {
+  //     sortOptions.date = -1;
+  //   } else if (sortBy === "status") {
+  //     sortOptions.status = 1;
+  //   }
+
+  //   const skip = (page - 1) * limit;
+  //   const appointments = await appointmentModel
+  //     .find(query)
+  //     .sort(sortOptions)
+  //     .skip(skip)
+  //     .limit(limit);
+
+  //   const totalAppointments = await appointmentModel.countDocuments(query);
+
+  //   return {
+  //     appointments,
+  //     totalPages: Math.ceil(totalAppointments / limit),
+  //     currentPage: page,
+  //   };
+  // }
 
   async cancelAppointment(appointmentId: string): Promise<{ message: string }> {
     const appointmentData = await this.adminRepository.findAppointmentById(

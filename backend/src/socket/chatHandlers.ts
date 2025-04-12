@@ -1,16 +1,7 @@
 import { Socket, Server } from "socket.io";
-import ChatMessage, { IChatMessage } from "../models/ChatModel";
-
-interface ChatFile {
-  url: string;
-  type: string;
-  fileName: string;
-}
-
-interface UserStatus {
-  online: boolean;
-  lastSeen?: Date;
-}
+import ChatMessage, { IChatMessage } from "../models/chatModel";
+import { ChatFile } from "../interfaces/Chat/chat";
+import { UserStatus } from "../interfaces/Chat/chat";
 
 const userStatus: { [userId: string]: UserStatus } = {};
 

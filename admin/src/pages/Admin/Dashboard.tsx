@@ -26,44 +26,13 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-
-interface Metrics {
-  totalPatients: number;
-  totalDoctors: number;
-  totalAppointments: number;
-  totalEarnings: number;
-}
-
-interface RevenueData {
-  _id: {
-    year: number;
-    month?: number;
-    day?: number;
-    week?: number;
-  };
-  totalRevenue: number;
-}
-
-interface AppointmentStatus {
-  _id: {
-    status: string;
-  };
-  count: number;
-}
-
-interface PaymentStatus {
-  _id: {
-    payment: string;
-  };
-  count: number;
-}
-
-interface TopDoctor {
-  docId: string;
-  name: string;
-  totalAppointments: number;
-  totalEarnings: number;
-}
+import {
+  Metrics,
+  RevenueData,
+  AppointmentStatus,
+  PaymentStatus,
+  TopDoctor,
+} from "../../Interfaces/Dashboard";
 
 const AdminDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<Metrics>({
@@ -98,23 +67,29 @@ const AdminDashboard: React.FC = () => {
           paymentResponse,
           topDoctorsResponse,
         ] = await Promise.all([
-          axios.get(`${backendUrl}/api/admin/metrics`,{
+          axios.get(`${backendUrl}/api/admin/metrics`, {
             headers: {
-              atoken: aToken,  
-            },}),
-          axios.get(`${backendUrl}/api/admin/revenue?period=${period}`,{headers:{aToken}}),
-          axios.get(`${backendUrl}/api/admin/appointments-status`,{
+              atoken: aToken,
+            },
+          }),
+          axios.get(`${backendUrl}/api/admin/revenue?period=${period}`, {
+            headers: { aToken },
+          }),
+          axios.get(`${backendUrl}/api/admin/appointments-status`, {
             headers: {
-              atoken: aToken,  
-            },}),
-          axios.get(`${backendUrl}/api/admin/appointments-payment`,{
+              atoken: aToken,
+            },
+          }),
+          axios.get(`${backendUrl}/api/admin/appointments-payment`, {
             headers: {
-              atoken: aToken,  
-            },}),
-          axios.get(`${backendUrl}/api/admin/top-doctors`,{
+              atoken: aToken,
+            },
+          }),
+          axios.get(`${backendUrl}/api/admin/top-doctors`, {
             headers: {
-              atoken: aToken,  
-            },}),
+              atoken: aToken,
+            },
+          }),
         ]);
 
         setMetrics(
@@ -211,9 +186,7 @@ const AdminDashboard: React.FC = () => {
 
   const topDoctorsData = {
     labels:
-      topDoctors.length > 0
-        ? topDoctors.map((item) => item.name)
-        : ["No Data"],
+      topDoctors.length > 0 ? topDoctors.map((item) => item.name) : ["No Data"],
     datasets: [
       {
         label: "Appointments",
@@ -456,7 +429,7 @@ const AdminDashboard: React.FC = () => {
                     color: "rgba(156, 163, 175, 0.1)",
                   },
                   ticks: {
-                    callback: function(value) {
+                    callback: function (value) {
                       return "₹" + value;
                     },
                   },

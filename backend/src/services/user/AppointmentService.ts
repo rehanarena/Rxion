@@ -1,17 +1,22 @@
 import jwt from "jsonwebtoken";
-import { DoctorRepository } from "../../repositories/doctor/DoctorRepository";
-import { UserRepository } from "../../repositories/user/UserRepository";
-import { AppointmentRepository } from "../../repositories/user/AppointmentRepository";
+import { DoctorRepository } from "../../repositories/doctor/doctorRepository";
+import { UserRepository } from "../../repositories/user/userRepository";
+import { AppointmentRepository } from "../../repositories/user/appointmentRepository";
+import { sendAppointmentBookedEmail } from "../../helper/mailer";
 
 export class AppointmentService {
   private doctorRepository: DoctorRepository;
   private userRepository: UserRepository;
   private appointmentRepository: AppointmentRepository;
 
-  constructor() {
-    this.doctorRepository = new DoctorRepository();
-    this.userRepository = new UserRepository();
-    this.appointmentRepository = new AppointmentRepository();
+  constructor(
+    doctorRepository: DoctorRepository,
+    userRepository: UserRepository,
+    appointmentRepository: AppointmentRepository
+  ) {
+    this.doctorRepository = doctorRepository;
+    this.userRepository = userRepository;
+    this.appointmentRepository = appointmentRepository;
   }
 
   async bookAppointment(
@@ -24,15 +29,9 @@ export class AppointmentService {
     const userId = decoded.id;
 
     const docData = await this.doctorRepository.findById(docId);
-    if (!docData) {
-      throw new Error("Doctor not found");
-    }
-    if (!docData.available) {
-      throw new Error("Doctor not available");
-    }
-    if (!docData.fees) {
-      throw new Error("Doctor fees not found");
-    }
+    if (!docData) throw new Error("Doctor not found");
+    if (!docData.available) throw new Error("Doctor not available");
+    if (!docData.fees) throw new Error("Doctor fees not found");
 
     if (!docData.slots_booked || Array.isArray(docData.slots_booked)) {
       docData.slots_booked = {};
@@ -66,9 +65,7 @@ export class AppointmentService {
     });
 
     const userData = await this.userRepository.findById(userId);
-    if (!userData) {
-      throw new Error("User not found");
-    }
+    if (!userData) throw new Error("User not found");
 
     const appointmentData = {
       userId,
@@ -83,8 +80,20 @@ export class AppointmentService {
 
     await this.appointmentRepository.createAppointment(appointmentData);
 
+    try {
+      await sendAppointmentBookedEmail(
+        userData.email,
+        userData.name,
+        slotDatePart,
+        slotTimePart
+      );
+    } catch (error) {
+      console.error(" Failed to send confirmation email:", error);
+    }
+
     return "Appointment booked successfully";
   }
+
   async listAppointments(userId: string) {
     return await this.appointmentRepository.findAppointmentsByUserId(userId);
   }

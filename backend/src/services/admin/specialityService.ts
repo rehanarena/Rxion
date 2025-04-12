@@ -1,41 +1,55 @@
-// specialty.service.ts
-import * as specialtyRepository from '../../repositories/admin/specialityRepository';
+import { SpecialityRepository } from "../../repositories/admin/specialityRepository";
 
-export const addSpecialty = async (data: { name: string; description: string }): Promise<{ message: string }> => {
-  const { name, description } = data;
-  
-  if (!name.trim()) {
-    throw new Error("Specialty name is required.");
-  }
-  
-  // Optional: Check if the specialty already exists
-  const existingSpecialty = await specialtyRepository.findSpecialtyByName(name);
-  if (existingSpecialty) {
-    return { message: "Specialty already exists" };
-  }
-  
-  await specialtyRepository.insertSpecialty({ name, description });
-  return { message: "Specialty added successfully!" };
-};
+export class SpecialityService {
+  private specialityRepository: SpecialityRepository;
 
-export const getSpecialties = async (): Promise<any[]> => {
-  return specialtyRepository.getSpecialties();
-};
-
-export const deleteSpecialty = async (specialtyId: string): Promise<void> => {
-  const deletedSpecialty = await specialtyRepository.deleteSpecialty(specialtyId);
-  if (!deletedSpecialty) {
-    throw new Error("Specialty not found");
+  constructor(specialityRepository: SpecialityRepository) {
+    this.specialityRepository = specialityRepository;
   }
-};
+  async addSpecialty(data: {
+    name: string;
+    description: string;
+  }): Promise<{ message: string }> {
+    const { name, description } = data;
 
-export const editSpecialty = async (
-  specialtyId: string,
-  updateData: { name?: string; description?: string }
-) => {
-  const updatedSpecialty = await specialtyRepository.updateSpecialty(specialtyId, updateData);
-  if (!updatedSpecialty) {
-    throw new Error("Specialty not found");
+    if (!name.trim()) {
+      throw new Error("Specialty name is required.");
+    }
+
+    const existingSpecialty =
+      await this.specialityRepository.findSpecialtyByName(name);
+    if (existingSpecialty) {
+      return { message: "Specialty already exists" };
+    }
+
+    await this.specialityRepository.insertSpecialty({ name, description });
+    return { message: "Specialty added successfully!" };
   }
-  return updatedSpecialty;
-};
+
+  async getSpecialties(): Promise<any[]> {
+    return this.specialityRepository.getSpecialties();
+  }
+
+  async deleteSpecialty(specialtyId: string): Promise<void> {
+    const deletedSpecialty = await this.specialityRepository.deleteSpecialty(
+      specialtyId
+    );
+    if (!deletedSpecialty) {
+      throw new Error("Specialty not found");
+    }
+  }
+
+  async editSpecialty(
+    specialtyId: string,
+    updateData: { name?: string; description?: string }
+  ) {
+    const updatedSpecialty = await this.specialityRepository.updateSpecialty(
+      specialtyId,
+      updateData
+    );
+    if (!updatedSpecialty) {
+      throw new Error("Specialty not found");
+    }
+    return updatedSpecialty;
+  }
+}

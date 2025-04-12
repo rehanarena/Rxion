@@ -1,32 +1,28 @@
-import { UserRepository } from "../../repositories/user/UserRepository";
-import { OTPRepository } from "../../repositories/user/OTPRepository";
-import { TokenRepository } from "../../repositories/user/TokenRepository";
-import bcryptjs from "bcryptjs"
+import bcryptjs from "bcryptjs";
 import validator from "validator";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import { RegisterRequestBody } from "../../interfaces/User/user";
+import { AuthRepository } from "../../repositories/user/authRepository";
+import { OTPRepository } from "../../repositories/user/otpRepository";
+import { TokenRepository } from "../../repositories/user/tokenRepository";
 import { generateOTP } from "../../utils/generateOTP";
 import { sendOtpEmail } from "../../helper/mailer";
-import jwt from "jsonwebtoken";
-import { v2 as cloudinary } from "cloudinary";
-import { Address } from "../../interfaces/IAddress";
-import { IUser} from "../../models/userModel";
-import crypto from "crypto";
-
-interface RegisterRequestBody {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
 
 export class AuthService {
-  private userRepository: UserRepository;
+  private authRepository: AuthRepository;
   private otpRepository: OTPRepository;
   private tokenRepository: TokenRepository;
 
-  constructor() {
-    this.userRepository = new UserRepository();
-    this.otpRepository = new OTPRepository();
-    this.tokenRepository = new TokenRepository();
+  /// Dependency injected ///
+  constructor(
+    authRepository: AuthRepository,
+    otpRepository: OTPRepository,
+    tokenRepository: TokenRepository
+  ) {
+    this.authRepository = authRepository;
+    this.otpRepository = otpRepository;
+    this.tokenRepository = tokenRepository;
   }
 
   async registerUser(data: RegisterRequestBody) {
@@ -49,10 +45,15 @@ export class AuthService {
     }
 
     if (password.length < 8) {
-      throw new Error("Enter a strong password");
+      throw new Error("Password must be at least 8 characters long");
     }
 
-    const existingUser = await this.userRepository.findByEmail(email);
+    const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
+    if (!specialCharRegex.test(password)) {
+      throw new Error("Password must include at least one special character");
+    }
+
+    const existingUser = await this.authRepository.findByEmail(email);
     if (existingUser) {
       throw new Error("Email already registered");
     }
@@ -60,14 +61,14 @@ export class AuthService {
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
 
-    const user = await this.userRepository.createUser({
+    const user = await this.authRepository.createUser({
       name,
       email,
       password: hashedPassword,
     });
 
     const otp = generateOTP(6);
-    console.log(otp);
+    console.log("Generated OTP:", otp);
     await sendOtpEmail(email, otp);
 
     await this.otpRepository.createOTP(
@@ -78,48 +79,41 @@ export class AuthService {
 
     return user;
   }
-
-  
-
   async verifyOtp(otp: string, userId: string) {
     const otpData = await this.otpRepository.findOtp(otp, userId);
     if (!otpData) {
       throw new Error("OTP is invalid");
     }
-  
+
     if (otpData.expiresAt < new Date()) {
       throw new Error("OTP has expired");
     }
-  
-    const user = await this.userRepository.findById(userId);
+
+    const user = await this.authRepository.findById(userId);
     if (!user) {
       throw new Error("User not found");
     }
-  
-    // Mark user as verified
+
     user.isVerified = true;
-    await this.userRepository.updateUser(user);
-  
-    // Delete the used OTP
+    await this.authRepository.saveUser(user);
+
     await this.otpRepository.deleteOtp(otp);
-  
-    // Generate reset token
+
     const resetToken = crypto.randomBytes(20).toString("hex");
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
-    await this.userRepository.saveUser(user);
-  
+    user.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
+    await this.authRepository.saveUser(user);
+
     return {
       userId,
       isForPasswordReset: true,
       message: "User verified successfully. You can reset your password now.",
-      email: user.email,  // Return the user's email
-      token: resetToken,  // Return the generated reset token
+      email: user.email,
+      token: resetToken,
     };
   }
-  
   async resendOtp(userId: string) {
-    const user = await this.userRepository.findById(userId);
+    const user = await this.authRepository.findById(userId);
     if (!user) {
       throw new Error("User not found.");
     }
@@ -149,7 +143,6 @@ export class AuthService {
 
     return { message: "OTP has been resent to your email." };
   }
-
   private generateAccessToken(
     userId: string,
     expiresIn: string = "3d"
@@ -164,9 +157,8 @@ export class AuthService {
       expiresIn: "7d",
     });
   }
-
   async loginUser(email: string, password: string) {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this.authRepository.findByEmail(email);
     if (!user) {
       throw new Error("User does not exist");
     }
@@ -198,7 +190,7 @@ export class AuthService {
       throw new Error("Name, email, and photo are required");
     }
 
-    let user = await this.userRepository.findByEmail(email);
+    let user = await this.authRepository.findByEmail(email);
     if (user) {
       const token = this.generateAccessToken(String(user._id), "3d");
       return { status: 200, user, token };
@@ -212,7 +204,7 @@ export class AuthService {
         name.split(" ").join("").toLowerCase() +
         Math.random().toString(36).slice(-8);
 
-      const newUser = await this.userRepository.createUser({
+      const newUser = await this.authRepository.createUser({
         name: username,
         email,
         password: hashedPassword,
@@ -222,7 +214,6 @@ export class AuthService {
       return { status: 201, user: newUser, token };
     }
   }
-
   async refreshAccessToken(refreshToken: string): Promise<string> {
     if (!refreshToken) {
       throw new Error("No refresh token provided");
@@ -239,139 +230,57 @@ export class AuthService {
       }
       const newAccessToken = this.generateAccessToken(decoded.id);
       return newAccessToken;
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
       throw new Error("Invalid or expired refresh token");
     }
   }
   async forgotPassword(email: string) {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this.authRepository.findByEmail(email);
     if (!user) {
       throw new Error("User not found");
     }
-  
+
     const otp = generateOTP(6);
-  
+
     await this.otpRepository.createOTP(
       String(user._id),
       otp,
       new Date(Date.now() + 10 * 60 * 1000)
     );
-  
+
     const emailBody = `
-      Hello ${user.name || "User"},
-  
-      Your OTP code for resetting your password is: ${otp}
-      This OTP is valid for the next 10 minutes.
-  
-      If you did not request this, please ignore this email.
-  
-      Regards,
-      Rxion Team
-    `;
-  
+            Hello ${user.name || "User"},
+        
+            Your OTP code for resetting your password is: ${otp}
+            This OTP is valid for the next 10 minutes.
+        
+            If you did not request this, please ignore this email.
+        
+            Regards,
+            Rxion Team
+          `;
+
     await sendOtpEmail(email, emailBody);
-  
+
     return {
       message: "OTP sent to your email. Please verify to reset password.",
-      userId: String(user._id)  // Include the userId here
+      userId: String(user._id),
     };
   }
   async userResetPassword(email: string, token: string, password: string) {
-      const user = await this.userRepository.findOne({
-        email,
-        resetPasswordToken: token,
-        resetPasswordExpire: { $gt: new Date() },
-      });
-      if (!user) {
-        return { success: false, message: "Invalid or expired reset token" };
-      }
-      user.password = await bcryptjs.hash(password, 10);
-      user.resetPasswordToken = null;
-      user.resetPasswordExpire = null;
-      await this.userRepository.saveUser(user);
-      return { success: true, message: "Password updated successfully" };
-    }
-  
-  async changePassword(
-    userId: string,
-    currentPassword: string,
-    newPassword: string,
-    confirmPassword: string
-  ): Promise<string> {
-    if (!userId) {
-      throw new Error("User ID is required.");
-    }
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      throw new Error("All fields are required.");
-    }
-    if (newPassword !== confirmPassword) {
-      throw new Error("Passwords do not match.");
-    }
-
-    const user = await this.userRepository.findById(userId);
+    const user = await this.authRepository.findOne({
+      email,
+      resetPasswordToken: token,
+      resetPasswordExpire: { $gt: new Date() },
+    });
     if (!user) {
-      throw new Error("User not found.");
+      return { success: false, message: "Invalid or expired reset token" };
     }
-
-    const isMatch = await bcryptjs.compare(currentPassword, user.password);
-    if (!isMatch) {
-      throw new Error("Current password is incorrect.");
-    }
-
-    const salt = await bcryptjs.genSalt(10);
-    user.password = await bcryptjs.hash(newPassword, salt);
-    await this.userRepository.updateUser(user);
-
-    return "Password changed successfully.";
+    user.password = await bcryptjs.hash(password, 10);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
+    await this.authRepository.saveUser(user);
+    return { success: true, message: "Password updated successfully" };
   }
-  async getProfile(userId: string) {
-    const userData = await this.userRepository.findByIdWithoutPassword(userId);
-    if (!userData) {
-      throw new Error("User not found");
-    }
-    return userData;
-  }
-  async updateProfile(
-    userId: string,
-    name: string,
-    phone: string,
-    address: string,
-    dob: string,
-    gender: string,
-    imageFile?: Express.Multer.File,
-    medicalHistory?: string 
-  ): Promise<{ message: string }> {
-    if (!userId || !name || !phone || !address || !dob || !gender) {
-      throw new Error("Enter details in all missing fields");
-    }
-    const parsedAddress = JSON.parse(address) as Address;
-  
-    // Build the update data object including medicalHistory if provided
-    const updateData: Partial<IUser> = {
-      name,
-      phone,
-      address: parsedAddress,
-      dob,
-      gender,
-    };
-  
-    if (medicalHistory) {
-      updateData.medicalHistory = medicalHistory;
-    }
-  
-    // Update the user profile with the new data
-    await this.userRepository.updateProfile(userId, updateData);
-  
-    if (imageFile) {
-      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
-        resource_type: "image",
-      });
-      const imageURL = imageUpload.secure_url;
-      await this.userRepository.updateProfile(userId, { image: imageURL });
-    }
-  
-    return { message: "Profile updated" };
-  }
-  
 }

@@ -5,22 +5,8 @@ import { useEffect, useState } from "react"
 import { io } from "socket.io-client"
 import { useNavigate } from "react-router-dom"
 import { MessageSquare, Search, Inbox, Clock, ChevronRight } from "lucide-react"
-
-interface MessageSummary {
-  patientId: string
-  patientName: string
-  patientImage: string
-  lastMessage: string
-  timestamp: Date
-}
-
-interface ChatHistoryMessage {
-  room: string
-  patientName: string
-  patientImage: string
-  message: string
-  timestamp: string
-}
+import { MessageSummary } from "../../Interfaces/Chat"
+import { ChatHistoryMessage } from "../../Interfaces/Chat"
 
 const DoctorMessages: React.FC = () => {
   const [messageSummaries, setMessageSummaries] = useState<MessageSummary[]>([])

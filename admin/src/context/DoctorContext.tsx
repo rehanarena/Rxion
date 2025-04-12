@@ -1,80 +1,16 @@
 import axios from "axios";
-import { useState, createContext, ReactNode, useEffect } from "react";
+import { useState, createContext, useEffect } from "react";
 import { toast } from "react-toastify";
-
-interface DashDataType {
-  appointments: number;
-  earnings: number;
-  patients: number;
-}
-
-interface Doctor {
-  _id: string;
-  name: string;
-  image: string;
-  degree: string;
-  speciality: string;
-  experience: string;
-  about: string;
-  fees: number;
-  slots_booked: Record<string, string[]> | null;
-}
-
-interface Address {
-  line1: string;
-  line2: string;
-}
-
-export interface ProfileData {
-  _id: string;
-  name: string;
-  degree: string;
-  speciality: string;
-  experience: string;
-  about: string;
-  fees: number;
-  address: Address;
-  available: boolean;
-  image: string | null;
-}
-interface Appointment {
-  _id: string;
-  userId: string;
-  docId: string;
-  slotDate: string;
-  slotTime: string;
-  docData: Doctor;
-  amount: number;
-  date: number;
-  cancelled?: boolean;
-  payment?: boolean;
-  isCompleted?: boolean;
-}
-interface DoctorContextType {
-  doctors: Doctor[];
-  getDoctorsData: () => void;
-  backendUrl: string;
-  dToken: string;
-  setDToken: React.Dispatch<React.SetStateAction<string>>;
-  dashData: DashDataType | boolean;
-  getDashData: () => Promise<void>;
-  profileData: ProfileData | null;
-  setProfileData: React.Dispatch<React.SetStateAction<ProfileData | null>>;
-  getLoggedInDoctor: () => void;
-  getAppointments: () => Promise<void>;
-  appointments: Appointment[];
-  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>;
-  completeAppointment: (appointmentId: string) => Promise<void>;
-  cancelAppointment: (appointmentId: string) => Promise<void>;
-}
-
+import { Doctor} from '../Interfaces/Doctor'
+import { DashDataType } from "../Interfaces/AdminContext";
+import { Appointment } from "../Interfaces/Appointment";
+import { ProfileData } from "../Interfaces/Doctor";
+import { DoctorContextType, DoctorContextProviderProps } from "../Interfaces/Doctor";
 export const DoctorContext = createContext<DoctorContextType | undefined>(
   undefined
 );
 
-interface DoctorContextProviderProps {
-  children: ReactNode;
-}
+
 
 const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
   const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL

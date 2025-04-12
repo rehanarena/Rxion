@@ -3,12 +3,7 @@ import { DoctorContext } from "../../context/DoctorContext";
 import { toast } from "react-toastify";
 import { Edit, Trash2, X, Check, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-interface Specialty {
-  _id: string;
-  name: string;
-  description: string;
-}
+import { Specialty } from "../../Interfaces/Doctor";
 
 const SpecialtyManagement = () => {
   const doctorContext = useContext(DoctorContext);
@@ -24,7 +19,6 @@ const SpecialtyManagement = () => {
   const [description, setDescription] = useState("");
   const navigate = useNavigate();
 
-  // Fetch all specialties from the backend
   useEffect(() => {
     const fetchSpecialties = async () => {
       try {
@@ -44,7 +38,6 @@ const SpecialtyManagement = () => {
     fetchSpecialties();
   }, [backendUrl]);
 
-  // Delete a specialty
   const handleDelete = async (specialtyId: string) => {
     try {
       const response = await fetch(`${backendUrl}/api/admin/delete-specialties/${specialtyId}`, {
@@ -63,7 +56,6 @@ const SpecialtyManagement = () => {
     }
   };
 
-  // Enter edit mode with selected specialty data
   const handleEdit = (specialty: Specialty) => {
     setCurrentSpecialty(specialty);
     setName(specialty.name);
@@ -71,23 +63,19 @@ const SpecialtyManagement = () => {
     setIsEditing(true);
   };
 
-  // Update the specialty details with validation
   const handleUpdate = async () => {
     if (!currentSpecialty) return;
 
-    // Validation: Required fields
     if (name.trim() === "" || description.trim() === "") {
       toast.error("Please fill in all fields");
       return;
     }
 
-    // Validation: Minimum length for description
     if (description.trim().length < 10) {
       toast.error("Description should be at least 10 characters long");
       return;
     }
 
-    // Validation: Duplicate check (ignoring current specialty in edit mode)
     const duplicate = specialties.find(
       (spec) =>
         spec.name.toLowerCase() === name.trim().toLowerCase() &&
@@ -123,7 +111,6 @@ const SpecialtyManagement = () => {
     }
   };
 
-  // Cancel the editing process
   const cancelEdit = () => {
     setIsEditing(false);
     setCurrentSpecialty(null);

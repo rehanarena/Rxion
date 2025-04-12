@@ -3,38 +3,9 @@ import { DoctorContext } from "../../context/DoctorContext";
 import { AppContext } from "../../context/AppContext";
 import { Check, Video, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-interface userData {
-  name: string;
-  image: string;
-  dob: string;
-  medicalHistory?: string;
-}
-
-interface Appointment {
-  _id: string;
-  userData: userData;
-  amount: number;
-  slotDate: string;
-  slotTime: string;
-  cancelled: boolean;
-  payment: boolean;
-  isCompleted: boolean;
-}
-
-interface DoctorContextType {
-  dToken: string | null;
-  appointments: Appointment[];
-  getAppointments: () => void;
-  completeAppointment: (id: string) => void;
-  cancelAppointment: (id: string) => void;
-}
-
-interface AppContextType {
-  currencySymbol: string;
-  slotDateFormat: (date: string, time: string) => string;
-  calculateAge: (dob: string) => number;
-}
+import { Appointment } from "../../Interfaces/Appointment";
+import { DoctorContextType } from "../../Interfaces/Doctor";
+import { AppContextType } from "../../Interfaces/AppContext";
 
 const DoctorAppointments = () => {
   const { dToken, appointments, getAppointments, completeAppointment, cancelAppointment } =

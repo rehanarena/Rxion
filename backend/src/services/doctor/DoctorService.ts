@@ -1,84 +1,25 @@
-import { DoctorRepository } from "../../repositories/doctor/DoctorRepository";
-import { DoctorOTPRepository } from "../../repositories/doctor/DoctorOTPRepository";
-import bcryptjs from "bcryptjs"
+import { DoctorRepository } from "../../repositories/doctor/doctorRepository";
+import { DoctorOTPRepository } from "../../repositories/doctor/doctorOTPRepository";
+import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 import { ObjectId } from "mongodb";
 import { IDoctor } from "../../models/doctorModel";
-
-interface SearchParams {
-  speciality?: string;
-  search?: string;
-  sortBy?: string;
-  page?: string;
-  limit?: string;
-}
-interface Address{
-  line1: string,
-  line2: string
-}
-interface UpdateDoctorProfileData {
-  fees: number;
-  address: Address; // or string, depending on your schema
-  available: boolean;
-  experience: string;
-  about: string;
-}
-
+import { UpdateDoctorProfileData } from "../../interfaces/Doctor/doctor";
 
 export class DoctorService {
   private doctorRepository: DoctorRepository;
   private doctorOTPRepository: DoctorOTPRepository;
 
-  constructor() {
-    this.doctorRepository = new DoctorRepository();
-    this.doctorOTPRepository = new DoctorOTPRepository();
+  constructor(
+    doctorRepository: DoctorRepository,
+    doctorOTPRepository: DoctorOTPRepository
+  ) {
+    this.doctorRepository = doctorRepository;
+    this.doctorOTPRepository = doctorOTPRepository;
   }
 
-  async searchDoctors(params: SearchParams) {
-    const { speciality, search, sortBy, page = "1", limit = "8" } = params;
-    let query: any = {};
-
-    if (speciality) {
-      query.speciality = speciality;
-    }
-
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { speciality: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    let sortOptions: any = {};
-    if (sortBy === "availability") {
-      query.available = true;
-    } else if (sortBy === "fees") {
-      sortOptions.fees = 1;
-    } else if (sortBy === "experience") {
-      sortOptions.experience = -1;
-    }
-
-    const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 8;
-    const skip = (pageNum - 1) * limitNum;
-
-    const doctors = await this.doctorRepository.searchDoctors(
-      query,
-      sortOptions,
-      skip,
-      limitNum
-    );
-    const totalDoctors = await this.doctorRepository.countDoctors(query);
-
-    return {
-      totalPages: Math.ceil(totalDoctors / limitNum),
-      currentPage: pageNum,
-      totalDoctors,
-      doctors,
-    };
-  }
   async loginDoctor(email: string, password: string) {
     const doctor = await this.doctorRepository.findByEmail(email);
     if (!doctor) {
@@ -293,14 +234,16 @@ Rxion Team
     if (!docId) {
       throw new Error("Doctor ID is required");
     }
-  
-    const updatedDoctor = await this.doctorRepository.updateDoctorProfile(docId, data);
+
+    const updatedDoctor = await this.doctorRepository.updateDoctorProfile(
+      docId,
+      data
+    );
     console.log("Updated Doctor:", updatedDoctor);
     if (!updatedDoctor) {
       throw new Error("Doctor not found");
     }
-  
+
     return updatedDoctor;
   }
-  
 }

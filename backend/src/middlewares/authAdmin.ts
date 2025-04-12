@@ -35,9 +35,8 @@ const authAdmin = async (req: CustomRequest, res: Response, next: NextFunction):
     }
 
     next();
-  } catch (error: any) {
-    console.error("Authentication Error:", error.message || error);
-    res.status(500).json({ success: false, message: error.message });
+  } catch (error) {
+    next(error)
   }
 };
 

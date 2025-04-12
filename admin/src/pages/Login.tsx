@@ -48,7 +48,6 @@ const Login = () => {
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        // Check if the error response has a custom message, otherwise display a generic message.
         const message = error.response?.data?.message || "Something went wrong. Please try again later.";
         toast.error(message);
       } else {

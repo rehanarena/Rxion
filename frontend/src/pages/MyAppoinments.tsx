@@ -65,9 +65,37 @@ interface AppContextType {
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay: {
+      new (options: {
+        key: string;
+        amount: number;
+        currency: string;
+        name: string;
+        description: string;
+        order_id: string;
+        receipt?: string;
+        handler: (response: RazorpaySuccessResponse) => void;
+        modal?: {
+          ondismiss: () => void;
+        };
+        prefill?: {
+          name?: string;
+          email?: string;
+          contact?: string;
+        };
+        notes?: Record<string, string | number | boolean | null>;
+        theme?: {
+          color: string;
+        };
+      }): {
+        open(): void;
+        close(): void;
+        on(event: "payment.failed", handler: (response: RazorpayErrorResponse) => void): void;
+      };
+    };
   }
 }
+
 
 interface Order {
   id: string;
@@ -76,7 +104,7 @@ interface Order {
   receipt: string;
 }
 
-const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"
+const backendUrl = import.meta.env.VITE_NODE_ENV === "PRODUCTION"
   ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
   : import.meta.env.VITE_BACKEND_URL;
 const socket = io(backendUrl);
@@ -87,6 +115,8 @@ const MyAppointments = () => {
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [incomingCall, setIncomingCall] = useState<IncomingCallData | null>(null);
+  const [showAlreadyPaidModal, setShowAlreadyPaidModal] = useState(false);
+
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const slotDateFormat = (slotDate: string): string => {
@@ -100,16 +130,16 @@ const MyAppointments = () => {
 
   const getUsersAppointments = async () => {
     try {
-      const { data } = await axios.get(backendUrl + "/api/user/appointments", {
+      const { data } = await axios.get(`${backendUrl}/api/user/appointments`, {
         headers: { token },
       });
       if (data.success) {
         setAppointments(data.appointments.reverse());
-        console.log(data.appointments);
+        console.log("Fetched appointments:", data.appointments);
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        console.error(error);
+        console.error("Error fetching appointments:", error);
         toast.error(error.message || "An error occurred while fetching appointments");
       } else {
         console.error("An unexpected error occurred:", error);
@@ -121,9 +151,9 @@ const MyAppointments = () => {
   const cancelAppointment = async (appointmentId: string) => {
     try {
       const { data } = await axios.post(
-        backendUrl + "/api/user/cancel-appointment",
+        `${backendUrl}/api/user/cancel-appointment`,
         { appointmentId },
-        { headers: { token } },
+        { headers: { token } }
       );
       if (data.success) {
         toast.success(data.message);
@@ -134,7 +164,7 @@ const MyAppointments = () => {
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        console.error(error);
+        console.error("Error cancelling appointment:", error);
         toast.error(error.message || "An error occurred while cancelling appointment");
       } else {
         console.error("An unexpected error occurred:", error);
@@ -155,10 +185,11 @@ const MyAppointments = () => {
       handler: async (response: RazorpaySuccessResponse) => {
         try {
           const { data } = await axios.post(
-            backendUrl + "/api/user/verify-razorpay",
+            `${backendUrl}/api/user/verify-razorpay`,
             response,
             { headers: { token } }
           );
+          console.log("Payment verification response:", data);
           if (data.success) {
             navigate("/payment-success", { state: { appointmentId } });
           } else {
@@ -166,7 +197,9 @@ const MyAppointments = () => {
           }
         } catch (error: unknown) {
           if (error instanceof Error) {
-            navigate("/payment-failure", { state: { errorMessage: error.message || "Payment verification failed." } });
+            navigate("/payment-failure", {
+              state: { errorMessage: error.message || "Payment verification failed." },
+            });
           } else {
             navigate("/payment-failure", { state: { errorMessage: "Payment verification failed." } });
           }
@@ -177,55 +210,77 @@ const MyAppointments = () => {
           setTimeout(() => {
             navigate("/payment-failure", { state: { errorMessage: "Payment cancelled by user." } });
           }, 300);
-        }
-      }
+        },
+      },
     };
 
     const rzp = new window.Razorpay(options);
 
     rzp.on("payment.failed", function (response: RazorpayErrorResponse) {
+      console.error("Payment failed:", response);
       rzp.close();
       setTimeout(() => {
-        navigate("/payment-failure", { state: { errorMessage: response.error.description || "Payment failed." } });
+        navigate("/payment-failure", {
+          state: { errorMessage: response.error.description || "Payment failed." },
+        });
       }, 900);
     });
 
     rzp.open();
   };
-
   const appointmentRazorpay = async (appointmentId: string) => {
     try {
       const { data } = await axios.post(
-        backendUrl + "/api/user/payment-razorpay",
+        `${backendUrl}/api/user/payment-razorpay`,
         { appointmentId },
-        { headers: { token } },
+        { headers: { token } }
       );
-
-      if (data.message === "Already paid") {
-        toast.info("Already paid");
-        getUsersAppointments();
-        return;
-      }
-
+    
+      console.log("Payment API response:", data);
+    
       if (data.success) {
+        // If the backend sends back an "Already paid" message,
+        // simply show a toast and stop further processing.
+        if (data.message === "Already paid") {
+          toast.info("Already paid");
+          getUsersAppointments();
+          return;
+        }
+    
+        // Open the Razorpay modal only if there's an order,
+        // meaning that the payment is still pending.
         if (data.order) {
           initPay(data.order, appointmentId);
         } else {
+          // If no order is provided yet the API signals success,
+          // we assume the payment is already complete.
           navigate("/payment-success", { state: { appointmentId } });
         }
       } else {
         toast.error(data.message);
       }
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(error);
-        toast.error(error.message || "An error occurred during payment");
+      if (axios.isAxiosError(error)) {
+        const errorMsg = error.response?.data?.message || error.message;
+        
+        // Check if the error message contains "Already paid"
+        if (errorMsg && errorMsg.toLowerCase().includes("already paid")) {
+          toast.info("Already paid");
+          getUsersAppointments();
+          return;
+        }
+        
+        console.error("Payment error:", errorMsg);
+        toast.error(errorMsg || "Payment error occurred");
       } else {
-        console.error("An unexpected error occurred", error);
+        console.error("Unexpected payment error:", error);
         toast.error("An unexpected error occurred during payment");
       }
     }
+    
   };
+  
+  
 
   useEffect(() => {
     socket.on("call-made", (data: IncomingCallData) => {
@@ -282,10 +337,27 @@ const MyAppointments = () => {
           </div>
         </div>
       )}
+
+      {/* Modal for Already Paid */}
+      {showAlreadyPaidModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-bold mb-4">Payment Information</h2>
+            <p className="mb-4">This appointment has already been paid for.</p>
+            <button
+              onClick={() => setShowAlreadyPaidModal(false)}
+              className="px-4 py-2 bg-blue-500 text-white rounded"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold text-gray-800 mb-6">My Appointments</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {appointments.map((appointment, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full">
+        {appointments.map((appointment) => (
+          <div key={appointment._id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full">
             <div className="p-4 flex-grow">
               <div className="flex items-center space-x-3 mb-2">
                 <img
@@ -305,15 +377,11 @@ const MyAppointments = () => {
               <div className="space-y-1 text-sm">
                 <div className="flex items-center text-gray-600">
                   <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="line-clamp-1">
-                    {slotDateFormat(appointment.slotDate)}
-                  </span>
+                  <span className="line-clamp-1">{slotDateFormat(appointment.slotDate)}</span>
                 </div>
                 <div className="flex items-center text-gray-600">
                   <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="line-clamp-1">
-                    {new Date(appointment.slotTime).toLocaleTimeString()}
-                  </span>
+                  <span className="line-clamp-1">{new Date(appointment.slotTime).toLocaleTimeString()}</span>
                 </div>
                 <div className="flex items-center text-gray-600">
                   <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />

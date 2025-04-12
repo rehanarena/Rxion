@@ -1,205 +1,293 @@
 import { NextFunction, Request, Response } from "express";
-import { DoctorService } from '../../services/doctor/DoctorService';
+import { DoctorService } from "../../services/doctor/doctorService";
 import specialityModel from "../../models/specialityModel";
 import HttpStatus from "../../utils/statusCode";
-import {v2 as cloudinary} from 'cloudinary';
-import dotenv from 'dotenv';
+import fs from "fs";
+import s3 from "../../config/s3Config";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const doctorService = new DoctorService();
-const backendUrl = process.env.NODE_ENV==="PRODUCTION"? process.env.PRODUCTION_URL_BACKEND: process.env.PRODUCTION_DEV_BACKEND
+export class DoctorController {
+  private doctorService: DoctorService;
 
-
-const loginDoctor = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { email, password } = req.body;
-    const result = await doctorService.loginDoctor(email, password);
-    res.status(HttpStatus.OK).json(result);
-  } catch (error: any) {
-    console.error(error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
+  constructor(doctorService: DoctorService) {
+    this.doctorService = doctorService;
   }
-};
-
-export const doctorForgotPasswordOTP = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { email } = req.body;
-    const result = await doctorService.doctorForgotPasswordOTP(email);
-    res.status(HttpStatus.OK).json(result);
-  } catch (error: any) {
-    console.error(error);
-    const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
-    res.status(status).json({ success: false, message: error.message || "Server error" });
-  }
-};
-
-export const verifyDoctorOtp = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { otp, doctorId } = req.body;
-    const result = await doctorService.verifyDoctorOtp(doctorId, otp);
-    res.status(HttpStatus.OK).json(result);
-  } catch (error: any) {
-    console.error("Error verifying OTP:", error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Something went wrong." });
-  }
-};
-
-export const resendDoctorOtp = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { doctorId } = req.body;
-    const result = await doctorService.resendDoctorOtp(doctorId);
-    res.status(HttpStatus.OK).json(result);
-  } catch (error: any) {
-    console.error("Error resending OTP:", error);
-    const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
-    res.status(status).json({
-      success: false,
-      message: error.message || "An error occurred while resending the OTP. Please try again later."
-    });
-  }
-};
-
-export const doctorResetPassword = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { email, token, password } = req.body;
-    const result = await doctorService.doctorResetPassword(email, token, password);
-    if (!result.success) {
-      res.status(HttpStatus.BAD_REQUEST).json(result);
-    } else {
+  async loginDoctor(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { email, password } = req.body;
+      const result = await this.doctorService.loginDoctor(email, password);
       res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      next(error);
     }
-  } catch (error: any) {
-    console.error(error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
-};
-
-export const changeDoctorPassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { doctorId, currentPassword, newPassword, confirmPassword } = req.body;
-    const message = await doctorService.changeDoctorPassword(
-      doctorId,
-      currentPassword,
-      newPassword,
-      confirmPassword
-    );
-    res.status(HttpStatus.OK).json({ success: true, message });
-  } catch (error: any) {
-    next(error);
+  async doctorForgotPasswordOTP(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { email } = req.body;
+      const result = await this.doctorService.doctorForgotPasswordOTP(email);
+      res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
-};
+  async verifyDoctorOtp(req: Request, res: Response): Promise<void> {
+    try {
+      const { otp, doctorId } = req.body;
+      const result = await this.doctorService.verifyDoctorOtp(doctorId, otp);
+      res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: "Something went wrong." });
+    }
+  }
+  async resendDoctorOtp(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { doctorId } = req.body;
+      const result = await this.doctorService.resendDoctorOtp(doctorId);
+      res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 
-const doctorDashboard = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { docId } = req.body;
-    if (!docId) {
-      res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: "docId is required" });
+  async doctorResetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, token, password } = req.body;
+      const result = await this.doctorService.doctorResetPassword(
+        email,
+        token,
+        password
+      );
+      if (!result.success) {
+        res.status(HttpStatus.BAD_REQUEST).json(result);
+      } else {
+        res.status(HttpStatus.OK).json(result);
+      }
+    } catch (error) {
+      console.error(error);
+      res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: "Server error" });
+    }
+  }
+  async changeDoctorPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { doctorId, currentPassword, newPassword, confirmPassword } =
+        req.body;
+      const message = await this.doctorService.changeDoctorPassword(
+        doctorId,
+        currentPassword,
+        newPassword,
+        confirmPassword
+      );
+      res.status(HttpStatus.OK).json({ success: true, message });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async doctorDashboard(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { docId } = req.body;
+      if (!docId) {
+        res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ success: false, message: "docId is required" });
+        return;
+      }
+
+      const dashData = await this.doctorService.getDashboardData(docId);
+      res.status(HttpStatus.OK).json({ success: true, dashData });
+    } catch (error) {
+      console.error(error);
+      next(error);
+    }
+  }
+  async changeAvailability(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { docId } = req.body;
+      const newAvailability = await this.doctorService.changeAvailability(
+        docId
+      );
+      res
+        .status(HttpStatus.OK)
+        .json({
+          success: true,
+          message: "Availability Changed",
+          available: newAvailability,
+        });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async doctorList(req: Request, res: Response): Promise<void> {
+    try {
+      const doctors = await this.doctorService.listDoctors();
+      res.status(HttpStatus.OK).json({ success: true, doctors });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: "Server error while fetching doctors.",
+      });
+    }
+  }
+
+  async getSpeciality(req: Request, res: Response): Promise<void> {
+    try {
+      const specialties = await specialityModel.find({});
+      res.status(HttpStatus.OK).json({ success: true, specialties });
+    } catch (error) {
+      res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: "Unable to fetch specialties" });
+    }
+  }
+
+  async doctorProfile(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { docId } = req.body;
+      const profileData = await this.doctorService.getDoctorProfile(docId);
+      res.status(HttpStatus.OK).json({ success: true, profileData });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateDoctorProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const { docId, fees, address, available, experience, about } = req.body;
+      console.log("Received update:", req.body);
+      const updatedDoctor = await this.doctorService.updateDoctorProfile(
+        docId,
+        { fees, address, available, experience, about }
+      );
+      res
+        .status(HttpStatus.OK)
+        .json({ success: true, message: "Profile Updated", updatedDoctor });
+    } catch (error) {
+      console.error("Error in updateDoctorProfile controller:", error);
+      res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({
+          success: false,
+          message: "Server error while updating profile.",
+        });
+    }
+  }
+
+  // async fileUploadofDoc(
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> {
+  //   if (!req.file) {
+  //     res.status(HttpStatus.BAD_REQUEST).json({ error: "No file uploaded" });
+  //     return;
+  //   }
+
+  //   try {
+  //     const result = await cloudinary.uploader.upload(req.file.path, {
+  //       resource_type: "image",
+  //     });
+
+  //     const fileData = {
+  //       url: result.secure_url,
+  //       type: req.file.mimetype,
+  //       fileName: result.original_filename || req.file.originalname,
+  //     };
+
+  //     res.status(HttpStatus.OK).json({ file: fileData });
+  //   } catch (error) {
+  //     console.error("Cloudinary upload error:", error);
+  //     res
+  //       .status(HttpStatus.INTERNAL_SERVER_ERROR)
+  //       .json({ error: "File upload failed." });
+  //   }
+  // }
+
+  async fileUploadofDoc(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    if (!req.file) {
+      res.status(HttpStatus.BAD_REQUEST).json({ error: "No file uploaded" });
       return;
     }
-    
-    const dashData = await doctorService.getDashboardData(docId);
-    res.status(HttpStatus.OK).json({ success: true, dashData });
-  } catch (error: any) {
-    console.error(error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
-  }
-};
-
-const changeAvailability = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { docId } = req.body;
-    const newAvailability = await doctorService.changeAvailability(docId);
-    res.status(HttpStatus.OK).json({ success: true, message: "Availability Changed", available: newAvailability });
-  } catch (error: any) {
-    console.error(error);
-    if (error.message === "Doctor not found") {
-      res.status(HttpStatus.NOT_FOUND).json({ success: false, message: error.message });
-    } else {
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error while changing availability." });
+  
+    try {
+      const fileContent = fs.readFileSync(req.file.path);
+      const uniqueFileName = `${Date.now()}-${req.file.originalname}`;
+  
+      const params = {
+        Bucket: process.env.AWS_BUCKET_NAME as string,
+        Key: uniqueFileName,
+        Body: fileContent,
+        ContentType: req.file.mimetype,
+      };
+  
+      const data = await s3.upload(params).promise();
+  
+      // Clean up local file
+      fs.unlink(req.file.path, (err) => {
+        if (err) {
+          console.error("Error deleting local file:", err);
+        }
+      });
+  
+      // Get signed URL (valid for 1 hour)
+      const signedUrl = s3.getSignedUrl("getObject", {
+        Bucket: process.env.AWS_BUCKET_NAME as string,
+        Key: uniqueFileName,
+        Expires: 60 * 60,
+      });
+  
+      const fileData = {
+        url: signedUrl,
+        type: req.file.mimetype,
+        fileName: req.file.originalname,
+      };
+  
+      res.status(HttpStatus.OK).json({ file: fileData });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ error: "File upload failed." });
     }
   }
-};
 
-const doctorList = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const doctors = await doctorService.listDoctors();
-    res.status(HttpStatus.OK).json({ success: true, doctors });
-  } catch (error) {
-    console.log(error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: "Server error while fetching doctors.",
-    });
-  }
-};
-
-export const getSpeciality = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const specialties = await specialityModel.find({});
-    res.status(HttpStatus.OK).json({ success: true, specialties });
-  } catch (error) {
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Unable to fetch specialties" });
-  }
-};
-
-export const doctorProfile = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { docId } = req.body;
-    const profileData = await doctorService.getDoctorProfile(docId);
-    res.status(HttpStatus.OK).json({ success: true, profileData });
-  } catch (error: any) {
-    console.error(error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
-  }
-};
-
-export const updateDoctorProfile = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { docId, fees, address, available, experience, about } = req.body;
-    console.log("Received update:", req.body); 
-    const updatedDoctor = await doctorService.updateDoctorProfile(docId, { fees, address, available, experience, about });
-    res.status(HttpStatus.OK).json({ success: true, message: "Profile Updated", updatedDoctor });
-  } catch (error: any) {
-    console.error("Error in updateDoctorProfile controller:", error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error while updating profile." });
-  }
-};
-
-
-const fileUploadofDoc = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  if (!req.file) {
-    res.status(HttpStatus.BAD_REQUEST).json({ error: 'No file uploaded' });
-    return;
-  }
-
-  try {
-    const result = await cloudinary.uploader.upload(req.file.path, {
-          resource_type: "image", 
-        });
-
-  
-        const fileData = {
-          url: result.secure_url,
-          type: req.file.mimetype,        
-          fileName: result.original_filename || req.file.originalname,
-        };
-
-        res.status(HttpStatus.OK).json({ file: fileData });
-  } catch (error) {
-    console.error("Cloudinary upload error:", error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: "File upload failed." });
-  }
-  }
-
-export {
-  loginDoctor,
-  doctorDashboard,
-  changeAvailability,
-  doctorList,
-  fileUploadofDoc
-};
+}

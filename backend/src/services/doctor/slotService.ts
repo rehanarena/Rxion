@@ -2,14 +2,7 @@ import { SlotRepository } from "../../repositories/doctor/slotRepository";
 import { RRule } from "rrule";
 import moment from "moment";
 import { ISlot } from "../../models/slotModel";
-
-interface SlotData {
-  doctorId: string;
-  date: string;
-  isBooked: boolean;
-  startTime: string;
-  endTime: string;
-}
+import { SlotData } from "../../interfaces/Slot/slot";
 
 export class SlotService {
   private slotRepository: SlotRepository;

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
 import { getAxiosInstance } from "../utils/axiosInterceptor";
+import axios from "axios";
 
 interface AppContextType {
   backendUrl: string;
@@ -25,39 +26,35 @@ const Login = () => {
 
   const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
+  
     try {
       if (state === "Sign Up") {
         if (password !== confirmPassword) {
           toast.error("Passwords do not match.");
           return;
         }
-
+  
+        // This call registers a new user.
         const { data } = await axiosInstance.post(
           `${backendUrl}/api/user/register`,
-          {
-            name,
-            password,
-            email,
-            confirmPassword,
-          }
+          { name, password, email, confirmPassword }
         );
-
+  
         if (data.success) {
           toast.success(data.message);
           navigate("/verify-otp", { state: { userId: data.userId } });
         } else {
+          // This block might not be called if your backend sends an error via catch,
+          // but it's here in case the API responds with a success: false.
           toast.error(data.message);
         }
       } else {
+        // Login flow
         const { data } = await axiosInstance.post(
           `${backendUrl}/api/user/login`,
-          {
-            password,
-            email,
-          }
+          { password, email }
         );
-
+  
         if (data.success) {
           if (data.user?.isBlocked) {
             toast.error("Your account has been blocked by the admin.");
@@ -71,10 +68,19 @@ const Login = () => {
           toast.error(data.message);
         }
       }
-    } catch (error) {
-      toast.error((error as Error).message);
+    }  catch (error: unknown) {
+      let errorMessage = "Something went wrong";
+  
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+  
+      toast.error(errorMessage);
     }
   };
+  
 
   useEffect(() => {
     const storedToken = localStorage.getItem("accessToken");

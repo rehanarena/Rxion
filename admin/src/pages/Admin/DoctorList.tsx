@@ -1,15 +1,9 @@
 import { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { AdminContext } from "../../context/AdminContext";
+import { Doctor } from "../../Interfaces/Doctor";
 
-interface Doctor {
-  _id: string;
-  name: string;
-  email: string;
-  speciality: string;
-  isBlocked: boolean;
-  image?: string;
-}
+
 
 const DoctorCardList = () => {
   const { aToken } = useContext(AdminContext) as { aToken: string };

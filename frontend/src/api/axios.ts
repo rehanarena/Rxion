@@ -17,15 +17,12 @@ const api = axios.create({
   baseURL: backendUrl, 
 });
 
-// Add a response interceptor
 api.interceptors.response.use(
   (response: AxiosResponse): AxiosResponse => response,
   (error: AxiosError): Promise<AxiosError> => {
     let errorMessage = 'An error occurred';
 
-    // If the error response has a JSON message, use it.
     if (error.response && error.response.data) {
-      // Cast error.response.data to any so we can safely access the message property.
       const data = error.response.data as ErrorResponse;
       if (data.message) {
         errorMessage = data.message;
@@ -34,7 +31,6 @@ api.interceptors.response.use(
       errorMessage = error.message;
     }
 
-    // Display the error message in a toast notification
     toast.error(errorMessage);
 
     return Promise.reject(error);

@@ -1,57 +1,59 @@
 import express from "express";
 import upload from '../middlewares/multer';
-import {
-  loginDoctor,
-  doctorDashboard,
-  doctorProfile,
-  doctorList,
-  updateDoctorProfile,
-  doctorForgotPasswordOTP,
-  verifyDoctorOtp,
-  resendDoctorOtp,
-  doctorResetPassword,
-  getSpeciality,
-  fileUploadofDoc,
-  changeDoctorPassword,
-  
-} from "../controllers/doctor/doctorController";
-import {
-  addSlots,
-  slot,
-  getSlotsByDoctor,
-  deleteSlot,
-  editSlot,
-} from "../controllers/doctor/slotController";
-import {
-  appoinmentsDoctor,
-  appoinmentComplete,
-  appoinmentCancel,
-} from "../controllers/doctor/appointmentController";
+import { DoctorRepository } from "../repositories/doctor/doctorRepository";
+import { DoctorService } from "../services/doctor/doctorService";
+import { DoctorController } from "../controllers/doctor/doctorController";
 import authDoctor from "../middlewares/authDoctor";
+import { DoctorOTPRepository } from "../repositories/doctor/doctorOTPRepository";
+import { SlotRepository } from "../repositories/doctor/slotRepository";
+import { SlotService } from "../services/doctor/slotService";
+import { SlotController } from "../controllers/doctor/slotController";
+import { AppointmentRepository } from "../repositories/doctor/appointmentRepository";
+import { AppointmentService } from "../services/doctor/appointmentService";
+import { AppointmentController} from '../controllers/doctor/appointmentController'
+
+
+// Instantiate repositories
+const doctorRepository = new DoctorRepository();
+const doctorOTPRepository = new DoctorOTPRepository
+const slotRepository = new SlotRepository
+const appointmentRepository = new AppointmentRepository
+
+// Create the service by injecting the repositories
+const doctorService = new DoctorService(doctorRepository, doctorOTPRepository)
+const slotService = new SlotService(slotRepository)
+const appointmentService = new AppointmentService( appointmentRepository,)
+
+// Create the controller by injecting the service
+const doctorController = new DoctorController(doctorService);
+const slotController = new SlotController(slotService);
+const appointmentController = new AppointmentController(appointmentService)
+
+
 const doctorRouter = express.Router();
 
-doctorRouter.post("/login", loginDoctor);
-doctorRouter.post("/verify-otp", verifyDoctorOtp);
-doctorRouter.post("/resend-otp", resendDoctorOtp);
+doctorRouter.post("/login", doctorController.loginDoctor.bind(doctorController));
+doctorRouter.post("/verify-otp", doctorController.verifyDoctorOtp.bind(doctorController));
+doctorRouter.post("/resend-otp", doctorController.resendDoctorOtp.bind(doctorController));
 
-doctorRouter.post("/forgotPasswordOTP", doctorForgotPasswordOTP);
-doctorRouter.put("/resetPasswordWithToken", doctorResetPassword);
-doctorRouter.put("/change-password", changeDoctorPassword);
-doctorRouter.get("/dashboard",authDoctor,doctorDashboard);
-doctorRouter.get("/list", doctorList);
-doctorRouter.get("/slot/:docId", slot);
+doctorRouter.post("/forgotPasswordOTP", doctorController.doctorForgotPasswordOTP.bind(doctorController));
+doctorRouter.put("/resetPasswordWithToken", doctorController.doctorResetPassword.bind(doctorController));
+doctorRouter.put("/change-password", doctorController.changeDoctorPassword.bind(doctorController));
+doctorRouter.get("/dashboard",authDoctor,doctorController.doctorDashboard.bind(doctorController));
+doctorRouter.get("/list", doctorController.doctorList.bind(doctorController));
+doctorRouter.get("/slot/:docId", slotController.slot.bind(slotController));
 
-doctorRouter.get("/:doctorId/slots", getSlotsByDoctor);
-doctorRouter.post("/slots", addSlots);
-doctorRouter.delete("/slots/:slotId", deleteSlot);
-doctorRouter.put("/slots/:slotId/edit", editSlot);
+doctorRouter.get("/:doctorId/slots", slotController.getSlotsByDoctor.bind(slotController));
+doctorRouter.post("/slots", slotController.addSlots.bind(slotController));
+doctorRouter.delete("/slots/:slotId", slotController.deleteSlot.bind(slotController));
+doctorRouter.put("/slots/:slotId/edit", slotController.editSlot.bind(slotController));
 
-doctorRouter.get("/profile", authDoctor, doctorProfile);
-doctorRouter.get("/specialties", getSpeciality)
-doctorRouter.post("/update-profile", authDoctor, updateDoctorProfile);
-doctorRouter.post('/upload',upload.single('file'),fileUploadofDoc)
-doctorRouter.get("/appointments", authDoctor, appoinmentsDoctor);
-doctorRouter.post("/complete-appointment", authDoctor, appoinmentComplete);
-doctorRouter.post("/cancel-appointment", authDoctor, appoinmentCancel);
+doctorRouter.get("/profile", authDoctor, doctorController.doctorProfile.bind(doctorController));
+doctorRouter.get("/specialties", doctorController.getSpeciality.bind(doctorController))
+doctorRouter.post("/update-profile", authDoctor, doctorController.updateDoctorProfile.bind(doctorController));
+doctorRouter.post('/upload',upload.single('file'),doctorController.fileUploadofDoc.bind(doctorController))
+doctorRouter.get("/appointments", authDoctor, appointmentController.appoinmentsDoctor.bind(appointmentController));
+doctorRouter.post("/complete-appointment", authDoctor, appointmentController.appoinmentComplete.bind(appointmentController));
+doctorRouter.post("/cancel-appointment", authDoctor, appointmentController.appoinmentCancel.bind(appointmentController));
 
 export default doctorRouter;

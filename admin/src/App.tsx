@@ -29,14 +29,9 @@ import DoctorVideoCallPage from './pages/Doctor/DoctorVideoCallPage';
 import DoctorChat from './pages/Doctor/chat';
 import PatientList from './pages/Doctor/PatientchatList';
 import Reports from './pages/Admin/Reports';
-
-interface AdminContextType {
-  aToken: string | null;
-}
-
-interface DoctorContextType {
-  dToken: string | null;
-}
+import { AdminContextType } from './Interfaces/AdminContext';
+import { DoctorContextType } from './Interfaces/Doctor';
+import DoctorProtectedRoute from './components/DoctorProtectedRoute';
 
 const App = () => {
   const { aToken } = useContext(AdminContext) as AdminContextType;
@@ -67,7 +62,16 @@ const App = () => {
               {/* Doctor Routes */}
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appoinments' element={<DoctorAppoinments />} />
-              <Route path="/doctor/video-call/:appointmentId" element={<DoctorVideoCallPage />} />
+
+              <Route 
+                path="/doctor/video-call/:appointmentId" 
+                element={
+                  <DoctorProtectedRoute>
+                    <DoctorVideoCallPage />
+                  </DoctorProtectedRoute>
+                } 
+              />
+
               <Route path="/doctor-patient-list" element={<PatientList />} />
               <Route path="/doctor-chat" element={<DoctorChat />} />
               <Route path='/doctor-profile' element={<DoctorProfile />} />
@@ -86,7 +90,6 @@ const App = () => {
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/doctor/forgot-password-otp" element={<DoctorForgotPasswordOTP />} />
           <Route path="/doctor/reset-password-otp" element={<DoctorResetPasswordOTP />} />
-          {/* Fallback route: any unknown URL redirects to Login */}
           <Route path="*" element={<Login />} />
         </Routes>
       )}

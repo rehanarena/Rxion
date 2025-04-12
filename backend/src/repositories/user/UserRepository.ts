@@ -1,12 +1,7 @@
+import doctorModel from "../../models/doctorModel";
 import userModel from "../../models/userModel";
 import { IUser } from "../../models/userModel";
-
-interface UserData {
-  name: string;
-  email: string;
-  password: string;
-  profilePicture?: string;
-}
+import { UserData } from "../../interfaces/User/user";
 
 export class UserRepository {
   async findByEmail(email: string): Promise<IUser | null> {
@@ -59,4 +54,20 @@ export class UserRepository {
     if (!user) throw new Error("User not found");
     return user.walletBalance;
   }
+  async searchDoctors(
+      query: any,
+      sortOptions: any,
+      skip: number,
+      limit: number
+    ) {
+      return await doctorModel
+        .find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit);
+    }
+  
+    async countDoctors(query: any) {
+      return await doctorModel.countDocuments(query);
+    }
 }

@@ -16,7 +16,7 @@
     "@radix-ui/react-avatar": "^1.1.3",
     "@radix-ui/react-slot": "^1.1.2",
     "@shadcn/ui": "^0.0.4",
-    "axios": "^1.7.8",
+    "axios": "^1.8.4",
     "date-fns": "^4.1.0",
     "firebase": "^11.5.0",
     "geolib": "^3.3.4",

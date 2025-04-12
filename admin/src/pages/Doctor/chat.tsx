@@ -5,25 +5,9 @@ import { useState, useEffect, useRef, type ChangeEvent } from "react"
 import { io, type Socket } from "socket.io-client"
 import { useSearchParams } from "react-router-dom"
 import { Send, Loader2, Paperclip, MessageSquare, CheckCheck, Check, ImageIcon, FileText, User } from "lucide-react"
-
-interface ChatFile {
-  url: string
-  type: string
-  fileName: string
-}
-
-export interface ChatMessage {
-  sender: string
-  message: string
-  timestamp: string // ISO string
-  read?: boolean
-  file?: ChatFile
-}
-
-interface PatientStatus {
-  online: boolean
-  lastSeen?: Date
-}
+import { ChatFile } from "../../Interfaces/Chat"
+import { ChatMessage } from "../../Interfaces/Chat"
+import { PatientStatus } from "../../Interfaces/Chat"
 
 const DoctorChatComponent: React.FC = () => {
   const [searchParams] = useSearchParams()

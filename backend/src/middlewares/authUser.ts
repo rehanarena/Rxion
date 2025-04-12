@@ -36,9 +36,8 @@ const authUser = async (
     req.body.userId = token_decode.id;
 
     next();
-  } catch (error: any) {
-    console.error(error);
-    res.json({ success: false, message: error.message });
+  } catch (error) {
+    next(error)
   }
 };
 

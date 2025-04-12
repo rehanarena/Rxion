@@ -3,12 +3,7 @@ import { AdminContext } from "../../context/AdminContext";
 import { toast } from "react-toastify";
 import axios from "axios";
 import upload_area from "../../assets/upload_area.svg";
-
-interface Specialty {
-  _id: string;
-  name: string;
-  description?: string;
-}
+import { Specialty } from "../../Interfaces/Doctor";
 
 const AddDoctor: React.FC = () => {
   const [docImg, setDocImg] = useState<File | null>(null);

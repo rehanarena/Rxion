@@ -1,25 +1,27 @@
 import Specialty, { ISpecialty } from '../../models/specialityModel';
 
-export const findSpecialtyByName = async (name: string): Promise<ISpecialty | null> => {
+export class SpecialityRepository {
+async findSpecialtyByName (name: string): Promise<ISpecialty | null> {
   return Specialty.findOne({ name });
 };
 
-export const insertSpecialty = async (specialtyData: { name: string; description: string }): Promise<ISpecialty> => {
+async insertSpecialty (specialtyData: { name: string; description: string }): Promise<ISpecialty>{
   const specialty = new Specialty(specialtyData);
   return specialty.save();
 };
 
-export const getSpecialties = async (): Promise<ISpecialty[]> => {
+async getSpecialties(): Promise<ISpecialty[]>{
   return Specialty.find();
 };
 
-export const deleteSpecialty = async (specialtyId: string): Promise<ISpecialty | null> => {
+async deleteSpecialty (specialtyId: string): Promise<ISpecialty | null> {
   return Specialty.findByIdAndDelete(specialtyId);
 };
 
-export const updateSpecialty = async (
+async updateSpecialty (
   specialtyId: string,
   updateData: { name?: string; description?: string }
-): Promise<ISpecialty | null> => {
+): Promise<ISpecialty | null> {
   return Specialty.findByIdAndUpdate(specialtyId, updateData, { new: true });
 };
+}

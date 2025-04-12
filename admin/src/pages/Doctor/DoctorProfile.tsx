@@ -3,24 +3,7 @@ import { DoctorContext } from "../../context/DoctorContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Lock, Eye, EyeOff, Edit, Save, User, Stethoscope, DollarSign, MapPin, ClipboardCheck } from "lucide-react";
-
-interface Address {
-  line1: string;
-  line2: string;
-}
-
-interface ProfileData {
-  _id: string;
-  name: string;
-  degree: string;
-  speciality: string;
-  experience: string;
-  about: string;
-  fees: number;
-  address: Address;
-  available: boolean;
-  image: string | null;
-}
+import { ProfileData } from "../../Interfaces/Doctor";
 
 const DoctorProfile = () => {
   const { backendUrl, dToken, profileData, setProfileData } = useContext(DoctorContext)!;

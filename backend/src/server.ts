@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import http from 'http';
+import logger from "morgan";
 import { Server } from 'socket.io';
 import connectDB from './config/mongodb';
 import connectCloudinary from './config/cloudinary';
@@ -10,6 +11,7 @@ import userRouter from './routes/userRoute';
 import doctorRouter from './routes/doctorRoute';
 import { errorHandler } from './middlewares/errorHandler';
 import fs from "fs";
+import * as rfs from "rotating-file-stream";
 import path from "path";
 
 import { videoCallHandler } from './socket/videoCallHandlers';
@@ -17,6 +19,19 @@ import { chatHandler } from './socket/chatHandlers';
 
 const app: Application = express(); 
 const port: number = parseInt(process.env.PORT || '4000', 10);
+
+const logDirectory = path.join(__dirname, `logs`);
+if (!fs.existsSync(logDirectory)) {
+  fs.mkdirSync(logDirectory);
+}
+const errorLogstream = rfs.createStream("error.log", {
+  interval: `1d`,
+  path: logDirectory,
+  maxFiles: 7,
+});
+
+// errorLogstream.write("🔧 Logger test write\n");
+
 
 connectDB();
 connectCloudinary();
@@ -26,7 +41,13 @@ app.use(cors());
 
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
+// app.use(logger("dev"));
+app.use(
+  logger("combined", {
+    stream: errorLogstream,
+    skip: (req: Request, res: Response) => res.statusCode < 400,
+  })
+);
 
 // Routes
 app.use('/api/admin', adminRouter);
@@ -37,6 +58,7 @@ app.get("/", (req: Request, res: Response) => {
   res.send("API Working");
 });
 
+
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -45,6 +67,9 @@ if (!fs.existsSync(uploadDir)) {
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 app.use(errorHandler);
+
+
+
 
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
@@ -61,6 +86,8 @@ io.on('connection', (socket) => {
     console.log("Client disconnected:", socket.id);
   });
 });
+
+
 
 httpServer.listen(port, (): void => {
   console.log(`Server is running on http://localhost:${port}`);

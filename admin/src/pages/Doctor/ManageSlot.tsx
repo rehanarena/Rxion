@@ -3,12 +3,7 @@ import { DoctorContext } from "../../context/DoctorContext"
 import { toast } from "react-toastify"
 import { Calendar, Clock, Edit, Trash2, X, Check, Plus } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-
-interface Slot {
-  _id: string
-  startTime: string
-  endTime: string
-}
+import { Slot } from "../../Interfaces/Slot"
 
 export const ManageSlot = () => {
   const doctorContext = useContext(DoctorContext)

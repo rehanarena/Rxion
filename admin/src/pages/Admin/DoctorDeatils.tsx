@@ -1,12 +1,11 @@
-"use client"
-
 import { useState, useEffect, useContext } from "react"
 import { useParams } from "react-router-dom"
 import { AdminContext } from "../../context/AdminContext"
+import { Doctor } from "../../Interfaces/Doctor"
 const DoctorDetails = () => {
   const { doctorId } = useParams<{ doctorId: string }>()
   const { getDoctorDetails } = useContext(AdminContext)!
-  const [doctor, setDoctor] = useState<any>(null)
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
 
   useEffect(() => {
     const fetchDoctor = async () => {

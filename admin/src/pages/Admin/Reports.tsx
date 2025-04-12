@@ -5,17 +5,10 @@ import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import { AdminContext } from "../../context/AdminContext";
 import { formatTime } from '../../Helper/formatTime'
+import { AppointmentReport } from "../../Interfaces/Appointment";
 pdfMake.vfs = pdfFonts.vfs;
 
-interface AppointmentReport {
-  appointmentId: string;
-  doctor: string;
-  patient: string;
-  date: string;
-  time: string;
-  paymentStatus: string;
-  fees: number;
-}
+
 
 export default function AppointmentsReport() {
   const [startDate, setStartDate] = useState<string>("");
@@ -65,7 +58,6 @@ export default function AppointmentsReport() {
   };
 
   const handleDownloadPDF = () => {
-    // Build the table header and body for the PDF
     const tableBody = [
       [
         { text: "S.no", bold: true, fillColor: "#4a4a4a", color: "white" },
@@ -89,11 +81,9 @@ export default function AppointmentsReport() {
       ]),
     ];
 
-    // Calculate summary values
     const totalAppointments = reportData.length;
     const totalFees = reportData.reduce((sum, report) => sum + report.fees, 0);
 
-    // Define the document structure for the PDF
     const documentDefinition = {
       content: [
         {
@@ -196,7 +186,6 @@ export default function AppointmentsReport() {
       },
     } as unknown as TDocumentDefinitions;
 
-    // Generate and download the PDF
     pdfMake.createPdf(documentDefinition).download("appointments_report.pdf");
   };
 

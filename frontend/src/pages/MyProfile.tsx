@@ -97,6 +97,13 @@ const MyProfile = () => {
       return;
     }
   
+    // Check for at least one special character (you can modify the set as needed)
+    const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
+    if (!specialCharRegex.test(newPassword)) {
+      toast.error("New password must contain at least one special character.");
+      return;
+    }
+  
     if (newPassword !== confirmPassword) {
       toast.error("New passwords do not match");
       return;
@@ -144,6 +151,7 @@ const MyProfile = () => {
     
     setIsPasswordLoading(false);
   };
+  
   
 
   if (!userData) return null;

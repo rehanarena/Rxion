@@ -77,7 +77,6 @@ const VerifyOtp = () => {
       if (data.success) {
         toast.success(data.message);
         if (isForPasswordReset) {
-          // Destructure email and token from the response data
           const { email, token } = data;
           navigate("/reset-password", { state: { userId, email, token } });
         } else {

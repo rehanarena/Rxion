@@ -6,6 +6,7 @@ import io from "socket.io-client"
 import { Phone, X, Mic, MicOff, Video, VideoOff, ArrowLeft, User, Clock, Wifi } from "lucide-react"
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { DoctorVideoCallProps } from "../Interfaces/Doctor"
 
 const backendUrl =
   import.meta.env.VITE_NODE_ENV === "PRODUCTION"
@@ -13,9 +14,6 @@ const backendUrl =
     : import.meta.env.VITE_BACKEND_URL
 const socket = io(backendUrl)
 
-interface DoctorVideoCallProps {
-  roomId: string
-}
 
 const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
   const navigate = useNavigate()
@@ -66,7 +64,6 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
       console.log("Answer received:", data.signalData)
       if (pc.current) {
         await pc.current.setRemoteDescription(data.signalData)
-        // Add any queued ICE candidates
         for (const candidate of pendingCandidates.current) {
           try {
             await pc.current.addIceCandidate(candidate)

@@ -6,32 +6,8 @@ import patients_icon from '../../assets/patients_icon.svg';
 import list_icon from '../../assets/list_icon.svg';
 import cancel_icon from '../../assets/cancel_icon.svg';
 import tick_icon from '../../assets/tick_icon.svg';
+import { DoctorContextType } from "../../Interfaces/Doctor";
 
-interface Appointment {
-  _id: string;
-  slotDate: string;
-  cancelled?: boolean;
-  isCompleted?: boolean;
-  userData: {
-    image: string;
-    name: string;
-  };
-}
-
-interface DashDataType {
-  appointments: number;
-  earnings: number;
-  patients: number;
-  latestAppointments: Appointment[];
-}
-
-interface DoctorContextType {
-  dToken: string | null;
-  getDashData: () => Promise<void>;
-  dashData: DashDataType | boolean; 
-  completeAppointment: (appointmentId: string) => void;
-  cancelAppointment: (appointmentId: string) => void;
-}
 
 const DoctorDashboard: React.FC = () => {
   const doctorContext = useContext(DoctorContext);

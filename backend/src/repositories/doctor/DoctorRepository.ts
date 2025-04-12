@@ -1,31 +1,10 @@
 import doctorModel from "../../models/doctorModel";
 import appointmentModel from "../../models/appoinmentModel";
 import { IDoctor } from "../../models/doctorModel";
-import specialityModel from "../../models/specialityModel";
-
-interface Address {
-  line1: string;
-  line2: string;
-}
 
 
 export class DoctorRepository {
-  async searchDoctors(
-    query: any,
-    sortOptions: any,
-    skip: number,
-    limit: number
-  ) {
-    return await doctorModel
-      .find(query)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(limit);
-  }
-
-  async countDoctors(query: any) {
-    return await doctorModel.countDocuments(query);
-  }
+  
 
   async findById(docId: string): Promise<IDoctor | null> {
     return await doctorModel.findById(docId);

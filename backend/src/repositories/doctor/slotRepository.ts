@@ -1,14 +1,7 @@
 import Slot from "../../models/slotModel";
 import { ISlot } from "../../models/slotModel";
 import mongoose from "mongoose";
-
-interface SlotData {
-  doctorId: string;
-  date: string;
-  isBooked: boolean;
-  startTime: string;
-  endTime: string;
-}
+import { SlotData } from "../../interfaces/Slot/slot";
 
 export class SlotRepository {
   async getAvailableSlots(

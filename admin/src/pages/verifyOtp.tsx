@@ -3,12 +3,13 @@ import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
+import { AppContextType } from "../Interfaces/AppContext";
 
-interface AppContextType {
-  backendUrl: string;
-  token: string | null;
-  setToken: (token: string) => void;
-}
+// interface AppContextType {
+//   backendUrl: string;
+//   token: string | null;
+//   setToken: (token: string) => void;
+// }
 
 const VerifyOtp = () => {
   const { backendUrl } = useContext(AppContext) as AppContextType;
