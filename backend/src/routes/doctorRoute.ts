@@ -8,7 +8,7 @@ import { DoctorOTPRepository } from "../repositories/doctor/doctorOTPRepository"
 import { SlotRepository } from "../repositories/doctor/slotRepository";
 import { SlotService } from "../services/doctor/slotService";
 import { SlotController } from "../controllers/doctor/slotController";
-import { AppointmentRepository } from "../repositories/doctor/appointmentRepository";
+import { DoctorAppointmentRepository } from "../repositories/doctor/doctorAppointmentRepository";
 import { AppointmentService } from "../services/doctor/appointmentService";
 import { AppointmentController} from '../controllers/doctor/appointmentController'
 
@@ -17,7 +17,7 @@ import { AppointmentController} from '../controllers/doctor/appointmentControlle
 const doctorRepository = new DoctorRepository();
 const doctorOTPRepository = new DoctorOTPRepository
 const slotRepository = new SlotRepository
-const appointmentRepository = new AppointmentRepository
+const appointmentRepository = new DoctorAppointmentRepository
 
 // Create the service by injecting the repositories
 const doctorService = new DoctorService(doctorRepository, doctorOTPRepository)

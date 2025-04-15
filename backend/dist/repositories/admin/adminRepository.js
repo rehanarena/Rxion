@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminRepository = void 0;
-// repositories/adminRepository.ts
 const doctorModel_1 = __importDefault(require("../../models/doctorModel"));
 const userModel_1 = __importDefault(require("../../models/userModel"));
 const appoinmentModel_1 = __importDefault(require("../../models/appoinmentModel"));
@@ -35,9 +34,9 @@ class AdminRepository {
             const query = search
                 ? {
                     $or: [
-                        { name: { $regex: search, $options: 'i' } },
-                        { email: { $regex: search, $options: 'i' } }
-                    ]
+                        { name: { $regex: search, $options: "i" } },
+                        { email: { $regex: search, $options: "i" } },
+                    ],
                 }
                 : {};
             const skip = (page - 1) * limit;
@@ -129,7 +128,9 @@ class AdminRepository {
     }
     updateAppointment(appointmentId, update) {
         return __awaiter(this, void 0, void 0, function* () {
-            return appoinmentModel_1.default.findByIdAndUpdate(appointmentId, update, { new: true });
+            return appoinmentModel_1.default.findByIdAndUpdate(appointmentId, update, {
+                new: true,
+            });
         });
     }
     updateDoctorSlots(docId, slots_booked) {

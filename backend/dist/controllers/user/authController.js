@@ -27,6 +27,7 @@ exports.AuthController = void 0;
 const mongoose_1 = require("mongoose");
 const statusCode_1 = __importDefault(require("../../utils/statusCode"));
 class AuthController {
+    // The dependency is injected as an abstraction
     constructor(authService) {
         this.authService = authService;
     }
@@ -49,7 +50,9 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             const { otp, userId } = req.body;
             if (!userId || !mongoose_1.Types.ObjectId.isValid(userId)) {
-                res.status(statusCode_1.default.BAD_REQUEST).json({ success: false, message: "Invalid userId." });
+                res
+                    .status(statusCode_1.default.BAD_REQUEST)
+                    .json({ success: false, message: "Invalid userId." });
                 return;
             }
             try {
@@ -65,7 +68,10 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             const { userId } = req.body;
             if (!userId || !mongoose_1.Types.ObjectId.isValid(userId)) {
-                res.status(statusCode_1.default.BAD_REQUEST).json({ success: false, message: "Invalid userId." });
+                res.status(statusCode_1.default.BAD_REQUEST).json({
+                    success: false,
+                    message: "Invalid userId.",
+                });
                 return;
             }
             try {
@@ -77,7 +83,6 @@ class AuthController {
             }
         });
     }
-    ;
     loginUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -94,13 +99,14 @@ class AuthController {
             }
         });
     }
-    ;
     google(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { email, name, photo } = req.body;
                 if (!name || !email || !photo) {
-                    res.status(statusCode_1.default.BAD_REQUEST).json({ message: "Name, email, and photo are required" });
+                    res
+                        .status(statusCode_1.default.BAD_REQUEST)
+                        .json({ message: "Name, email, and photo are required" });
                     return;
                 }
                 const { status, user, token } = yield this.authService.googleAuth(email, name, photo);
@@ -134,7 +140,6 @@ class AuthController {
             }
         });
     }
-    ;
     refreshAccessToken(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             const { refreshToken } = req.body;
@@ -146,20 +151,20 @@ class AuthController {
             }
             try {
                 const newAccessToken = yield this.authService.refreshAccessToken(refreshToken);
-                res.status(statusCode_1.default.OK).json({ success: true, accessToken: newAccessToken });
+                res
+                    .status(statusCode_1.default.OK)
+                    .json({ success: true, accessToken: newAccessToken });
             }
             catch (error) {
                 next(error);
             }
         });
     }
-    ;
     forgotPassword(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { email } = req.body;
                 const result = yield this.authService.forgotPassword(email);
-                console.log("forgotPassword result:", result);
                 res.status(statusCode_1.default.OK).json(Object.assign({ success: true }, result));
             }
             catch (error) {
@@ -167,7 +172,6 @@ class AuthController {
             }
         });
     }
-    ;
     resetPassword(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -182,7 +186,6 @@ class AuthController {
             }
             catch (error) {
                 next(error);
-                res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
             }
         });
     }

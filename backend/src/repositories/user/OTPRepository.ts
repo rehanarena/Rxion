@@ -1,7 +1,8 @@
 import OTP from "../../models/otpModel";
+import { IOtpRepository } from "../../interfaces/Repository/IOtpRepository";
 
-export class OTPRepository {
-  async createOTP(userId: string, otp: string, expiresAt: Date) {
+export class OTPRepository implements IOtpRepository {
+  async createOTP(userId: string, otp: string, expiresAt: Date): Promise<any> {
     const otpData = new OTP({ userId, otp, expiresAt });
     return await otpData.save();
   }

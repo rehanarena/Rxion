@@ -1,16 +1,21 @@
 import { Request, Response, NextFunction } from "express";
 import { Types } from "mongoose";
 import HttpStatus from "../../utils/statusCode";
-import { AuthService } from "../../services/user/auth";
 
+import { IAuthService } from "../../interfaces/Service/IAuthService";
 export class AuthController {
-  private authService: AuthService;
+  private authService: IAuthService;
 
-  constructor(authService: AuthService) {
+  // The dependency is injected as an abstraction
+  constructor(authService: IAuthService) {
     this.authService = authService;
   }
 
-  async registerUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async registerUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const user = await this.authService.registerUser(req.body);
       res.status(HttpStatus.OK).json({
@@ -23,11 +28,17 @@ export class AuthController {
     }
   }
 
-  async verifyOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async verifyOtp(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { otp, userId } = req.body;
 
     if (!userId || !Types.ObjectId.isValid(userId)) {
-      res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: "Invalid userId." });
+      res
+        .status(HttpStatus.BAD_REQUEST)
+        .json({ success: false, message: "Invalid userId." });
       return;
     }
 
@@ -38,26 +49,41 @@ export class AuthController {
       next(error);
     }
   }
-  async resendOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+
+  async resendOtp(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { userId } = req.body;
 
     if (!userId || !Types.ObjectId.isValid(userId)) {
-      res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: "Invalid userId." });
+      res.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        message: "Invalid userId.",
+      });
       return;
     }
-  
+
     try {
-      
       const result = await this.authService.resendOtp(userId);
       res.status(HttpStatus.OK).json({ success: true, ...result });
     } catch (error) {
       next(error);
     }
-  };
-  async loginUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  }
+
+  async loginUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { email, password } = req.body;
-      const { accessToken, refreshToken } = await this.authService.loginUser(email, password);
+      const { accessToken, refreshToken } = await this.authService.loginUser(
+        email,
+        password
+      );
       res.status(HttpStatus.OK).json({
         success: true,
         accessToken,
@@ -66,24 +92,28 @@ export class AuthController {
     } catch (error) {
       next(error);
     }
-  };
-
-
+  }
 
   async google(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, name, photo } = req.body;
-  
+
       if (!name || !email || !photo) {
-        res.status(HttpStatus.BAD_REQUEST).json({ message: "Name, email, and photo are required" });
+        res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ message: "Name, email, and photo are required" });
         return;
       }
 
-      const { status, user, token } = await this.authService.googleAuth(email, name, photo);
-  
+      const { status, user, token } = await this.authService.googleAuth(
+        email,
+        name,
+        photo
+      );
+
       const userObject = user.toObject ? user.toObject() : user;
       const { password, ...rest } = userObject;
-  
+
       if (status === HttpStatus.OK) {
         const expiryDate = new Date(Date.now() + 3600000);
         res
@@ -108,38 +138,61 @@ export class AuthController {
     } catch (error) {
       next(error);
     }
-  };
-  async refreshAccessToken(req: Request, res: Response, next: NextFunction): Promise<void>{
+  }
+
+  async refreshAccessToken(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { refreshToken } = req.body;
-  
+
     if (!refreshToken) {
       res
         .status(HttpStatus.UNAUTHORIZED)
         .json({ success: false, message: "No refresh token provided" });
       return;
     }
-  
+
     try {
-      const newAccessToken = await this.authService.refreshAccessToken(refreshToken);
-      res.status(HttpStatus.OK).json({ success: true, accessToken: newAccessToken });
+      const newAccessToken = await this.authService.refreshAccessToken(
+        refreshToken
+      );
+      res
+        .status(HttpStatus.OK)
+        .json({ success: true, accessToken: newAccessToken });
     } catch (error) {
       next(error);
     }
-  };
-  async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void>{
+  }
+
+  async forgotPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { email } = req.body;
       const result = await this.authService.forgotPassword(email);
-      console.log("forgotPassword result:", result);
       res.status(HttpStatus.OK).json({ success: true, ...result });
     } catch (error) {
       next(error);
     }
-  };
- async resetPassword(req: Request, res: Response,next: NextFunction): Promise<void>{
+  }
+
+  async resetPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { email, token, password } = req.body;
-      const result = await  this.authService.userResetPassword(email, token, password);
+      const result = await this.authService.userResetPassword(
+        email,
+        token,
+        password
+      );
+
       if (!result.success) {
         res.status(HttpStatus.BAD_REQUEST).json(result);
       } else {
@@ -147,8 +200,6 @@ export class AuthController {
       }
     } catch (error) {
       next(error);
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
     }
   }
-  
 }

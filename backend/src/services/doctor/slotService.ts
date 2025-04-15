@@ -1,10 +1,11 @@
+import { ISlotService } from "../../interfaces/Service/ISlotService";
 import { SlotRepository } from "../../repositories/doctor/slotRepository";
 import { RRule } from "rrule";
 import moment from "moment";
 import { ISlot } from "../../models/slotModel";
 import { SlotData } from "../../interfaces/Slot/slot";
 
-export class SlotService {
+export class SlotService implements ISlotService {
   private slotRepository: SlotRepository;
 
   constructor(slotRepository: SlotRepository) {
@@ -131,10 +132,7 @@ export class SlotService {
     slotId: string,
     updateData: { startTime: string; endTime: string }
   ): Promise<ISlot> {
-    const updatedSlot = await this.slotRepository.updateSlot(
-      slotId,
-      updateData
-    );
+    const updatedSlot = await this.slotRepository.updateSlot(slotId, updateData);
     if (!updatedSlot) {
       throw new Error("Slot not found");
     }

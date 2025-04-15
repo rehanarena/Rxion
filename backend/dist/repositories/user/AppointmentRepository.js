@@ -26,16 +26,14 @@ class AppointmentRepository {
             return yield appoinmentModel_1.default.find({ userId }).lean();
         });
     }
-    updateAppointment(appointmentId, update) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield appoinmentModel_1.default.findByIdAndUpdate(appointmentId, update, {
-                new: true,
-            });
-        });
-    }
     findById(appointmentId) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield appoinmentModel_1.default.findById(appointmentId);
+        });
+    }
+    updateAppointment(appointmentId, update) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield appoinmentModel_1.default.findByIdAndUpdate(appointmentId, update, { new: true });
         });
     }
     updatePaymentStatus(appointmentId, update) {

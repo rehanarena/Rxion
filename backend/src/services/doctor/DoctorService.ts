@@ -1,3 +1,5 @@
+
+import { IDoctorService } from "../../interfaces/Service/IDoctorService";
 import { DoctorRepository } from "../../repositories/doctor/doctorRepository";
 import { DoctorOTPRepository } from "../../repositories/doctor/doctorOTPRepository";
 import bcryptjs from "bcryptjs";
@@ -8,7 +10,7 @@ import { ObjectId } from "mongodb";
 import { IDoctor } from "../../models/doctorModel";
 import { UpdateDoctorProfileData } from "../../interfaces/Doctor/doctor";
 
-export class DoctorService {
+export class DoctorService implements IDoctorService {
   private doctorRepository: DoctorRepository;
   private doctorOTPRepository: DoctorOTPRepository;
 
@@ -85,8 +87,7 @@ export class DoctorService {
       await this.doctorRepository.saveDoctor(doctor);
       return {
         success: true,
-        message:
-          "Doctor verified successfully. You can reset your password now.",
+        message: "Doctor verified successfully. You can reset your password now.",
         isForPasswordReset: true,
         doctorId,
         email: doctor.email,
@@ -212,6 +213,7 @@ Rxion Team
 
     return dashData;
   }
+
   async changeAvailability(docId: string): Promise<boolean> {
     const doctor = await this.doctorRepository.findById(docId);
     if (!doctor) {
@@ -221,15 +223,18 @@ Rxion Team
     await this.doctorRepository.updateAvailability(docId, newAvailability);
     return newAvailability;
   }
+
   async listDoctors(): Promise<IDoctor[]> {
     return this.doctorRepository.getAllDoctors();
   }
+
   async getDoctorProfile(docId: string): Promise<IDoctor | null> {
     return this.doctorRepository.getDoctorProfile(docId);
   }
+
   async updateDoctorProfile(
     docId: string,
-    data: UpdateDoctorProfileData // Make sure UpdateDoctorProfileData interface now includes experience and about
+    data: UpdateDoctorProfileData
   ): Promise<IDoctor> {
     if (!docId) {
       throw new Error("Doctor ID is required");

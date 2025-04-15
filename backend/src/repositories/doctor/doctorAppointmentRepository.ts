@@ -1,7 +1,8 @@
 import appointmentModel from "../../models/appoinmentModel";
 import { IAppointment } from "../../models/appoinmentModel";
+import { IDoctorAppointmentRepository } from "../../interfaces/Repository/IDoctorAppointmentRepository";
 
-export class AppointmentRepository {
+export class DoctorAppointmentRepository implements IDoctorAppointmentRepository {
   async getAppointmentsByDoctor(docId: string): Promise<IAppointment[]> {
     return appointmentModel.find({ docId });
   }

@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import HttpStatus from "../../utils/statusCode";
-import { DashboardRepository } from "../../repositories/admin/dashboardRepository";
+import { IDashboardRepository } from "../../interfaces/Repository/IDashboardRepository";
 
 export class ReportController {
-  private dashboardRepository: DashboardRepository;
+  private dashboardRepository: IDashboardRepository;
 
-  constructor(dashboardRepository: DashboardRepository) {
+  constructor(dashboardRepository: IDashboardRepository) {
     this.dashboardRepository = dashboardRepository;
   }
 
@@ -23,7 +23,7 @@ export class ReportController {
         data: reportData,
       });
     } catch (error) {
-      next(error)
+      next(error);
+    }
   }
-}
 }

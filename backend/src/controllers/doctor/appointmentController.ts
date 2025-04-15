@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
-import { AppointmentService } from '../../services/doctor/appointmentService';
 import HttpStatus from '../../utils/statusCode';
+import { IDoctorappointmentService } from '../../interfaces/Service/IDoctorappointmentService';
 
 export class AppointmentController {
-  private appointmentService: AppointmentService;
+  private appointmentService: IDoctorappointmentService;
 
-  constructor(appointmentService: AppointmentService) {
+  constructor(appointmentService: IDoctorappointmentService) {
     this.appointmentService = appointmentService;
   }
 async appoinmentsDoctor (req: Request, res: Response): Promise<void>{

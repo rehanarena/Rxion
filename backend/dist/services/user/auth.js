@@ -15,12 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const validator_1 = __importDefault(require("validator"));
-const crypto_1 = __importDefault(require("crypto"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const crypto_1 = __importDefault(require("crypto"));
 const generateOTP_1 = require("../../utils/generateOTP");
 const mailer_1 = require("../../helper/mailer");
 class AuthService {
-    /// Dependency injected ///
     constructor(authRepository, otpRepository, tokenRepository) {
         this.authRepository = authRepository;
         this.otpRepository = otpRepository;
@@ -102,7 +101,8 @@ class AuthService {
                 throw new Error("User not found.");
             }
             const newOtp = (0, generateOTP_1.generateOTP)(6);
-            console.log(`resend ${newOtp}`);
+            console.log(`Resend OTP: ${newOtp}`);
+            // Update the OTP entry (or create if missing) with the new OTP and expiry
             yield this.otpRepository.updateOtp(userId, newOtp, new Date(Date.now() + 10 * 60 * 1000));
             const emailBody = `
       Hello ${user.name || "User"},
@@ -115,6 +115,7 @@ class AuthService {
       Regards,
       Rxion Team
     `;
+            // Send OTP email (you might adjust email content or subject accordingly)
             yield (0, mailer_1.sendOtpEmail)(user.email, emailBody);
             return { message: "OTP has been resent to your email." };
         });
@@ -185,11 +186,15 @@ class AuthService {
                 throw new Error("No refresh token provided");
             }
             try {
+                // Verify the provided refresh token
                 const decoded = jsonwebtoken_1.default.verify(refreshToken, process.env.JWT_SECRET);
+                // Retrieve the stored token using the user id from the token payload
                 const storedToken = this.tokenRepository.getToken(decoded.id);
+                // Compare the provided refresh token with the stored token
                 if (storedToken !== refreshToken) {
                     throw new Error("Invalid refresh token");
                 }
+                // Generate and return a new access token
                 const newAccessToken = this.generateAccessToken(decoded.id);
                 return newAccessToken;
             }
@@ -208,16 +213,16 @@ class AuthService {
             const otp = (0, generateOTP_1.generateOTP)(6);
             yield this.otpRepository.createOTP(String(user._id), otp, new Date(Date.now() + 10 * 60 * 1000));
             const emailBody = `
-            Hello ${user.name || "User"},
-        
-            Your OTP code for resetting your password is: ${otp}
-            This OTP is valid for the next 10 minutes.
-        
-            If you did not request this, please ignore this email.
-        
-            Regards,
-            Rxion Team
-          `;
+      Hello ${user.name || "User"},
+
+      Your OTP code for resetting your password is: ${otp}
+      This OTP is valid for the next 10 minutes.
+
+      If you did not request this, please ignore this email.
+
+      Regards,
+      Rxion Team
+    `;
             yield (0, mailer_1.sendOtpEmail)(email, emailBody);
             return {
                 message: "OTP sent to your email. Please verify to reset password.",

@@ -2,15 +2,16 @@ import validator from "validator";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
-import { AdminRepository } from "../../repositories/admin/adminRepository";
+import { IAdminRepository } from "../../interfaces/Repository/IAdminRepository";
+import { IAdminService } from "../../interfaces/Service/IAdminService";
 import { sendPasswordEmail } from "../../helper/mailer";
 import { AddDoctorRequestBody } from "../../interfaces/Doctor/doctor";
 import { AppointmentOptions } from "../../interfaces/Appointment/appointment";
 
-export class AdminService {
-  private adminRepository: AdminRepository;
+export class AdminService implements IAdminService {
+  private adminRepository: IAdminRepository;
 
-  constructor(adminRepository: AdminRepository) {
+  constructor(adminRepository: IAdminRepository) {
     this.adminRepository = adminRepository;
   }
 
@@ -167,50 +168,6 @@ export class AdminService {
   async getAllAppointments(options: AppointmentOptions): Promise<any[]> {
     return this.adminRepository.getAllAppointments(options);
   }
-  // async searchAppointments({
-  //   search,
-  //   sortBy,
-  //   page,
-  //   limit,
-  // }: {
-  //   search: string;
-  //   sortBy: string;
-  //   page: number;
-  //   limit: number;
-  // }) {
-
-  //   let query: any = {};
-
-  //   if (search) {
-  //     query.$or = [
-  //       { "user.name": { $regex: search, $options: "i" } },
-  //       { "doctor.name": { $regex: search, $options: "i" } },
-  //       { status: { $regex: search, $options: "i" } }
-  //     ];
-  //   }
-
-  //   let sortOptions: any = {};
-  //   if (sortBy === "date") {
-  //     sortOptions.date = -1;
-  //   } else if (sortBy === "status") {
-  //     sortOptions.status = 1;
-  //   }
-
-  //   const skip = (page - 1) * limit;
-  //   const appointments = await appointmentModel
-  //     .find(query)
-  //     .sort(sortOptions)
-  //     .skip(skip)
-  //     .limit(limit);
-
-  //   const totalAppointments = await appointmentModel.countDocuments(query);
-
-  //   return {
-  //     appointments,
-  //     totalPages: Math.ceil(totalAppointments / limit),
-  //     currentPage: page,
-  //   };
-  // }
 
   async cancelAppointment(appointmentId: string): Promise<{ message: string }> {
     const appointmentData = await this.adminRepository.findAppointmentById(

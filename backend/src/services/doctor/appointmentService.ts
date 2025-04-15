@@ -1,14 +1,15 @@
-import { AppointmentRepository } from "../../repositories/doctor/appointmentRepository";
-import { IAppointment } from "../../models/appoinmentModel";
+import { IDoctorappointmentService } from '../../interfaces/Service/IDoctorappointmentService';
+import { IDoctorAppointmentRepository } from '../../interfaces/Repository/IDoctorAppointmentRepository';
+import { IAppointment } from '../../models/appoinmentModel';
 import {
   sendAppointmentCompletedEmail,
   sendAppointmentCancelledEmail,
 } from "../../helper/mailer";
 
-export class AppointmentService {
-  private appointmentRepository: AppointmentRepository;
+export class AppointmentService implements IDoctorappointmentService {
+  private appointmentRepository: IDoctorAppointmentRepository;
 
-  constructor(appointmentRepository: AppointmentRepository) {
+  constructor(appointmentRepository: IDoctorAppointmentRepository) {
     this.appointmentRepository = appointmentRepository;
   }
 

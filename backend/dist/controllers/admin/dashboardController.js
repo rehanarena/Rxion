@@ -15,11 +15,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DashboardController = void 0;
 const statusCode_1 = __importDefault(require("../../utils/statusCode"));
 class DashboardController {
-    // The repository is injected via the constructor
     constructor(dashboardRepository) {
         this.dashboardRepository = dashboardRepository;
     }
-    // Get total reports endpoint
     getTotal(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -31,7 +29,6 @@ class DashboardController {
             }
         });
     }
-    // Get revenue report based on query parameter "period"
     getRevenue(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -44,7 +41,6 @@ class DashboardController {
             }
         });
     }
-    // Get appointment status report
     getStatusAppointment(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -56,7 +52,6 @@ class DashboardController {
             }
         });
     }
-    // Get payment status report
     getPaymentStatus(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -68,7 +63,6 @@ class DashboardController {
             }
         });
     }
-    // Get top doctor report
     getTopDoctors(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {

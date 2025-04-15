@@ -1,10 +1,9 @@
 import doctorModel from "../../models/doctorModel";
 import appointmentModel from "../../models/appoinmentModel";
 import { IDoctor } from "../../models/doctorModel";
+import { IDoctorRepository } from "../../interfaces/Repository/IDoctorRepository";
 
-
-export class DoctorRepository {
-  
+export class DoctorRepository implements IDoctorRepository {
 
   async findById(docId: string): Promise<IDoctor | null> {
     return await doctorModel.findById(docId);

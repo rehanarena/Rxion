@@ -9,8 +9,6 @@ interface DoctorProtectedRouteProps {
 
 const DoctorProtectedRoute: React.FC<DoctorProtectedRouteProps> = ({ children }) => {
   const { dToken } = useContext(DoctorContext) as DoctorContextType;
-
-  // If there's no doctor token then redirect to the login page.
   if (!dToken) {
     return <Navigate to="/login" replace />;
   }

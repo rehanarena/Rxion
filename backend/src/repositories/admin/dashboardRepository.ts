@@ -1,8 +1,9 @@
 import appointmentModel from "../../models/appoinmentModel";
 import userModel from "../../models/userModel";
 import doctorModel from "../../models/doctorModel";
+import { IDashboardRepository } from "../../interfaces/Repository/IDashboardRepository";
 
-export class DashboardRepository {
+export class DashboardRepository implements IDashboardRepository {
   async getTotalReports(): Promise<{
     totalAppointments: number;
     totalEarnings: number;
@@ -137,6 +138,7 @@ export class DashboardRepository {
     ]);
     return topDoctors;
   }
+
   async getAppointmentsReport(startDate?: string, endDate?: string): Promise<any[]> {
     const query: any = {};
 

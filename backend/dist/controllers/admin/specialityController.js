@@ -22,12 +22,19 @@ class SpecialityController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { name, description } = req.body;
-                const result = yield this.specialityService.addSpecialty({ name, description });
-                if (result.message === 'Specialty added successfully!') {
-                    res.status(statusCode_1.default.CREATED).json({ success: true, message: result.message });
+                const result = yield this.specialityService.addSpecialty({
+                    name,
+                    description,
+                });
+                if (result.message === "Specialty added successfully!") {
+                    res
+                        .status(statusCode_1.default.CREATED)
+                        .json({ success: true, message: result.message });
                 }
                 else {
-                    res.status(statusCode_1.default.BAD_REQUEST).json({ success: false, message: result.message });
+                    res
+                        .status(statusCode_1.default.BAD_REQUEST)
+                        .json({ success: false, message: result.message });
                 }
             }
             catch (error) {
@@ -35,7 +42,6 @@ class SpecialityController {
             }
         });
     }
-    ;
     getSpecialties(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -47,20 +53,20 @@ class SpecialityController {
             }
         });
     }
-    ;
     deleteSpecialty(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { specialtyId } = req.params;
                 yield this.specialityService.deleteSpecialty(specialtyId);
-                res.status(statusCode_1.default.OK).json({ success: true, message: 'Specialty deleted successfully' });
+                res
+                    .status(statusCode_1.default.OK)
+                    .json({ success: true, message: "Specialty deleted successfully" });
             }
             catch (error) {
                 next(error);
             }
         });
     }
-    ;
     editSpecialty(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -69,7 +75,7 @@ class SpecialityController {
                 const updatedSpecialty = yield this.specialityService.editSpecialty(specialtyId, { name, description });
                 res.status(statusCode_1.default.OK).json({
                     success: true,
-                    message: 'Specialty updated successfully',
+                    message: "Specialty updated successfully",
                     specialty: updatedSpecialty,
                 });
             }
@@ -78,6 +84,5 @@ class SpecialityController {
             }
         });
     }
-    ;
 }
 exports.SpecialityController = SpecialityController;

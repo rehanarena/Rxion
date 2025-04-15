@@ -1,16 +1,15 @@
-import { UserRepository } from "../../repositories/user/userRepository";
 import bcryptjs from "bcryptjs";
 import { v2 as cloudinary } from "cloudinary";
 import { Address } from "../../interfaces/IAddress";
 import { IUser } from "../../models/userModel";
 import { SearchParams } from "../../interfaces/User/user";
+import { IUserRepository } from "../../interfaces/Repository/IUserRepository";
+import { IUserService } from "../../interfaces/Service/IUserService";
 
-export class UserService {
-  private userRepository: UserRepository;
 
-  constructor(userRepository: UserRepository) {
-    this.userRepository = userRepository;
-  }
+export class UserService implements IUserService {
+  constructor(private userRepository: IUserRepository) {}
+
   async changePassword(
     userId: string,
     currentPassword: string,

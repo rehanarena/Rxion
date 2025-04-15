@@ -32,6 +32,7 @@ class AppointmentService {
                 throw new Error("Doctor not available");
             if (!docData.fees)
                 throw new Error("Doctor fees not found");
+            // Ensure slots_booked is an object
             if (!docData.slots_booked || Array.isArray(docData.slots_booked)) {
                 docData.slots_booked = {};
             }
@@ -49,6 +50,7 @@ class AppointmentService {
             if (isSlotBooked) {
                 throw new Error("Slot not available");
             }
+            // Add new slot
             docData.slots_booked[slotDate].push({
                 date: slotDatePart,
                 time: slotTimePart,
@@ -75,7 +77,7 @@ class AppointmentService {
                 yield (0, mailer_1.sendAppointmentBookedEmail)(userData.email, userData.name, slotDatePart, slotTimePart);
             }
             catch (error) {
-                console.error(" Failed to send confirmation email:", error);
+                console.error("Failed to send confirmation email:", error);
             }
             return "Appointment booked successfully";
         });

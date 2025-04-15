@@ -138,7 +138,6 @@ class UserController {
             }
         });
     }
-    ;
     /// List Appointments ///
     listAppointments(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -152,7 +151,6 @@ class UserController {
             }
         });
     }
-    ;
     /// Cancel Appointment ///
     cancelAppointment(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -166,7 +164,6 @@ class UserController {
             }
         });
     }
-    ;
     /// Payment Razorpay ///
     paymentRazorpay(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {

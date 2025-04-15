@@ -138,44 +138,6 @@ class AdminService {
             return this.adminRepository.getAllAppointments(options);
         });
     }
-    // async searchAppointments({
-    //   search,
-    //   sortBy,
-    //   page,
-    //   limit,
-    // }: {
-    //   search: string;
-    //   sortBy: string;
-    //   page: number;
-    //   limit: number;
-    // }) {
-    //   let query: any = {};
-    //   if (search) {
-    //     query.$or = [
-    //       { "user.name": { $regex: search, $options: "i" } },
-    //       { "doctor.name": { $regex: search, $options: "i" } },
-    //       { status: { $regex: search, $options: "i" } }
-    //     ];
-    //   }
-    //   let sortOptions: any = {};
-    //   if (sortBy === "date") {
-    //     sortOptions.date = -1;
-    //   } else if (sortBy === "status") {
-    //     sortOptions.status = 1;
-    //   }
-    //   const skip = (page - 1) * limit;
-    //   const appointments = await appointmentModel
-    //     .find(query)
-    //     .sort(sortOptions)
-    //     .skip(skip)
-    //     .limit(limit);
-    //   const totalAppointments = await appointmentModel.countDocuments(query);
-    //   return {
-    //     appointments,
-    //     totalPages: Math.ceil(totalAppointments / limit),
-    //     currentPage: page,
-    //   };
-    // }
     cancelAppointment(appointmentId) {
         return __awaiter(this, void 0, void 0, function* () {
             const appointmentData = yield this.adminRepository.findAppointmentById(appointmentId);

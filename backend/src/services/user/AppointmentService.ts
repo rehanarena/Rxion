@@ -1,18 +1,20 @@
 import jwt from "jsonwebtoken";
-import { DoctorRepository } from "../../repositories/doctor/doctorRepository";
-import { UserRepository } from "../../repositories/user/userRepository";
-import { AppointmentRepository } from "../../repositories/user/appointmentRepository";
+import { IDoctorRepository } from "../../interfaces/Repository/IDoctorRepository";
+import { IUserRepository } from "../../interfaces/Repository/IUserRepository";
+import { IAppointmentRepository } from "../../interfaces/Repository/IAppointmentRepository";
+import { IAppointmentService } from "../../interfaces/Service/IAppointmentService";
 import { sendAppointmentBookedEmail } from "../../helper/mailer";
 
-export class AppointmentService {
-  private doctorRepository: DoctorRepository;
-  private userRepository: UserRepository;
-  private appointmentRepository: AppointmentRepository;
+
+export class AppointmentService implements IAppointmentService {
+  private doctorRepository: IDoctorRepository;
+  private userRepository: IUserRepository;
+  private appointmentRepository: IAppointmentRepository;
 
   constructor(
-    doctorRepository: DoctorRepository,
-    userRepository: UserRepository,
-    appointmentRepository: AppointmentRepository
+    doctorRepository: IDoctorRepository,
+    userRepository: IUserRepository,
+    appointmentRepository: IAppointmentRepository
   ) {
     this.doctorRepository = doctorRepository;
     this.userRepository = userRepository;
@@ -33,6 +35,7 @@ export class AppointmentService {
     if (!docData.available) throw new Error("Doctor not available");
     if (!docData.fees) throw new Error("Doctor fees not found");
 
+    // Ensure slots_booked is an object
     if (!docData.slots_booked || Array.isArray(docData.slots_booked)) {
       docData.slots_booked = {};
     }
@@ -55,6 +58,7 @@ export class AppointmentService {
       throw new Error("Slot not available");
     }
 
+    // Add new slot
     docData.slots_booked[slotDate].push({
       date: slotDatePart,
       time: slotTimePart,
@@ -88,7 +92,7 @@ export class AppointmentService {
         slotTimePart
       );
     } catch (error) {
-      console.error(" Failed to send confirmation email:", error);
+      console.error("Failed to send confirmation email:", error);
     }
 
     return "Appointment booked successfully";
@@ -97,13 +101,12 @@ export class AppointmentService {
   async listAppointments(userId: string) {
     return await this.appointmentRepository.findAppointmentsByUserId(userId);
   }
+
   async cancelAppointment(
     userId: string,
     appointmentId: string
   ): Promise<string> {
-    const appointmentData = await this.appointmentRepository.findById(
-      appointmentId
-    );
+    const appointmentData = await this.appointmentRepository.findById(appointmentId);
     if (!appointmentData) {
       throw new Error("Appointment not found");
     }
@@ -128,7 +131,6 @@ export class AppointmentService {
     }
 
     let slots_booked = doctorData.slots_booked;
-
     const formattedSlotTime = new Date(slotTime).toISOString();
     const slotTimePart = new Date(formattedSlotTime).toLocaleTimeString([], {
       hour: "2-digit",

@@ -230,8 +230,7 @@ Rxion Team
             return this.doctorRepository.getDoctorProfile(docId);
         });
     }
-    updateDoctorProfile(docId, data // Make sure UpdateDoctorProfileData interface now includes experience and about
-    ) {
+    updateDoctorProfile(docId, data) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!docId) {
                 throw new Error("Doctor ID is required");

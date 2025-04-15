@@ -2,8 +2,9 @@ import Slot from "../../models/slotModel";
 import { ISlot } from "../../models/slotModel";
 import mongoose from "mongoose";
 import { SlotData } from "../../interfaces/Slot/slot";
+import { ISlotRepository } from "../../interfaces/Repository/ISlotRepository";
 
-export class SlotRepository {
+export class SlotRepository implements ISlotRepository {
   async getAvailableSlots(
     doctorId: string,
     minStartTime: string

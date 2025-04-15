@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { DoctorService } from "../../services/doctor/doctorService";
+import { IDoctorService } from "../../interfaces/Service/IDoctorService";
 import specialityModel from "../../models/specialityModel";
 import HttpStatus from "../../utils/statusCode";
 import fs from "fs";
@@ -9,11 +9,12 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export class DoctorController {
-  private doctorService: DoctorService;
+  private doctorService: IDoctorService;
 
-  constructor(doctorService: DoctorService) {
+  constructor(doctorService: IDoctorService) {
     this.doctorService = doctorService;
   }
+
   async loginDoctor(
     req: Request,
     res: Response,
@@ -27,6 +28,7 @@ export class DoctorController {
       next(error);
     }
   }
+
   async doctorForgotPasswordOTP(
     req: Request,
     res: Response,
@@ -40,6 +42,7 @@ export class DoctorController {
       next(error);
     }
   }
+
   async verifyDoctorOtp(req: Request, res: Response): Promise<void> {
     try {
       const { otp, doctorId } = req.body;
@@ -52,6 +55,7 @@ export class DoctorController {
         .json({ success: false, message: "Something went wrong." });
     }
   }
+
   async resendDoctorOtp(
     req: Request,
     res: Response,
@@ -86,6 +90,7 @@ export class DoctorController {
         .json({ success: false, message: "Server error" });
     }
   }
+
   async changeDoctorPassword(
     req: Request,
     res: Response,
@@ -105,6 +110,7 @@ export class DoctorController {
       next(error);
     }
   }
+
   async doctorDashboard(
     req: Request,
     res: Response,
@@ -126,6 +132,7 @@ export class DoctorController {
       next(error);
     }
   }
+
   async changeAvailability(
     req: Request,
     res: Response,
@@ -136,13 +143,11 @@ export class DoctorController {
       const newAvailability = await this.doctorService.changeAvailability(
         docId
       );
-      res
-        .status(HttpStatus.OK)
-        .json({
-          success: true,
-          message: "Availability Changed",
-          available: newAvailability,
-        });
+      res.status(HttpStatus.OK).json({
+        success: true,
+        message: "Availability Changed",
+        available: newAvailability,
+      });
     } catch (error) {
       next(error);
     }
@@ -194,49 +199,19 @@ export class DoctorController {
         docId,
         { fees, address, available, experience, about }
       );
-      res
-        .status(HttpStatus.OK)
-        .json({ success: true, message: "Profile Updated", updatedDoctor });
+      res.status(HttpStatus.OK).json({
+        success: true,
+        message: "Profile Updated",
+        updatedDoctor,
+      });
     } catch (error) {
       console.error("Error in updateDoctorProfile controller:", error);
-      res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({
-          success: false,
-          message: "Server error while updating profile.",
-        });
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: "Server error while updating profile.",
+      });
     }
   }
-
-  // async fileUploadofDoc(
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ): Promise<void> {
-  //   if (!req.file) {
-  //     res.status(HttpStatus.BAD_REQUEST).json({ error: "No file uploaded" });
-  //     return;
-  //   }
-
-  //   try {
-  //     const result = await cloudinary.uploader.upload(req.file.path, {
-  //       resource_type: "image",
-  //     });
-
-  //     const fileData = {
-  //       url: result.secure_url,
-  //       type: req.file.mimetype,
-  //       fileName: result.original_filename || req.file.originalname,
-  //     };
-
-  //     res.status(HttpStatus.OK).json({ file: fileData });
-  //   } catch (error) {
-  //     console.error("Cloudinary upload error:", error);
-  //     res
-  //       .status(HttpStatus.INTERNAL_SERVER_ERROR)
-  //       .json({ error: "File upload failed." });
-  //   }
-  // }
 
   async fileUploadofDoc(
     req: Request,
@@ -247,40 +222,37 @@ export class DoctorController {
       res.status(HttpStatus.BAD_REQUEST).json({ error: "No file uploaded" });
       return;
     }
-  
+
     try {
       const fileContent = fs.readFileSync(req.file.path);
       const uniqueFileName = `${Date.now()}-${req.file.originalname}`;
-  
+
       const params = {
         Bucket: process.env.AWS_BUCKET_NAME as string,
         Key: uniqueFileName,
         Body: fileContent,
         ContentType: req.file.mimetype,
       };
-  
+
       const data = await s3.upload(params).promise();
-  
-      // Clean up local file
+
       fs.unlink(req.file.path, (err) => {
         if (err) {
           console.error("Error deleting local file:", err);
         }
       });
-  
-      // Get signed URL (valid for 1 hour)
       const signedUrl = s3.getSignedUrl("getObject", {
         Bucket: process.env.AWS_BUCKET_NAME as string,
         Key: uniqueFileName,
         Expires: 60 * 60,
       });
-  
+
       const fileData = {
         url: signedUrl,
         type: req.file.mimetype,
         fileName: req.file.originalname,
       };
-  
+
       res.status(HttpStatus.OK).json({ file: fileData });
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -289,5 +261,4 @@ export class DoctorController {
         .json({ error: "File upload failed." });
     }
   }
-
 }

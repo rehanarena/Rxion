@@ -1,11 +1,13 @@
-import { SpecialityRepository } from "../../repositories/admin/specialityRepository";
+import { ISpecialityService } from "../../interfaces/Service/ISpecialityService";
+import { ISpecialityRepository } from "../../interfaces/Repository/ISpecialityRepository";
 
-export class SpecialityService {
-  private specialityRepository: SpecialityRepository;
+export class SpecialityService implements ISpecialityService {
+  private specialityRepository: ISpecialityRepository;
 
-  constructor(specialityRepository: SpecialityRepository) {
+  constructor(specialityRepository: ISpecialityRepository) {
     this.specialityRepository = specialityRepository;
   }
+
   async addSpecialty(data: {
     name: string;
     description: string;
@@ -42,7 +44,7 @@ export class SpecialityService {
   async editSpecialty(
     specialtyId: string,
     updateData: { name?: string; description?: string }
-  ) {
+  ): Promise<any> {
     const updatedSpecialty = await this.specialityRepository.updateSpecialty(
       specialtyId,
       updateData

@@ -13,14 +13,14 @@ const doctorOTPRepository_1 = require("../repositories/doctor/doctorOTPRepositor
 const slotRepository_1 = require("../repositories/doctor/slotRepository");
 const slotService_1 = require("../services/doctor/slotService");
 const slotController_1 = require("../controllers/doctor/slotController");
-const appointmentRepository_1 = require("../repositories/doctor/appointmentRepository");
+const doctorAppointmentRepository_1 = require("../repositories/doctor/doctorAppointmentRepository");
 const appointmentService_1 = require("../services/doctor/appointmentService");
 const appointmentController_1 = require("../controllers/doctor/appointmentController");
 // Instantiate repositories
 const doctorRepository = new doctorRepository_1.DoctorRepository();
 const doctorOTPRepository = new doctorOTPRepository_1.DoctorOTPRepository;
 const slotRepository = new slotRepository_1.SlotRepository;
-const appointmentRepository = new appointmentRepository_1.AppointmentRepository;
+const appointmentRepository = new doctorAppointmentRepository_1.DoctorAppointmentRepository;
 // Create the service by injecting the repositories
 const doctorService = new doctorService_1.DoctorService(doctorRepository, doctorOTPRepository);
 const slotService = new slotService_1.SlotService(slotRepository);

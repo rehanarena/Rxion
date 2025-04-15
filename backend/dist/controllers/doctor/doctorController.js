@@ -130,9 +130,7 @@ class DoctorController {
             try {
                 const { docId } = req.body;
                 const newAvailability = yield this.doctorService.changeAvailability(docId);
-                res
-                    .status(statusCode_1.default.OK)
-                    .json({
+                res.status(statusCode_1.default.OK).json({
                     success: true,
                     message: "Availability Changed",
                     available: newAvailability,
@@ -189,47 +187,21 @@ class DoctorController {
                 const { docId, fees, address, available, experience, about } = req.body;
                 console.log("Received update:", req.body);
                 const updatedDoctor = yield this.doctorService.updateDoctorProfile(docId, { fees, address, available, experience, about });
-                res
-                    .status(statusCode_1.default.OK)
-                    .json({ success: true, message: "Profile Updated", updatedDoctor });
+                res.status(statusCode_1.default.OK).json({
+                    success: true,
+                    message: "Profile Updated",
+                    updatedDoctor,
+                });
             }
             catch (error) {
                 console.error("Error in updateDoctorProfile controller:", error);
-                res
-                    .status(statusCode_1.default.INTERNAL_SERVER_ERROR)
-                    .json({
+                res.status(statusCode_1.default.INTERNAL_SERVER_ERROR).json({
                     success: false,
                     message: "Server error while updating profile.",
                 });
             }
         });
     }
-    // async fileUploadofDoc(
-    //   req: Request,
-    //   res: Response,
-    //   next: NextFunction
-    // ): Promise<void> {
-    //   if (!req.file) {
-    //     res.status(HttpStatus.BAD_REQUEST).json({ error: "No file uploaded" });
-    //     return;
-    //   }
-    //   try {
-    //     const result = await cloudinary.uploader.upload(req.file.path, {
-    //       resource_type: "image",
-    //     });
-    //     const fileData = {
-    //       url: result.secure_url,
-    //       type: req.file.mimetype,
-    //       fileName: result.original_filename || req.file.originalname,
-    //     };
-    //     res.status(HttpStatus.OK).json({ file: fileData });
-    //   } catch (error) {
-    //     console.error("Cloudinary upload error:", error);
-    //     res
-    //       .status(HttpStatus.INTERNAL_SERVER_ERROR)
-    //       .json({ error: "File upload failed." });
-    //   }
-    // }
     fileUploadofDoc(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!req.file) {
@@ -246,13 +218,11 @@ class DoctorController {
                     ContentType: req.file.mimetype,
                 };
                 const data = yield s3Config_1.default.upload(params).promise();
-                // Clean up local file
                 fs_1.default.unlink(req.file.path, (err) => {
                     if (err) {
                         console.error("Error deleting local file:", err);
                     }
                 });
-                // Get signed URL (valid for 1 hour)
                 const signedUrl = s3Config_1.default.getSignedUrl("getObject", {
                     Bucket: process.env.AWS_BUCKET_NAME,
                     Key: uniqueFileName,

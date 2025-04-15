@@ -22,6 +22,7 @@ import { useAppContext } from "./context/AppContext";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailure from "./pages/PaymentFailure";
 import PatientVideoCallPage from "./pages/PatientVideoCallPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   const { token, loadUserProfileData } = useAppContext();
@@ -56,7 +57,11 @@ const App = () => {
         <Route path="/payment-failure" element={<PaymentFailure />} />
         <Route path="/appointment/:docId" element={<Appointment />} />
         <Route path="/chat/:doctorId" element={<ChatMessage />} />
-        <Route path="/patient/video-call/:appointmentId" element={<PatientVideoCallPage />} />
+        <Route path="/patient/video-call/:appointmentId" element={
+          <ProtectedRoute>
+            <PatientVideoCallPage />
+          </ProtectedRoute>
+        } />
         <Route path="/my-wallet" element={<Wallet />} />
       </Routes>
       <Footer />

@@ -1,5 +1,9 @@
-
 import { Schema, model, Document } from "mongoose";
+
+export interface IFileData {
+  name?: string;
+  url?: string;
+}
 
 export interface IChatMessage extends Document {
   room: string;
@@ -7,7 +11,7 @@ export interface IChatMessage extends Document {
   message: string;
   timestamp: Date;
   read: boolean;
-  file?: any; 
+  file?: IFileData | Record<string, unknown>; 
   patientName?: string;
   patientImage?: string;
 }

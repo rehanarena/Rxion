@@ -2,8 +2,9 @@ import doctorModel from "../../models/doctorModel";
 import userModel from "../../models/userModel";
 import { IUser } from "../../models/userModel";
 import { UserData } from "../../interfaces/User/user";
+import { IUserRepository } from "../../interfaces/Repository/IUserRepository";
 
-export class UserRepository {
+export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<IUser | null> {
     return await userModel.findOne({ email });
   }

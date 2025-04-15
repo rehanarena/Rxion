@@ -13,11 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SlotController = void 0;
-const slotService_1 = require("../../services/doctor/slotService");
-const slotRepository_1 = require("../../repositories/doctor/slotRepository");
 const statusCode_1 = __importDefault(require("../../utils/statusCode"));
-const slotRepository = new slotRepository_1.SlotRepository();
-const slotService = new slotService_1.SlotService(slotRepository);
 class SlotController {
     constructor(slotService) {
         this.slotService = slotService;
@@ -32,10 +28,8 @@ class SlotController {
             catch (error) {
                 next(error);
             }
-            ;
         });
     }
-    ;
     addSlots(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -53,7 +47,6 @@ class SlotController {
             }
         });
     }
-    ;
     getSlotsByDoctor(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -66,12 +59,11 @@ class SlotController {
             }
         });
     }
-    ;
     deleteSlot(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { slotId } = req.params;
-                yield slotService.deleteSlot(slotId);
+                yield this.slotService.deleteSlot(slotId);
                 res.status(statusCode_1.default.OK).json({ success: true, message: 'Slot deleted successfully' });
             }
             catch (error) {
@@ -79,7 +71,6 @@ class SlotController {
             }
         });
     }
-    ;
     editSlot(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -97,6 +88,5 @@ class SlotController {
             }
         });
     }
-    ;
 }
 exports.SlotController = SlotController;

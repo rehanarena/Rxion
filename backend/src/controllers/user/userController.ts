@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import { RequestWithUser } from "../../middlewares/authUser";
-import { UserService } from "../../services/user/user";
 import { AppointmentService } from "../../services/user/appointmentService";
 import { PaymentService } from "../../services/user/paymentService";
 import HttpStatus from "../../utils/statusCode";
@@ -9,6 +8,7 @@ import specialityModel from "../../models/specialityModel";
 import fs from "fs";
 import s3 from "../../config/s3Config"
 import { UpdateProfileRequestBody } from "../../interfaces/User/user";
+import { IUserService } from "../../interfaces/Service/IUserService";
 
 dotenv.config();
 
@@ -21,15 +21,12 @@ interface CustomRequest extends Request {
 
 
 export class UserController {
-  private userService: UserService;
-  private appointmentService: AppointmentService;
-  private paymentService: PaymentService;
+  constructor(
+    private userService: IUserService,
+    private appointmentService: AppointmentService,
+    private paymentService: PaymentService
+  ) {}
 
-  constructor(userService: UserService, appointmentService: AppointmentService, paymentService: PaymentService) {
-    this.userService = userService;
-    this.appointmentService = appointmentService;
-    this.paymentService = paymentService;
-  }
   /// Change Password ///
 async changePassword (
   req: RequestWithUser,
@@ -121,8 +118,10 @@ async doctorSearch(req: Request, res: Response, next: NextFunction): Promise<voi
     next(error);
   }
 };
-/// Book Appointment ///
-async bookAppointment(req: Request, res: Response, next: NextFunction): Promise<void>{
+
+
+ /// Book Appointment ///
+ async bookAppointment(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { docId, slotDate, slotTime } = req.body;
     const token = req.headers.authorization?.split(" ")[1];
@@ -136,9 +135,10 @@ async bookAppointment(req: Request, res: Response, next: NextFunction): Promise<
   } catch (error) {
     next(error);
   }
-};
+}
+
 /// List Appointments ///
-async listAppointments(req: Request, res: Response, next: NextFunction): Promise<void>{
+async listAppointments(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { userId } = req.body;
     const appointments = await this.appointmentService.listAppointments(userId);
@@ -146,9 +146,10 @@ async listAppointments(req: Request, res: Response, next: NextFunction): Promise
   } catch (error) {
     next(error);
   }
-};
+}
+
 /// Cancel Appointment ///
-async cancelAppointment(req: Request, res: Response, next: NextFunction): Promise<void>{
+async cancelAppointment(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { userId, appointmentId } = req.body;
     const message = await this.appointmentService.cancelAppointment(userId, appointmentId);
@@ -156,7 +157,7 @@ async cancelAppointment(req: Request, res: Response, next: NextFunction): Promis
   } catch (error) {
     next(error);
   }
-};
+}
 /// Payment Razorpay ///
 async paymentRazorpay(req: Request, res: Response, next: NextFunction): Promise<void>{
   try {

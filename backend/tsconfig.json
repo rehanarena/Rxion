@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES6",                      // Use ES6 for compatibility
-    "module": "commonjs",                  // Use CommonJS modules (required for Node.js)
-    "outDir": "./dist",                    // Output compiled files to the "dist" directory
-    "rootDir": "./src",                    // Source code directory
-    "esModuleInterop": true,               // Allows importing modules using "require" or "import"
-    "skipLibCheck": true,                  // Skip type checking of declaration files
-    "strict": true                         // Enable all strict type-checking options
+    "target": "ES6",                      
+    "module": "commonjs",                  
+    "outDir": "./dist",                    
+    "rootDir": "./src",                    
+    "esModuleInterop": true,               
+    "skipLibCheck": true,                  
+    "strict": true                         
   },
   "include": [
     "src/**/*.ts"

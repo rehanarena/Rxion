@@ -20,31 +20,26 @@ class SpecialityRepository {
             return specialityModel_1.default.findOne({ name });
         });
     }
-    ;
     insertSpecialty(specialtyData) {
         return __awaiter(this, void 0, void 0, function* () {
             const specialty = new specialityModel_1.default(specialtyData);
             return specialty.save();
         });
     }
-    ;
     getSpecialties() {
         return __awaiter(this, void 0, void 0, function* () {
             return specialityModel_1.default.find();
         });
     }
-    ;
     deleteSpecialty(specialtyId) {
         return __awaiter(this, void 0, void 0, function* () {
             return specialityModel_1.default.findByIdAndDelete(specialtyId);
         });
     }
-    ;
     updateSpecialty(specialtyId, updateData) {
         return __awaiter(this, void 0, void 0, function* () {
             return specialityModel_1.default.findByIdAndUpdate(specialtyId, updateData, { new: true });
         });
     }
-    ;
 }
 exports.SpecialityRepository = SpecialityRepository;

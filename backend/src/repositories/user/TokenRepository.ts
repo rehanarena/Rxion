@@ -1,9 +1,7 @@
-export class TokenRepository {
-  private tokens: Map<string, string>;
+import { ITokenRepository } from "../../interfaces/Repository/ITokenRepository";
 
-  constructor() {
-    this.tokens = new Map<string, string>();
-  }
+export class TokenRepository implements ITokenRepository {
+  private tokens: Map<string, string> = new Map();
 
   setToken(userId: string, token: string): void {
     this.tokens.set(userId, token);
