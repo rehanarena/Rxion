@@ -9,16 +9,16 @@ import { UserController } from "../controllers/user/userController";
 // Services
 import { AuthService } from "../services/user/auth";
 import { UserService } from "../services/user/user";
-import { AppointmentService } from "../services/user/appointmentService";
-import { PaymentService } from "../services/user/paymentService";
+import { AppointmentService } from "../services/user/AppointmentService";
+import { PaymentService } from "../services/user/PaymentService";
 
 // Repositories
 import { AuthRepository } from "../repositories/user/authRepository";
-import { UserRepository } from "../repositories/user/userRepository";
-import { OTPRepository } from "../repositories/user/otpRepository";
-import { TokenRepository } from "../repositories/user/tokenRepository";
-import { DoctorRepository } from "../repositories/doctor/doctorRepository";
-import { AppointmentRepository } from "../repositories/user/appointmentRepository";
+import { UserRepository } from "../repositories/user/UserRepository";
+import { OTPRepository } from "../repositories/user/OTPRepository";
+import { TokenRepository } from "../repositories/user/TokenRepository";
+import { DoctorRepository } from "../repositories/doctor/DoctorRepository";
+import { AppointmentRepository } from "../repositories/user/AppointmentRepository";
 
 const userRouter = express.Router();
 

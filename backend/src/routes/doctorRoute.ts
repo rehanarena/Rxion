@@ -1,6 +1,6 @@
 import express from "express";
 import upload from '../middlewares/multer';
-import { DoctorRepository } from "../repositories/doctor/doctorRepository";
+import { DoctorRepository } from "../repositories/doctor/DoctorRepository";
 import { DoctorService } from "../services/doctor/doctorService";
 import { DoctorController } from "../controllers/doctor/doctorController";
 import authDoctor from "../middlewares/authDoctor";

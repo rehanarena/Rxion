@@ -12,29 +12,29 @@ const userController_1 = require("../controllers/user/userController");
 // Services
 const auth_1 = require("../services/user/auth");
 const user_1 = require("../services/user/user");
-const appointmentService_1 = require("../services/user/appointmentService");
-const paymentService_1 = require("../services/user/paymentService");
+const AppointmentService_1 = require("../services/user/AppointmentService");
+const PaymentService_1 = require("../services/user/PaymentService");
 // Repositories
 const authRepository_1 = require("../repositories/user/authRepository");
-const userRepository_1 = require("../repositories/user/userRepository");
-const otpRepository_1 = require("../repositories/user/otpRepository");
-const tokenRepository_1 = require("../repositories/user/tokenRepository");
-const doctorRepository_1 = require("../repositories/doctor/doctorRepository");
-const appointmentRepository_1 = require("../repositories/user/appointmentRepository");
+const UserRepository_1 = require("../repositories/user/UserRepository");
+const OTPRepository_1 = require("../repositories/user/OTPRepository");
+const TokenRepository_1 = require("../repositories/user/TokenRepository");
+const DoctorRepository_1 = require("../repositories/doctor/DoctorRepository");
+const AppointmentRepository_1 = require("../repositories/user/AppointmentRepository");
 const userRouter = express_1.default.Router();
 // Instantiate Repositories
 const authRepository = new authRepository_1.AuthRepository();
-const userRepository = new userRepository_1.UserRepository();
-const otpRepository = new otpRepository_1.OTPRepository();
-const tokenRepository = new tokenRepository_1.TokenRepository();
-const doctorRepository = new doctorRepository_1.DoctorRepository();
-const appointmentRepository = new appointmentRepository_1.AppointmentRepository();
+const userRepository = new UserRepository_1.UserRepository();
+const otpRepository = new OTPRepository_1.OTPRepository();
+const tokenRepository = new TokenRepository_1.TokenRepository();
+const doctorRepository = new DoctorRepository_1.DoctorRepository();
+const appointmentRepository = new AppointmentRepository_1.AppointmentRepository();
 // Instantiate Services
 const authService = new auth_1.AuthService(authRepository, otpRepository, tokenRepository);
 const userService = new user_1.UserService(userRepository);
-const appointmentService = new appointmentService_1.AppointmentService(doctorRepository, userRepository, appointmentRepository);
+const appointmentService = new AppointmentService_1.AppointmentService(doctorRepository, userRepository, appointmentRepository);
 // Note: PaymentService now accepts only the AppointmentRepository as a dependency.
-const paymentService = new paymentService_1.PaymentService(appointmentRepository, userRepository);
+const paymentService = new PaymentService_1.PaymentService(appointmentRepository, userRepository);
 // Instantiate Controllers
 const authController = new authController_1.AuthController(authService);
 const userController = new userController_1.UserController(userService, appointmentService, paymentService);

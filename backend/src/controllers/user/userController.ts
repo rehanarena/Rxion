@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import { RequestWithUser } from "../../middlewares/authUser";
-import { AppointmentService } from "../../services/user/appointmentService";
-import { PaymentService } from "../../services/user/paymentService";
 import HttpStatus from "../../utils/statusCode";
 import dotenv from 'dotenv';
 import specialityModel from "../../models/specialityModel";
@@ -9,6 +7,8 @@ import fs from "fs";
 import s3 from "../../config/s3Config"
 import { UpdateProfileRequestBody } from "../../interfaces/User/user";
 import { IUserService } from "../../interfaces/Service/IUserService";
+import { IAppointmentService } from "../../interfaces/Service/IAppointmentService";
+import { IPaymentService } from "../../interfaces/Service/IPaymentService";
 
 dotenv.config();
 
@@ -23,8 +23,8 @@ interface CustomRequest extends Request {
 export class UserController {
   constructor(
     private userService: IUserService,
-    private appointmentService: AppointmentService,
-    private paymentService: PaymentService
+    private appointmentService: IAppointmentService,
+    private paymentService: IPaymentService,
   ) {}
 
   /// Change Password ///

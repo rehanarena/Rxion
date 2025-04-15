@@ -1,6 +1,6 @@
 
 import { IDoctorService } from "../../interfaces/Service/IDoctorService";
-import { DoctorRepository } from "../../repositories/doctor/doctorRepository";
+import { DoctorRepository } from "../../repositories/doctor/DoctorRepository";
 import { DoctorOTPRepository } from "../../repositories/doctor/doctorOTPRepository";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";

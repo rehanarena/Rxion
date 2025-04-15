@@ -10,7 +10,7 @@ import { AdminRepository } from "../repositories/admin/adminRepository";
 
 import { DoctorController } from "../controllers/doctor/doctorController"
 import { DoctorService } from "../services/doctor/doctorService";
-import { DoctorRepository } from "../repositories/doctor/doctorRepository";
+import { DoctorRepository } from "../repositories/doctor/DoctorRepository";
 import { DoctorOTPRepository } from "../repositories/doctor/doctorOTPRepository";
 
 import { ReportController } from "../controllers/admin/reportController"

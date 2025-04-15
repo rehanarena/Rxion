@@ -1,5 +1,5 @@
 import { Socket, Server } from "socket.io";
-import ChatMessage, { IChatMessage } from "../models/chatModel";
+import ChatMessage, { IChatMessage } from "../models/ChatModel";
 import { ChatFile } from "../interfaces/Chat/chat";
 import { UserStatus } from "../interfaces/Chat/chat";
 

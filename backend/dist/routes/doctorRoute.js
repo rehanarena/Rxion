@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const multer_1 = __importDefault(require("../middlewares/multer"));
-const doctorRepository_1 = require("../repositories/doctor/doctorRepository");
+const DoctorRepository_1 = require("../repositories/doctor/DoctorRepository");
 const doctorService_1 = require("../services/doctor/doctorService");
 const doctorController_1 = require("../controllers/doctor/doctorController");
 const authDoctor_1 = __importDefault(require("../middlewares/authDoctor"));
@@ -17,7 +17,7 @@ const doctorAppointmentRepository_1 = require("../repositories/doctor/doctorAppo
 const appointmentService_1 = require("../services/doctor/appointmentService");
 const appointmentController_1 = require("../controllers/doctor/appointmentController");
 // Instantiate repositories
-const doctorRepository = new doctorRepository_1.DoctorRepository();
+const doctorRepository = new DoctorRepository_1.DoctorRepository();
 const doctorOTPRepository = new doctorOTPRepository_1.DoctorOTPRepository;
 const slotRepository = new slotRepository_1.SlotRepository;
 const appointmentRepository = new doctorAppointmentRepository_1.DoctorAppointmentRepository;
