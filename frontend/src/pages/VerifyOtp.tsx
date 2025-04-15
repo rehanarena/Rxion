@@ -9,7 +9,7 @@ const VerifyOtp = () => {
       ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
       : import.meta.env.VITE_BACKEND_URL;
   const navigate = useNavigate();
-  const [otpArray, setOtpArray] = useState(Array(6).fill("")); // Array for 6 OTP digits
+  const [otpArray, setOtpArray] = useState(Array(6).fill("")); 
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(30);
   const [isResendActive, setIsResendActive] = useState(false);
@@ -17,7 +17,7 @@ const VerifyOtp = () => {
   const location = useLocation();
   const stateUserId = location.state?.userId;
   const userId = stateUserId || localStorage.getItem("userId");
-  const isForPasswordReset = location.state?.isForPasswordReset || true;
+  const isForPasswordReset = location.state?.isForPasswordReset ;
 
   console.log("OTP Verification - userId:", userId);
 
@@ -40,13 +40,12 @@ const VerifyOtp = () => {
   }, [timer]);
 
   const handleChange = (value: string, index: number) => {
-    if (!/^\d?$/.test(value)) return; // Allow only single digit numbers
+    if (!/^\d?$/.test(value)) return; 
 
     const updatedOtpArray = [...otpArray];
     updatedOtpArray[index] = value;
     setOtpArray(updatedOtpArray);
 
-    // Automatically focus on the next field
     if (value && index < otpArray.length - 1) {
       const nextInput = document.getElementById(`otp-input-${index + 1}`);
       if (nextInput) (nextInput as HTMLInputElement).focus();
