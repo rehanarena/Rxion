@@ -9,8 +9,6 @@ const ResetPassword = () => {
     import.meta.env.VITE_NODE_ENV === "PRODUCTION"
       ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
       : import.meta.env.VITE_BACKEND_URL;
-
-  // Destructure userId, email, and token from state
   const { userId, email, token } = state || {};
 
   const [newPassword, setNewPassword] = useState("");
@@ -18,7 +16,6 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Validate that necessary info is present, otherwise redirect to login
     if (!userId || !email || !token) {
       toast.error("Invalid access! Redirecting to login.");
       navigate("/login");

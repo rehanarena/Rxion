@@ -3,10 +3,10 @@ import { Types } from "mongoose";
 import HttpStatus from "../../utils/statusCode";
 
 import { IAuthService } from "../../interfaces/Service/IAuthService";
+
 export class AuthController {
   private authService: IAuthService;
 
-  // The dependency is injected as an abstraction
   constructor(authService: IAuthService) {
     this.authService = authService;
   }
@@ -97,30 +97,29 @@ export class AuthController {
   async google(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, name, photo } = req.body;
-
+  
       if (!name || !email || !photo) {
         res
           .status(HttpStatus.BAD_REQUEST)
           .json({ message: "Name, email, and photo are required" });
         return;
       }
-
+  
       const { status, user, token } = await this.authService.googleAuth(
         email,
         name,
         photo
       );
-
+  
       const userObject = user.toObject ? user.toObject() : user;
       const { password, ...rest } = userObject;
-
+ 
+      const expiryDate = new Date(Date.now() + 3600000);
+      const cookieOpts = { httpOnly: true, expires: expiryDate };
+  
       if (status === HttpStatus.OK) {
-        const expiryDate = new Date(Date.now() + 3600000);
         res
-          .cookie("access_token", token, {
-            httpOnly: true,
-            expires: expiryDate,
-          })
+          .cookie("access_token", token, cookieOpts)
           .status(HttpStatus.OK)
           .json({
             success: true,
@@ -129,16 +128,21 @@ export class AuthController {
             accessToken: token,
           });
       } else {
-        res.status(HttpStatus.CREATED).json({
-          message: "Account created",
-          user: rest,
-          accessToken: token,
-        });
+        res
+          .cookie("access_token", token, cookieOpts)
+          .status(HttpStatus.CREATED)
+          .json({
+            success: true,              
+            message: "Account created",
+            user: rest,
+            accessToken: token,
+          });
       }
     } catch (error) {
       next(error);
     }
   }
+  
 
   async refreshAccessToken(
     req: Request,

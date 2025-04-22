@@ -22,6 +22,7 @@ import { AppointmentRepository } from "../repositories/user/AppointmentRepositor
 
 const userRouter = express.Router();
 
+
 // Instantiate Repositories
 const authRepository = new AuthRepository();
 const userRepository = new UserRepository();
@@ -34,7 +35,6 @@ const appointmentRepository = new AppointmentRepository();
 const authService = new AuthService(authRepository, otpRepository, tokenRepository);
 const userService = new UserService(userRepository);
 const appointmentService = new AppointmentService(doctorRepository, userRepository, appointmentRepository);
-// Note: PaymentService now accepts only the AppointmentRepository as a dependency.
 const paymentService = new PaymentService(appointmentRepository, userRepository);
 
 // Instantiate Controllers

@@ -46,8 +46,6 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
       .then((stream) => {
         console.log("Local stream captured:", stream)
         localStreamRef.current = stream
-        // Initially the local video element may not be mounted,
-        // so we set the stream again once it mounts (see effect below)
         initPeerConnection(stream)
       })
       .catch((err) => console.error("Error accessing media devices", err))
@@ -91,8 +89,6 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
     }
   }, [roomId])
 
-  // When the call is accepted and the local video element is mounted,
-  // assign the captured local stream to the video element.
   useEffect(() => {
     if (localVideoRef.current && localStreamRef.current) {
       localVideoRef.current.srcObject = localStreamRef.current;
@@ -212,7 +208,6 @@ const PatientVideoCall: React.FC<PatientVideoCallProps> = ({ roomId }) => {
           <h2 className="text-xl font-semibold">
             {callAccepted ? "Active Consultation" : "Virtual Consultation Room"}
           </h2>
-          <p className="text-sm opacity-80">Room ID: {roomId}</p>
         </div>
 
         {/* Waiting / Idle UI */}

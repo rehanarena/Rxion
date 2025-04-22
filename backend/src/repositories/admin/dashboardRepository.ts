@@ -156,7 +156,7 @@ export class DashboardRepository implements IDashboardRepository {
     const appointments = await appointmentModel.find(query).sort({ date: -1 });
 
     const reportData = appointments.map((appt) => ({
-      appointmentId: appt._id,
+      appointmentId: (appt as any).appointmentId,
       doctor: (appt.doctData && (appt.doctData as any).name) || "N/A",
       patient: (appt.userData && (appt.userData as any).name) || "N/A",
       date: appt.slotDate,

@@ -20,11 +20,9 @@ const PatientForgotPasswordOTP = () => {
         `${backendUrl}/api/user/forgot-password`,
         { email }
       );
-      // After successful response:
       if (data.success) {
         console.log("Forgot password response:", data);
         toast.success("OTP sent to your email.");
-        // Save the userId to localStorage
         localStorage.setItem("userId", data.userId);
         navigate("/verify-otp", {
           state: {

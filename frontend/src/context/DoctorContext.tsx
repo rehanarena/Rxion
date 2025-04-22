@@ -21,18 +21,19 @@ const DoctorContextProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
   const [docSlots, setDocSlots] = useState<Slot[]>([]);
 
-  const fetchSlots = async (docId: string) => {
+  const fetchSlots = async (docId: string): Promise<void> => {
     try {
         const response = await axios.get(`${backendUrl}/api/doctor/slot/${docId}`);
-        // console.log(`${backendUrl}/api/doctor/slot/${docId}`);
-      // console.log("API response:", response.data);
       if (response.data.success) {
         setDocSlots(response.data.slots);
+        console.log(response.data.slots) 
       } else {
-        console.error(response.data.message);
+        console.error("Fetch slots failed:", response.data.message);
+        throw new Error(response.data.message);
       }
     } catch (error) {
       console.error("Error fetching slots:", error);
+      throw error;
     }
   };
 

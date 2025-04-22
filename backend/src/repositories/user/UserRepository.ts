@@ -9,12 +9,12 @@ export class UserRepository implements IUserRepository {
     return await userModel.findOne({ email });
   }
 
-   async findOne(query: object) {
-      return await userModel.findOne(query);
-    }
-    async saveUser(user: any): Promise<any> {
-      return await user.save();
-    }
+  async findOne(query: object) {
+    return await userModel.findOne(query);
+  }
+  async saveUser(user: any): Promise<any> {
+    return await user.save();
+  }
   async createUser(userData: UserData) {
     const newUser = new userModel(userData);
     return await newUser.save();
@@ -56,19 +56,19 @@ export class UserRepository implements IUserRepository {
     return user.walletBalance;
   }
   async searchDoctors(
-      query: any,
-      sortOptions: any,
-      skip: number,
-      limit: number
-    ) {
-      return await doctorModel
-        .find(query)
-        .sort(sortOptions)
-        .skip(skip)
-        .limit(limit);
-    }
-  
-    async countDoctors(query: any) {
-      return await doctorModel.countDocuments(query);
-    }
+    query: any,
+    sortOptions: any,
+    skip: number,
+    limit: number
+  ) {
+    return await doctorModel
+      .find(query)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(limit);
+  }
+
+  async countDoctors(query: any) {
+    return await doctorModel.countDocuments(query);
+  }
 }

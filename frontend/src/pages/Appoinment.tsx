@@ -3,7 +3,7 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MessageSquare, Check } from "lucide-react";
-import api from "../api/axios"; 
+import api from "../api/axios";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
 import { DoctorContext } from "../context/DoctorContext";
@@ -30,7 +30,14 @@ const Appointment = () => {
   const { docId } = useParams<{ docId: string }>();
   const navigate = useNavigate();
 
-  const { doctors, currencySymbol, backendUrl, token, getDoctorsData } = useContext(AppContext)!;
+  const {
+    doctors,
+    currencySymbol,
+    backendUrl,
+    token,
+    getDoctorsData,
+    userData,
+  } = useContext(AppContext)!;
   const { docSlots, fetchSlots } = useContext(DoctorContext)!;
 
   const [docInfo, setDocInfo] = useState<Doctor | null>(null);
@@ -39,12 +46,30 @@ const Appointment = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (docId && doctors.length > 0) {
-      fetchDocInfo();
-      fetchSlots(docId);
-      setIsLoading(false);
+    if (userData && "isBlocked" in userData && userData.isBlocked) {
+      toast.error("Your account has been blocked by admin.");
+      navigate("/login");
     }
-  }, [docId, doctors, fetchSlots]);
+  }, [userData, navigate]);
+
+  useEffect(() => {
+    const loadDoctorAndSlots = async () => {
+      if (!docId || doctors.length === 0) return;
+
+      setIsLoading(true);
+
+      fetchDocInfo();
+      try {
+        await fetchSlots(docId);
+      } catch (err) {
+        console.error("Failed to load slots:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDoctorAndSlots();
+  }, [docId, doctors]);
 
   const fetchDocInfo = () => {
     const doc = doctors.find((doctor: Doctor) => doctor._id === docId);
@@ -88,9 +113,9 @@ const Appointment = () => {
         return;
       }
 
-      const slotDate = new Date(selectedSlot.startTime).toISOString().split("T")[0];
-
-      // Use the custom axios instance (api) here
+      const slotDate = new Date(selectedSlot.startTime)
+        .toISOString()
+        .split("T")[0];
       const { data } = await api.post(
         `${backendUrl}/api/user/book-appointment`,
         { docId, slotDate, slotTime },
@@ -106,11 +131,14 @@ const Appointment = () => {
 
         const formattedSlotTime = new Date(slotTime).toISOString();
         const slotDatePart = formattedSlotTime.split("T")[0];
-        const slotTimePart = new Date(formattedSlotTime).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        });
+        const slotTimePart = new Date(formattedSlotTime).toLocaleTimeString(
+          [],
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }
+        );
 
         const newSlot: BookedSlot = {
           date: slotDatePart,
@@ -173,26 +201,30 @@ const Appointment = () => {
       hour12: false,
     });
     const slotDateTime = `${slotDate} ${slotTimeFormatted}`;
-    return slotDateObj >= today && slotDateObj <= sevenDaysLater && !bookedSlotSet.has(slotDateTime);
+    return (
+      slotDateObj >= today &&
+      slotDateObj <= sevenDaysLater &&
+      !bookedSlotSet.has(slotDateTime)
+    );
   });
 
-  const groupedSlots = availableDocSlots.reduce(
-    (acc, slot) => {
-      const slotDateStr = new Date(slot.startTime).toDateString();
-      if (!acc[slotDateStr]) {
-        acc[slotDateStr] = [];
-      }
-      acc[slotDateStr].push(slot);
-      return acc;
-    },
-    {} as { [key: string]: typeof docSlots }
-  );
+  const groupedSlots = availableDocSlots.reduce((acc, slot) => {
+    const slotDateStr = new Date(slot.startTime).toDateString();
+    if (!acc[slotDateStr]) {
+      acc[slotDateStr] = [];
+    }
+    acc[slotDateStr].push(slot);
+    return acc;
+  }, {} as { [key: string]: typeof docSlots });
 
-  // Only compute slots if a date is selected
-  const slotsForSelectedDate = selectedDate ? groupedSlots[selectedDate.toDateString()] || [] : [];
+  const slotsForSelectedDate = selectedDate
+    ? groupedSlots[selectedDate.toDateString()] || []
+    : [];
   const timeSlotsSet = new Set<string>();
   const timeSlots: Date[] = [];
-  const bookedSlotTimes = new Set(bookedSlots.map((b) => new Date(`${b.date}T${b.time}`).toISOString()));
+  const bookedSlotTimes = new Set(
+    bookedSlots.map((b) => new Date(`${b.date}T${b.time}`).toISOString())
+  );
 
   slotsForSelectedDate.forEach((slot) => {
     const halfHourSlots = generateHalfHourSlots(slot.startTime, slot.endTime);
@@ -209,7 +241,20 @@ const Appointment = () => {
 
   const formatDate = (date: Date) => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
 
     return {
       day: days[date.getDay()],
@@ -221,7 +266,9 @@ const Appointment = () => {
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto p-4 md:p-6">
-        <h1 className="text-3xl font-bold mb-8 text-center">Book Appointment</h1>
+        <h1 className="text-3xl font-bold mb-8 text-center">
+          Book Appointment
+        </h1>
         <div className="bg-white rounded-lg shadow-lg overflow-hidden animate-pulse">
           <div className="md:flex">
             <div className="md:w-1/3 h-[300px] bg-gray-200"></div>
@@ -272,7 +319,9 @@ const Appointment = () => {
               </button>
             </div>
 
-            <p className="text-sm text-gray-500 mt-2">{docInfo.experience} of experience</p>
+            <p className="text-sm text-gray-500 mt-2">
+              {docInfo.experience} of experience
+            </p>
 
             <div className="mt-4">
               <h3 className="text-lg font-medium">About</h3>
@@ -292,7 +341,9 @@ const Appointment = () => {
         </div>
 
         <div className="p-6 bg-gray-50 border-t border-b border-gray-100">
-          <h3 className="text-xl font-semibold mb-4">Select Appointment Date</h3>
+          <h3 className="text-xl font-semibold mb-4">
+            Select Appointment Date
+          </h3>
           {Object.keys(groupedSlots).length > 0 ? (
             <div className="flex gap-3 overflow-x-auto pb-2">
               {Object.keys(groupedSlots).map((dateStr, index) => {
@@ -374,7 +425,9 @@ const Appointment = () => {
             onClick={bookAppointment}
             disabled={!slotTime}
             className={`w-full py-4 rounded-lg text-white text-lg font-semibold transition-colors ${
-              slotTime ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"
+              slotTime
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-blue-500 hover:bg-blue-600"
             }`}
           >
             Book Appointment

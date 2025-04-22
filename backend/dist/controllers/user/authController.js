@@ -27,7 +27,6 @@ exports.AuthController = void 0;
 const mongoose_1 = require("mongoose");
 const statusCode_1 = __importDefault(require("../../utils/statusCode"));
 class AuthController {
-    // The dependency is injected as an abstraction
     constructor(authService) {
         this.authService = authService;
     }

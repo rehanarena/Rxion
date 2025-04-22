@@ -1,7 +1,7 @@
-"use client";
-
 import React, { useState, useEffect, useRef, type ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
+import { toast } from "react-toastify";
 import { useAppContext } from "../context/AppContext";
 import {
   Send,
@@ -52,8 +52,6 @@ const ChatComponent: React.FC = () => {
   const doctorImage = selectedDoctor
     ? selectedDoctor.image
     : "/fallback-image.png";
-
-  // Use patient's _id as the room and name as sender.
   const room = userData?._id;
   const sender = userData?.name;
 
@@ -68,8 +66,15 @@ const ChatComponent: React.FC = () => {
   const [doctorStatus, setDoctorStatus] = useState<DoctorStatus>({
     online: false,
   });
+  const navigate = useNavigate();
 
-  // Connect to the socket server on mount and emit our own online status.
+  useEffect(() => {
+    if (userData && "isBlocked" in userData && userData.isBlocked) {
+      toast.error("Your account has been blocked by admin.");
+      navigate("/login");
+    }
+  }, [userData, navigate]);
+
   useEffect(() => {
     const newSocket = io(backendUrl);
     setSocket(newSocket);
@@ -81,7 +86,6 @@ const ChatComponent: React.FC = () => {
     };
   }, [userData]);
 
-  // Listen for user-status events (e.g. for the doctor)
   useEffect(() => {
     if (!socket) return;
     socket.on(
@@ -101,12 +105,10 @@ const ChatComponent: React.FC = () => {
     };
   }, [socket, doctorId]);
 
-  // Auto-scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Join chat room and set up listeners
   useEffect(() => {
     if (!socket || !room) return;
     socket.emit("join-chat", room);
@@ -152,7 +154,6 @@ const ChatComponent: React.FC = () => {
     };
   }, [socket, room, sender]);
 
-  // Emit a read event when there are unread messages
   useEffect(() => {
     if (socket && room && messages.length > 0 && sender) {
       const unreadMessages = messages.filter(
@@ -164,7 +165,6 @@ const ChatComponent: React.FC = () => {
     }
   }, [messages, socket, room, sender]);
 
-  // Handle text input change and typing events
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
     socket?.emit("typing", { room, sender });
@@ -176,7 +176,6 @@ const ChatComponent: React.FC = () => {
     }, 1000);
   };
 
-  // Function to send a text message
   const sendMessage = () => {
     if (input.trim() !== "" && userData) {
       socket?.emit("send-message", {
@@ -191,7 +190,6 @@ const ChatComponent: React.FC = () => {
     }
   };
 
-  // Handle file selection and upload
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !socket || !room || !sender) return;
@@ -209,7 +207,6 @@ const ChatComponent: React.FC = () => {
       });
       const resData = await response.json();
       console.log("Upload response:", resData);
-      // Expecting the backend to return an object like { file: { url, type, fileName } }
       const fileData: ChatFile = resData.file;
       console.log("Data sent with socket event:", {
         room,
@@ -219,7 +216,7 @@ const ChatComponent: React.FC = () => {
         patientImage: userData.image,
         file: fileData,
       });
-      
+
       socket.emit("send-message", {
         room,
         message: "",

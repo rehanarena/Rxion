@@ -65,7 +65,6 @@ const errorLogstream = rfs.createStream("error.log", {
     path: logDirectory,
     maxFiles: 7,
 });
-// errorLogstream.write("🔧 Logger test write\n");
 (0, mongodb_1.default)();
 (0, cloudinary_1.default)();
 app.use(express_1.default.json());

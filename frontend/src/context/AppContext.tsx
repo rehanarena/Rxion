@@ -54,7 +54,6 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const currencySymbol = "₹";
 
-  // Load token from local storage on mount
   useEffect(() => {
     const storedToken = localStorage.getItem("accessToken");
     if (storedToken) {
@@ -62,7 +61,6 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     }
   }, []);
 
-  // Update axios default headers and localStorage when token changes
   useEffect(() => {
     if (token) {
       localStorage.setItem("accessToken", token);
@@ -73,7 +71,6 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     }
   }, [token]);
 
-  // Function to load/update user profile data
   const loadUserProfileData = useCallback(async (): Promise<void> => {
     try {
       const { data } = await axios.get<{
@@ -100,7 +97,6 @@ const AppContextProvider = ({ children }: AppContextProviderProps) => {
     }
   }, [token, backendUrl]);
 
-  // Function to load doctors data
   const getDoctorsData = async (): Promise<void> => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/doctor/list`);

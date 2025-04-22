@@ -3,6 +3,7 @@ import { AdminContext } from '../../context/AdminContext';
 import axios from 'axios';
 import { UserData } from '../../Interfaces/User';
 import { AdminContextType } from '../../Interfaces/AdminContext';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const UserList = () => {
   const { aToken } = useContext(AdminContext) as AdminContextType;  
@@ -13,6 +14,7 @@ const UserList = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [usersPerPage] = useState<number>(10);
   const [search, setSearch] = useState<string>("");
+  const debouncedSearch = useDebounce(search, 500);
   const backendUrl = import.meta.env.VITE_NODE_ENV === "PRODUCTION"
     ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
     : import.meta.env.VITE_BACKEND_URL;
@@ -29,7 +31,7 @@ const UserList = () => {
         const response = await axios.get(`${backendUrl}/api/admin/users`, {
           headers: { atoken: aToken },
           params: {
-            search,
+            search: debouncedSearch,
             page: currentPage,
             limit: usersPerPage,
           },
@@ -53,7 +55,7 @@ const UserList = () => {
     };
   
     fetchUsers();
-  }, [aToken, backendUrl, currentPage, usersPerPage, search]);
+  }, [aToken, backendUrl, currentPage, usersPerPage, debouncedSearch,]);
   
   const handleBlockUnblock = async (userId: string, action: 'block' | 'unblock') => {
     try {

@@ -212,9 +212,8 @@ export class AuthService implements IAuthService {
         Math.random().toString(36).slice(-8) +
         Math.random().toString(36).slice(-8);
       const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
-      const username =
-        name.split(" ").join("").toLowerCase() +
-        Math.random().toString(36).slice(-8);
+
+      const username = name.split(" ").join("").toLowerCase();
 
       const newUser = await this.authRepository.createUser({
         name: username,

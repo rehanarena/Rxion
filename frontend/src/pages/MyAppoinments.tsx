@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Clock, MapPin, CreditCard, X } from "lucide-react";
+
 import io from "socket.io-client";
 
 interface IncomingCallData {
@@ -61,6 +62,10 @@ interface AppContextType {
   backendUrl: string;
   token: string | false;
   getDoctorsData: () => void;
+  UserData?: {
+    isBlocked: boolean;
+    name?: string;
+  };
 }
 
 declare global {
@@ -110,7 +115,7 @@ const backendUrl = import.meta.env.VITE_NODE_ENV === "PRODUCTION"
 const socket = io(backendUrl);
 
 const MyAppointments = () => {
-  const { backendUrl, token, getDoctorsData } = useContext(AppContext) as AppContextType;
+  const { backendUrl, token, getDoctorsData, UserData } = useContext(AppContext) as AppContextType;
   const navigate = useNavigate();
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -239,21 +244,14 @@ const MyAppointments = () => {
       console.log("Payment API response:", data);
     
       if (data.success) {
-        // If the backend sends back an "Already paid" message,
-        // simply show a toast and stop further processing.
         if (data.message === "Already paid") {
           toast.info("Already paid");
           getUsersAppointments();
           return;
         }
-    
-        // Open the Razorpay modal only if there's an order,
-        // meaning that the payment is still pending.
         if (data.order) {
           initPay(data.order, appointmentId);
         } else {
-          // If no order is provided yet the API signals success,
-          // we assume the payment is already complete.
           navigate("/payment-success", { state: { appointmentId } });
         }
       } else {
@@ -262,8 +260,6 @@ const MyAppointments = () => {
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || error.message;
-        
-        // Check if the error message contains "Already paid"
         if (errorMsg && errorMsg.toLowerCase().includes("already paid")) {
           toast.info("Already paid");
           getUsersAppointments();
@@ -280,6 +276,12 @@ const MyAppointments = () => {
     
   };
   
+  useEffect(() => {
+    if (UserData?.isBlocked) {
+      toast.error("Your account has been blocked by admin.");
+      navigate("/login"); 
+    }
+  }, [UserData, navigate]);
   
 
   useEffect(() => {
@@ -355,6 +357,14 @@ const MyAppointments = () => {
       )}
 
       <h1 className="text-2xl font-bold text-gray-800 mb-6">My Appointments</h1>
+      {appointments.length === 0 ? (
+  <p className="text-center text-gray-500 text-lg mt-10">No appointments found.</p>
+) : (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {/* your appointment cards go here */}
+  </div>
+)}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {appointments.map((appointment) => (
           <div key={appointment._id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full">

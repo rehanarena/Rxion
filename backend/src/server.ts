@@ -31,8 +31,6 @@ const errorLogstream = rfs.createStream("error.log", {
   maxFiles: 7,
 });
 
-// errorLogstream.write("🔧 Logger test write\n");
-
 connectDB();
 connectCloudinary();
 

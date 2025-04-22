@@ -33,7 +33,6 @@ const appointmentRepository = new AppointmentRepository_1.AppointmentRepository(
 const authService = new auth_1.AuthService(authRepository, otpRepository, tokenRepository);
 const userService = new user_1.UserService(userRepository);
 const appointmentService = new AppointmentService_1.AppointmentService(doctorRepository, userRepository, appointmentRepository);
-// Note: PaymentService now accepts only the AppointmentRepository as a dependency.
 const paymentService = new PaymentService_1.PaymentService(appointmentRepository, userRepository);
 // Instantiate Controllers
 const authController = new authController_1.AuthController(authService);

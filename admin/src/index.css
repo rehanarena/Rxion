@@ -6,3 +6,16 @@
 *{
     font-family: Outfit;
 }
+.hide-scrollbar {
+    -ms-overflow-style: none;  
+    scrollbar-width: none;     
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;            
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+  
+  

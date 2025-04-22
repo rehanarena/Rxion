@@ -20,7 +20,6 @@ export class AppointmentService implements IAppointmentService {
     this.userRepository = userRepository;
     this.appointmentRepository = appointmentRepository;
   }
-
   async bookAppointment(
     token: string,
     docId: string,
@@ -29,12 +28,12 @@ export class AppointmentService implements IAppointmentService {
   ): Promise<string> {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
     const userId = decoded.id;
-
+  
     const docData = await this.doctorRepository.findById(docId);
     if (!docData) throw new Error("Doctor not found");
     if (!docData.available) throw new Error("Doctor not available");
     if (!docData.fees) throw new Error("Doctor fees not found");
-
+  
     // Ensure slots_booked is an object
     if (!docData.slots_booked || Array.isArray(docData.slots_booked)) {
       docData.slots_booked = {};
@@ -42,7 +41,7 @@ export class AppointmentService implements IAppointmentService {
     if (!docData.slots_booked[slotDate]) {
       docData.slots_booked[slotDate] = [];
     }
-
+  
     const formattedSlotTime = new Date(slotTime).toISOString();
     const slotDatePart = formattedSlotTime.split("T")[0];
     const slotTimePart = new Date(formattedSlotTime).toLocaleTimeString([], {
@@ -50,14 +49,14 @@ export class AppointmentService implements IAppointmentService {
       minute: "2-digit",
       hour12: false,
     });
-
+  
     const isSlotBooked = docData.slots_booked[slotDate].some(
       (slot: any) => slot.date === slotDatePart && slot.time === slotTimePart
     );
     if (isSlotBooked) {
       throw new Error("Slot not available");
     }
-
+  
     // Add new slot
     docData.slots_booked[slotDate].push({
       date: slotDatePart,
@@ -67,11 +66,17 @@ export class AppointmentService implements IAppointmentService {
     await this.doctorRepository.updateDoctor(String(docData._id), {
       slots_booked: docData.slots_booked,
     });
-
+  
     const userData = await this.userRepository.findById(userId);
     if (!userData) throw new Error("User not found");
-
+  
+    // Generate a custom unique appointment ID //
+    const appointmentId = `APTMNT${Date.now().toString().slice(-5)}${Math.floor(
+      Math.random() * 10
+    )}`;
+  
     const appointmentData = {
+      appointmentId, 
       userId,
       docId,
       userData,
@@ -81,9 +86,10 @@ export class AppointmentService implements IAppointmentService {
       slotDate,
       date: new Date(),
     };
-
-    await this.appointmentRepository.createAppointment(appointmentData);
-
+  
+    const appointment = await this.appointmentRepository.createAppointment(appointmentData);
+    console.log("Saved appointment:", appointment);
+  
     try {
       await sendAppointmentBookedEmail(
         userData.email,
@@ -94,9 +100,10 @@ export class AppointmentService implements IAppointmentService {
     } catch (error) {
       console.error("Failed to send confirmation email:", error);
     }
-
-    return "Appointment booked successfully";
+  
+    return `Appointment booked successfully. Appointment ID: ${appointmentId}`;
   }
+  
 
   async listAppointments(userId: string) {
     return await this.appointmentRepository.findAppointmentsByUserId(userId);

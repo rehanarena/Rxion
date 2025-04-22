@@ -8,7 +8,6 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  // Adjust the token name (pToken, token, or similar) based on your PatientContext structure
   const { token } = useContext(AppContext) as AppContextType;
 
   if (!token) {

@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import { v4 as uuidv4 } from "uuid";
 
 export interface IAppointment extends Document {
+  appointmentId: string;
   userId: string;
   docId: string;
   slotDate: string;
@@ -15,6 +17,12 @@ export interface IAppointment extends Document {
 }
 
 const appointmentSchema: Schema<IAppointment> = new mongoose.Schema({
+  appointmentId: {
+    type: String,
+    required: true,
+    unique: true,
+
+  },
   userId: { type: String, required: true },
   docId: { type: String, required: true },
   slotDate: { type: String, required: true },

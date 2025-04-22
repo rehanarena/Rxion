@@ -33,8 +33,6 @@ const Login = () => {
           toast.error("Passwords do not match.");
           return;
         }
-  
-        // This call registers a new user.
         const { data } = await axiosInstance.post(
           `${backendUrl}/api/user/register`,
           { name, password, email, confirmPassword }
@@ -44,12 +42,11 @@ const Login = () => {
           toast.success(data.message);
           navigate("/verify-otp", { state: { userId: data.userId } });
         } else {
-          // This block might not be called if your backend sends an error via catch,
-          // but it's here in case the API responds with a success: false.
+          
           toast.error(data.message);
         }
       } else {
-        // Login flow
+       
         const { data } = await axiosInstance.post(
           `${backendUrl}/api/user/login`,
           { password, email }
@@ -121,9 +118,6 @@ const Login = () => {
     }
   };
 
-  // -------------------------
-  // NEW UI RETURN STATEMENT
-  // -------------------------
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-gray-700 px-4">
       {/* Main container */}

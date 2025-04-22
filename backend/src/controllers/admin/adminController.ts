@@ -158,8 +158,8 @@ export class AdminController {
     try {
       const {
         search = "",
-        sortField = "slotDate",
-        sortOrder = "asc",
+        sortField = "createdAt",
+        sortOrder = "desc",
         page = "1",
         limit = "10",
       } = req.query;

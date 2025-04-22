@@ -4,7 +4,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
+const uuid_1 = require("uuid");
 const appointmentSchema = new mongoose_1.default.Schema({
+    appointmentId: {
+        type: String,
+        required: true,
+        unique: true,
+        default: () => (0, uuid_1.v4)(),
+    },
     userId: { type: String, required: true },
     docId: { type: String, required: true },
     slotDate: { type: String, required: true },

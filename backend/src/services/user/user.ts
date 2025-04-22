@@ -6,7 +6,6 @@ import { SearchParams } from "../../interfaces/User/user";
 import { IUserRepository } from "../../interfaces/Repository/IUserRepository";
 import { IUserService } from "../../interfaces/Service/IUserService";
 
-
 export class UserService implements IUserService {
   constructor(private userRepository: IUserRepository) {}
 
@@ -76,6 +75,32 @@ export class UserService implements IUserService {
       updateData.medicalHistory = medicalHistory;
     }
 
+    const currentUser = await this.userRepository.findById(userId);
+
+    if (!currentUser) {
+      throw new Error("User not found");
+    }
+
+    if (imageFile && currentUser.image) {
+      const previousImagePublicId = currentUser.image
+        .split("/")
+        .pop()
+        ?.split(".")[0];
+
+      if (previousImagePublicId) {
+        const deleteResponse = await cloudinary.uploader.destroy(
+          previousImagePublicId
+        );
+        console.log("Old image delete response:", deleteResponse);
+
+        if (deleteResponse.result === "ok") {
+          console.log("Old image deleted successfully.");
+        } else {
+          console.log("Failed to delete the old image.");
+        }
+      }
+    }
+
     await this.userRepository.updateProfile(userId, updateData);
 
     if (imageFile) {
@@ -83,11 +108,13 @@ export class UserService implements IUserService {
         resource_type: "image",
       });
       const imageURL = imageUpload.secure_url;
+
       await this.userRepository.updateProfile(userId, { image: imageURL });
     }
 
     return { message: "Profile updated" };
   }
+
   async getWalletBalance(userId: string): Promise<number> {
     return await this.userRepository.getWalletBalance(userId);
   }

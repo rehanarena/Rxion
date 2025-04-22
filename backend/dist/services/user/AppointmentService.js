@@ -50,7 +50,7 @@ class AppointmentService {
             if (isSlotBooked) {
                 throw new Error("Slot not available");
             }
-            // Add new slot
+            // Add new slota
             docData.slots_booked[slotDate].push({
                 date: slotDatePart,
                 time: slotTimePart,

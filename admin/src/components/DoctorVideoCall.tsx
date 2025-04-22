@@ -198,7 +198,6 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
           <h2 className="text-xl font-semibold">
             {callStatus === "in-call" ? "Active Consultation" : "Doctor Consultation Room"}
           </h2>
-          <p className="text-sm opacity-80">Room ID: {roomId}</p>
         </div>
         {callStatus === "idle" && (
           <div className="flex flex-col items-center justify-center p-12 space-y-4">
