@@ -55,6 +55,7 @@ class UserService {
     }
     updateProfile(userId, name, phone, address, dob, gender, imageFile, medicalHistory) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             if (!userId || !name || !phone || !address || !dob || !gender) {
                 throw new Error("Enter details in all missing fields");
             }
@@ -68,6 +69,25 @@ class UserService {
             };
             if (medicalHistory) {
                 updateData.medicalHistory = medicalHistory;
+            }
+            const currentUser = yield this.userRepository.findById(userId);
+            if (!currentUser) {
+                throw new Error("User not found");
+            }
+            if (imageFile && currentUser.image) {
+                const previousImagePublicId = (_a = currentUser.image
+                    .split("/")
+                    .pop()) === null || _a === void 0 ? void 0 : _a.split(".")[0];
+                if (previousImagePublicId) {
+                    const deleteResponse = yield cloudinary_1.v2.uploader.destroy(previousImagePublicId);
+                    console.log("Old image delete response:", deleteResponse);
+                    if (deleteResponse.result === "ok") {
+                        console.log("Old image deleted successfully.");
+                    }
+                    else {
+                        console.log("Failed to delete the old image.");
+                    }
+                }
             }
             yield this.userRepository.updateProfile(userId, updateData);
             if (imageFile) {

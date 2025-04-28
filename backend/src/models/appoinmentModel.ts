@@ -14,6 +14,8 @@ export interface IAppointment extends Document {
   cancelled?: boolean;
   payment?: boolean;
   isCompleted?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const appointmentSchema: Schema<IAppointment> = new mongoose.Schema({

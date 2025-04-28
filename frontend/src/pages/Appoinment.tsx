@@ -423,7 +423,6 @@ const Appointment = () => {
         <div className="p-6 bg-gray-50 border-t border-gray-100">
           <button
             onClick={bookAppointment}
-            disabled={!slotTime}
             className={`w-full py-4 rounded-lg text-white text-lg font-semibold transition-colors ${
               slotTime
                 ? "bg-green-500 hover:bg-green-600"

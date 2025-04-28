@@ -50,7 +50,7 @@ class AppointmentService {
             if (isSlotBooked) {
                 throw new Error("Slot not available");
             }
-            // Add new slota
+            // Add new slot
             docData.slots_booked[slotDate].push({
                 date: slotDatePart,
                 time: slotTimePart,
@@ -62,7 +62,10 @@ class AppointmentService {
             const userData = yield this.userRepository.findById(userId);
             if (!userData)
                 throw new Error("User not found");
+            // Generate a custom unique appointment ID //
+            const appointmentId = `APTMNT${Date.now().toString().slice(-5)}${Math.floor(Math.random() * 10)}`;
             const appointmentData = {
+                appointmentId,
                 userId,
                 docId,
                 userData,
@@ -72,14 +75,15 @@ class AppointmentService {
                 slotDate,
                 date: new Date(),
             };
-            yield this.appointmentRepository.createAppointment(appointmentData);
+            const appointment = yield this.appointmentRepository.createAppointment(appointmentData);
+            console.log("Saved appointment:", appointment);
             try {
                 yield (0, mailer_1.sendAppointmentBookedEmail)(userData.email, userData.name, slotDatePart, slotTimePart);
             }
             catch (error) {
                 console.error("Failed to send confirmation email:", error);
             }
-            return "Appointment booked successfully";
+            return `Appointment booked successfully. Appointment ID: ${appointmentId}`;
         });
     }
     listAppointments(userId) {

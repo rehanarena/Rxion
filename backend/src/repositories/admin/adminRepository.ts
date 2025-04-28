@@ -32,14 +32,20 @@ export class AdminRepository implements IAdminRepository {
           ],
         }
       : {};
-
+  
     const skip = (page - 1) * limit;
-
-    const users = await userModel.find(query).skip(skip).limit(limit);
+  
+    const users = await userModel
+      .find(query)
+      .sort({ createdAt: -1 }) 
+      .skip(skip)
+      .limit(limit);
+  
     const total = await userModel.countDocuments(query);
-
+  
     return { users, total };
   }
+  
 
   async blockUnblockUser(
     id: string,

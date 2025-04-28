@@ -142,7 +142,7 @@ class AdminController {
     appointmentsAdmin(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { search = "", sortField = "slotDate", sortOrder = "asc", page = "1", limit = "10", } = req.query;
+                const { search = "", sortField = "createdAt", sortOrder = "desc", page = "1", limit = "10", } = req.query;
                 const options = {
                     search: search.toString(),
                     sortField: sortField.toString(),

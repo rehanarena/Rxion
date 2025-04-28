@@ -38,7 +38,6 @@ class UserController {
             }
         });
     }
-    ;
     /// Get Profile ///
     getProfile(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -52,7 +51,6 @@ class UserController {
             }
         });
     }
-    ;
     /// Update Profile ///
     updateProfile(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -60,14 +58,15 @@ class UserController {
                 const { userId, name, phone, address, dob, gender, medicalHistory } = req.body;
                 const imageFile = req.file;
                 const result = yield this.userService.updateProfile(userId, name, phone, address, dob, gender, imageFile, medicalHistory);
-                res.status(statusCode_1.default.OK).json({ success: true, message: result.message });
+                res
+                    .status(statusCode_1.default.OK)
+                    .json({ success: true, message: result.message });
             }
             catch (error) {
                 next(error);
             }
         });
     }
-    ;
     getSpecialty(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -79,7 +78,6 @@ class UserController {
             }
         });
     }
-    ;
     /// Get Wallet Balance ///
     getWalletBalance(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -87,7 +85,9 @@ class UserController {
             try {
                 const userId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || req.body.userId;
                 if (!userId) {
-                    res.status(statusCode_1.default.UNAUTHORIZED).json({ success: false, message: "User not authenticated" });
+                    res
+                        .status(statusCode_1.default.UNAUTHORIZED)
+                        .json({ success: false, message: "User not authenticated" });
                     return;
                 }
                 const walletBalance = yield this.userService.getWalletBalance(userId);
@@ -98,7 +98,6 @@ class UserController {
             }
         });
     }
-    ;
     /// Doctor Search ///
     doctorSearch(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -118,7 +117,6 @@ class UserController {
             }
         });
     }
-    ;
     /// Book Appointment ///
     bookAppointment(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -127,7 +125,9 @@ class UserController {
                 const { docId, slotDate, slotTime } = req.body;
                 const token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(" ")[1];
                 if (!token) {
-                    res.status(statusCode_1.default.UNAUTHORIZED).json({ success: false, message: "Unauthorized access" });
+                    res
+                        .status(statusCode_1.default.UNAUTHORIZED)
+                        .json({ success: false, message: "Unauthorized access" });
                     return;
                 }
                 const message = yield this.appointmentService.bookAppointment(token, docId, slotDate, slotTime);
@@ -177,7 +177,6 @@ class UserController {
             }
         });
     }
-    ;
     /// Verify Payment ///
     verifyRazorpay(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -196,13 +195,10 @@ class UserController {
             }
         });
     }
-    ;
     fileUploadofuser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!req.file) {
-                res
-                    .status(statusCode_1.default.BAD_REQUEST)
-                    .json({ error: "No file uploaded" });
+                res.status(statusCode_1.default.BAD_REQUEST).json({ error: "No file uploaded" });
                 return;
             }
             try {

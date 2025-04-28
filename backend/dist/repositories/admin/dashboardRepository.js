@@ -167,7 +167,7 @@ class DashboardRepository {
             }
             const appointments = yield appoinmentModel_1.default.find(query).sort({ date: -1 });
             const reportData = appointments.map((appt) => ({
-                appointmentId: appt._id,
+                appointmentId: appt.appointmentId,
                 doctor: (appt.doctData && appt.doctData.name) || "N/A",
                 patient: (appt.userData && appt.userData.name) || "N/A",
                 date: appt.slotDate,

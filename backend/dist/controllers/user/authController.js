@@ -111,13 +111,11 @@ class AuthController {
                 const { status, user, token } = yield this.authService.googleAuth(email, name, photo);
                 const userObject = user.toObject ? user.toObject() : user;
                 const { password } = userObject, rest = __rest(userObject, ["password"]);
+                const expiryDate = new Date(Date.now() + 3600000);
+                const cookieOpts = { httpOnly: true, expires: expiryDate };
                 if (status === statusCode_1.default.OK) {
-                    const expiryDate = new Date(Date.now() + 3600000);
                     res
-                        .cookie("access_token", token, {
-                        httpOnly: true,
-                        expires: expiryDate,
-                    })
+                        .cookie("access_token", token, cookieOpts)
                         .status(statusCode_1.default.OK)
                         .json({
                         success: true,
@@ -127,7 +125,11 @@ class AuthController {
                     });
                 }
                 else {
-                    res.status(statusCode_1.default.CREATED).json({
+                    res
+                        .cookie("access_token", token, cookieOpts)
+                        .status(statusCode_1.default.CREATED)
+                        .json({
+                        success: true,
                         message: "Account created",
                         user: rest,
                         accessToken: token,

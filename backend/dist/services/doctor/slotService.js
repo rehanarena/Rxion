@@ -30,63 +30,71 @@ class SlotService {
     addSlots(data) {
         return __awaiter(this, void 0, void 0, function* () {
             const { doctorId, startDate, endDate, daysOfWeek, startTime, endTime } = data;
+            if (!startDate || !endDate) {
+                throw new Error("Start and End dates are required.");
+            }
             if (!daysOfWeek || daysOfWeek.length === 0) {
-                throw new Error("Days of week are required.");
+                throw new Error("Days of the week are required.");
             }
             if (!startTime || !endTime) {
                 throw new Error("Start and End times are required.");
             }
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const now = new Date();
+            if (end < start) {
+                throw new Error("End date cannot be before start date.");
+            }
+            // Create rule for recurrence
             const rule = new rrule_1.RRule({
                 freq: rrule_1.RRule.WEEKLY,
-                dtstart: new Date(startDate),
-                until: new Date(endDate),
-                byweekday: daysOfWeek.map((day) => {
+                dtstart: start,
+                until: end,
+                byweekday: daysOfWeek.map(day => {
                     switch (day.toUpperCase()) {
-                        case "MO":
-                            return rrule_1.RRule.MO;
-                        case "TU":
-                            return rrule_1.RRule.TU;
-                        case "WE":
-                            return rrule_1.RRule.WE;
-                        case "TH":
-                            return rrule_1.RRule.TH;
-                        case "FR":
-                            return rrule_1.RRule.FR;
-                        case "SA":
-                            return rrule_1.RRule.SA;
-                        case "SU":
-                            return rrule_1.RRule.SU;
-                        default:
-                            throw new Error(`Invalid day: ${day}`);
+                        case "MO": return rrule_1.RRule.MO;
+                        case "TU": return rrule_1.RRule.TU;
+                        case "WE": return rrule_1.RRule.WE;
+                        case "TH": return rrule_1.RRule.TH;
+                        case "FR": return rrule_1.RRule.FR;
+                        case "SA": return rrule_1.RRule.SA;
+                        case "SU": return rrule_1.RRule.SU;
+                        default: throw new Error(`Invalid day: ${day}`);
                     }
                 }),
             });
             const slotDates = rule.all();
             const slotsToSave = [];
-            const now = new Date();
+            let skippedSlots = 0;
             for (const date of slotDates) {
                 const startSlotTime = new Date(date);
                 const endSlotTime = new Date(date);
                 const [startHour, startMinute] = startTime.split(":").map(Number);
-                startSlotTime.setHours(startHour);
-                startSlotTime.setMinutes(startMinute);
                 const [endHour, endMinute] = endTime.split(":").map(Number);
-                endSlotTime.setHours(endHour);
-                endSlotTime.setMinutes(endMinute);
+                startSlotTime.setHours(startHour, startMinute, 0);
+                endSlotTime.setHours(endHour, endMinute, 0);
                 if (isNaN(startSlotTime.getTime()) || isNaN(endSlotTime.getTime())) {
-                    throw new Error("Invalid time values.");
+                    throw new Error("Invalid start or end time.");
                 }
                 if (startSlotTime < now) {
+                    // Check if it's today with past time
+                    if (startSlotTime.toDateString() === now.toDateString()) {
+                        throw new Error("Past time cannot be selected for today's date.");
+                    }
+                    skippedSlots++;
                     continue;
                 }
-                const istStartTime = (0, moment_1.default)(startSlotTime)
-                    .utcOffset(330)
-                    .format("YYYY-MM-DD HH:mm:ss");
-                const istEndTime = (0, moment_1.default)(endSlotTime)
-                    .utcOffset(330)
-                    .format("YYYY-MM-DD HH:mm:ss");
+                // Validate selected day matches the date's actual weekday
+                const weekdayIndex = startSlotTime.getDay(); // 0 (Sun) to 6 (Sat)
+                const selectedDay = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][weekdayIndex];
+                if (!daysOfWeek.includes(selectedDay)) {
+                    throw new Error(`Selected day does not match date (${startSlotTime.toDateString()}).`);
+                }
+                const istStartTime = (0, moment_1.default)(startSlotTime).utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
+                const istEndTime = (0, moment_1.default)(endSlotTime).utcOffset(330).format("YYYY-MM-DD HH:mm:ss");
                 const existingSlot = yield this.slotRepository.findSlotByDoctorAndDate(doctorId, istStartTime);
                 if (existingSlot) {
+                    skippedSlots++;
                     continue;
                 }
                 slotsToSave.push({
@@ -99,10 +107,14 @@ class SlotService {
             }
             if (slotsToSave.length > 0) {
                 yield this.slotRepository.insertSlots(slotsToSave);
-                return { message: "Slots added successfully!" };
+                let msg = `Slots added successfully!`;
+                if (skippedSlots > 0) {
+                    msg += ` ${skippedSlots} slot(s) skipped (either past or already exist).`;
+                }
+                return { message: msg };
             }
             else {
-                return { message: "Already exist or Past Time cannot be added" };
+                throw new Error("All selected slots are either in the past or already exist.");
             }
         });
     }

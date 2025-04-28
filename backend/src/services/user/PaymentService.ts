@@ -2,13 +2,7 @@ import { IPaymentService } from "../../interfaces/Service/IPaymentService";
 import { IAppointmentRepository } from "../../interfaces/Repository/IAppointmentRepository";
 import { IUserRepository } from "../../interfaces/Repository/IUserRepository";
 import { razorpayInstance } from "../../config/razorpay";
-
-interface RazorpayOrderCreateRequestBody {
-  amount: number;
-  currency: string;
-  receipt: string;
-  payment_capture?: number;
-}
+import { RazorpayOrderCreateRequestBody } from "../../interfaces/User/user";
 
 export class PaymentService implements IPaymentService {
   private appointmentRepository: IAppointmentRepository;
@@ -21,7 +15,6 @@ export class PaymentService implements IPaymentService {
     this.appointmentRepository = appointmentRepository;
     this.userRepository = userRepository;
   }
-
 
   async processPayment(appointmentId: string) {
     const appointment = await this.appointmentRepository.findById(

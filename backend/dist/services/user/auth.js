@@ -167,8 +167,7 @@ class AuthService {
                 const generatedPassword = Math.random().toString(36).slice(-8) +
                     Math.random().toString(36).slice(-8);
                 const hashedPassword = bcryptjs_1.default.hashSync(generatedPassword, 10);
-                const username = name.split(" ").join("").toLowerCase() +
-                    Math.random().toString(36).slice(-8);
+                const username = name.split(" ").join("").toLowerCase();
                 const newUser = yield this.authRepository.createUser({
                     name: username,
                     email,
