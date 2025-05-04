@@ -5,8 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const multer_1 = __importDefault(require("../middlewares/multer"));
-const DoctorRepository_1 = require("../repositories/doctor/DoctorRepository");
-const doctorService_1 = require("../services/doctor/doctorService");
+const DoctorRepository_1 = require("../repositories/doctor/doctorRepository");
+const doctorService_1 = require("../services/doctor/DoctorService");
 const doctorController_1 = require("../controllers/doctor/doctorController");
 const authDoctor_1 = __importDefault(require("../middlewares/authDoctor"));
 const doctorOTPRepository_1 = require("../repositories/doctor/doctorOTPRepository");
