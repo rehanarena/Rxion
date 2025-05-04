@@ -40,7 +40,11 @@ class AdminRepository {
                 }
                 : {};
             const skip = (page - 1) * limit;
-            const users = yield userModel_1.default.find(query).skip(skip).limit(limit);
+            const users = yield userModel_1.default
+                .find(query)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
             const total = yield userModel_1.default.countDocuments(query);
             return { users, total };
         });

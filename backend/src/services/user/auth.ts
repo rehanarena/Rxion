@@ -31,7 +31,6 @@ export class AuthService implements IAuthService {
     if (!name || !email || !password) {
       throw new Error("Enter details in all fields");
     }
-
     if (password !== confirmPassword) {
       throw new Error("Passwords do not match");
     }
