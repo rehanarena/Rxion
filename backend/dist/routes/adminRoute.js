@@ -27,7 +27,7 @@ const dashboardRepository = new dashboardRepository_1.DashboardRepository();
 const specialityRepository = new specialityRepository_1.SpecialityRepository();
 // Create the service by injecting the repositories
 const adminService = new adminService_1.AdminService(adminRepository);
-const doctorService = new doctorService_1.DoctorService(doctorRepository, doctorOTPRepository);
+const doctorService = new DoctorService_1.DoctorService(doctorRepository, doctorOTPRepository);
 const specialityService = new specialityService_1.SpecialityService(specialityRepository);
 // Create the controller by injecting the service
 const adminController = new adminController_1.AdminController(adminService);
