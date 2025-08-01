@@ -1,35 +1,33 @@
-import appointmentModel from "../../models/appoinmentModel";
-import { IAppointment } from "../../models/appoinmentModel";
+import appointmentModel, { IAppointment } from "../../models/appoinmentModel";
+import { BaseRepository } from "../baseRepository";
 import { IAppointmentRepository } from "../../interfaces/Repository/IAppointmentRepository";
 
-export class AppointmentRepository implements IAppointmentRepository {
+export class AppointmentRepository
+  extends BaseRepository<IAppointment>
+  implements IAppointmentRepository {
+  constructor() {
+    super(appointmentModel);
+  }
 
-  async createAppointment(appointmentData: any): Promise<IAppointment> {
-    const appointment = new appointmentModel(appointmentData);
-    return await appointment.save();
+  async createAppointment(data: any): Promise<IAppointment> {
+    return this.create(data);
   }
 
   async findAppointmentsByUserId(userId: string): Promise<IAppointment[]> {
-    return await appointmentModel.find({ userId }).lean();
+    return this.model.find({ userId }).lean().exec();
   }
 
-  async findById(appointmentId: string): Promise<IAppointment | null> {
-    return await appointmentModel.findById(appointmentId);
-  }
-
-  async updateAppointment(appointmentId: string, update: object): Promise<IAppointment | null> {
-    return await appointmentModel.findByIdAndUpdate(appointmentId, update, { new: true });
+  async updateAppointment(
+    appointmentId: string,
+    update: object
+  ): Promise<IAppointment | null> {
+    return this.updateById(appointmentId, update as Partial<IAppointment>);
   }
 
   async updatePaymentStatus(
     appointmentId: string,
     update: object
   ): Promise<IAppointment | null> {
-    return await appointmentModel.findByIdAndUpdate(appointmentId, update, {
-      new: true,
-    });
-  }
-  async findOne(query: object): Promise<IAppointment | null> {
-    return appointmentModel.findOne(query).exec();
+    return this.updateById(appointmentId, update as Partial<IAppointment>);
   }
 }

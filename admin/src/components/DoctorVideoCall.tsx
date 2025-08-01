@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import io from "socket.io-client"
@@ -133,10 +131,8 @@ const DoctorVideoCall: React.FC<DoctorVideoCallProps> = ({ roomId }) => {
 
     pc.current.ontrack = (event) => {
       console.log("Remote stream received:", event.streams)
-      // Store the remote stream so we can set it on the video element later
       if (event.streams[0]) {
         remoteStreamRef.current = event.streams[0]
-        // If the remote video element is already rendered, assign the stream.
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = event.streams[0]
         }

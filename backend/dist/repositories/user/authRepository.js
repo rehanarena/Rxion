@@ -14,36 +14,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthRepository = void 0;
 const userModel_1 = __importDefault(require("../../models/userModel"));
-class AuthRepository {
+const baseRepository_1 = require("../baseRepository");
+class AuthRepository extends baseRepository_1.BaseRepository {
+    constructor() {
+        super(userModel_1.default);
+    }
     findByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield userModel_1.default.findOne({ email });
+            return this.findOne({ email });
         });
     }
-    createUser(userData) {
+    createUser(data) {
         return __awaiter(this, void 0, void 0, function* () {
-            const newUser = new userModel_1.default(userData);
-            return yield newUser.save();
-        });
-    }
-    findById(userId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield userModel_1.default.findById(userId);
-        });
-    }
-    updateUser(userId, update) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield userModel_1.default.findByIdAndUpdate(userId, update, { new: true });
+            return this.create(data);
         });
     }
     saveUser(user) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield user.save();
-        });
-    }
-    findOne(query) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield userModel_1.default.findOne(query);
+            return user.save();
         });
     }
 }

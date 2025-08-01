@@ -15,7 +15,6 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(): State {
-    // Update state to show fallback UI
     return { hasError: true };
   }
 

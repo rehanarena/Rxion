@@ -294,9 +294,9 @@
                 </div>
               ) : (
                 <p className="text-gray-600">
-                  {userData.address.line1}
+                  {userData.address?.line1}
                   <br />
-                  {userData.address.line2}
+                  {userData.address?.line2}
                 </p>
               )}
             </div>

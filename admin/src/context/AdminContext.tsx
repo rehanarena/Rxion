@@ -19,7 +19,7 @@ const AdminContextProvider: React.FC<AdminContextProviderProps> = ({ children })
     import.meta.env.VITE_NODE_ENV === "PRODUCTION"
       ? import.meta.env.VITE_PRODUCTION_URL_BACKEND
       : import.meta.env.VITE_BACKEND_URL;
-  console.log("Backend URL:", backendUrl);
+  // console.log("Backend URL:", backendUrl);
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);

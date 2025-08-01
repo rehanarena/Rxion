@@ -1,148 +1,123 @@
-import doctorModel from "../../models/doctorModel";
-import userModel from "../../models/userModel";
-import appointmentModel from "../../models/appoinmentModel";
+import { BaseRepository } from "../baseRepository";
+import userModel, { IUser } from "../../models/userModel";
+import doctorModel, { IDoctor } from "../../models/doctorModel";
+import appointmentModel, { IAppointment } from "../../models/appoinmentModel";
 import { IAdminRepository } from "../../interfaces/Repository/IAdminRepository";
 
 export class AdminRepository implements IAdminRepository {
-  async create(doctorData: any): Promise<any> {
-    const newDoctor = new doctorModel(doctorData);
-    return newDoctor.save();
+  private users = new BaseRepository<IUser>(userModel);
+  private doctors = new BaseRepository<IDoctor>(doctorModel);
+  private appointments = new BaseRepository<IAppointment>(appointmentModel);
+
+  async create(data: Partial<IDoctor>): Promise<IDoctor> {
+    return this.doctors.create(data);
   }
 
-  async validateAdminCredentials(
-    email: string,
-    password: string
-  ): Promise<boolean> {
+  async validateAdminCredentials(email: string, password: string): Promise<boolean> {
     return (
       email === process.env.ADMIN_EMAIL &&
       password === process.env.ADMIN_PASSWORD
     );
   }
-
   async getUsers(
     search: string,
     page: number,
     limit: number
-  ): Promise<{ users: any[]; total: number }> {
+  ): Promise<{ users: IUser[]; total: number }> {
     const query = search
-      ? {
-          $or: [
-            { name: { $regex: search, $options: "i" } },
-            { email: { $regex: search, $options: "i" } },
-          ],
-        }
+      ? { $or: [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ] }
       : {};
-  
+
     const skip = (page - 1) * limit;
-  
-    const users = await userModel
-      .find(query)
-      .sort({ createdAt: -1 }) 
-      .skip(skip)
-      .limit(limit);
-  
-    const total = await userModel.countDocuments(query);
-  
+    const [users, total] = await Promise.all([
+      this.users.find({ query, sort: { createdAt: -1 }, skip, limit }),
+      this.users.count(query),
+    ]);
+
     return { users, total };
   }
-  
 
   async blockUnblockUser(
     id: string,
-    action: string
+    action: "block" | "unblock"
   ): Promise<{ message: string }> {
-    const user = await userModel.findById(id);
-    if (!user) {
-      throw new Error("User not found");
-    }
-    if (action === "block") {
-      user.isBlocked = true;
-    } else if (action === "unblock") {
-      user.isBlocked = false;
-    } else {
-      throw new Error("Invalid action");
-    }
-    await user.save();
+    const value = action === "block";
+    const updated = await this.users.updateById(id, { isBlocked: value } as any);
+    if (!updated) throw new Error("User not found");
     return { message: `User has been ${action}ed successfully.` };
   }
 
   async blockUnblockDoctor(
     id: string,
-    action: string
+    action: "block" | "unblock"
   ): Promise<{ message: string }> {
-    const doctor = await doctorModel.findById(id);
-    if (!doctor) {
-      throw new Error("Doctor not found");
-    }
-    if (action === "block") {
-      doctor.isBlocked = true;
-    } else if (action === "unblock") {
-      doctor.isBlocked = false;
-    } else {
-      throw new Error("Invalid action");
-    }
-    await doctor.save();
+    const value = action === "block";
+    const updated = await this.doctors.updateById(id, { isBlocked: value } as any);
+    if (!updated) throw new Error("Doctor not found");
     return { message: `Doctor has been ${action}ed successfully.` };
   }
 
-  async findDoctors(query: any, skip: number, limit: number) {
-    return doctorModel.find(query).skip(skip).limit(limit);
+  async findDoctors(
+    query: object,
+    skip: number,
+    limit: number
+  ): Promise<IDoctor[]> {
+    return this.doctors.find({ query, skip, limit });
   }
 
-  async countDoctors(query: any) {
-    return doctorModel.countDocuments(query);
+  async countDoctors(query: object): Promise<number> {
+    return this.doctors.count(query);
   }
 
-  async getAllDoctors() {
-    return doctorModel.find({}).select("-password");
+  async getAllDoctors(): Promise<IDoctor[]> {
+    return this.doctors.find({ projection: "-password" });
   }
 
-  async getDoctorById(doctorId: string) {
-    return doctorModel.findById(doctorId);
+  async getDoctorById(doctorId: string): Promise<IDoctor | null> {
+    return this.doctors.findById(doctorId);
   }
 
-  async getAllAppointments(options: {
+  async getAllAppointments(opts: {
     search: string;
     sortField: string;
     sortOrder: string;
     page: number;
     limit: number;
-  }): Promise<any[]> {
-    const { search, sortField, sortOrder, page, limit } = options;
-    const query: any = {};
-    if (search) {
-      query["userData.name"] = { $regex: search, $options: "i" };
-    }
-
-    const sortOptions: any = {};
-    sortOptions[sortField] = sortOrder === "asc" ? 1 : -1;
+  }): Promise<IAppointment[]> {
+    const { search, sortField, sortOrder, page, limit } = opts;
+    const query = search
+      ? { "userData.name": { $regex: search, $options: "i" } }
+      : {};
 
     const skip = (page - 1) * limit;
+    const order = sortOrder.toLowerCase() === "desc" ? -1 : 1;
 
-    const appointments = await appointmentModel
-      .find(query)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(limit);
-
-    return appointments;
-  }
-
-  async findAppointmentById(appointmentId: string): Promise<any> {
-    return appointmentModel.findById(appointmentId);
-  }
-
-  async updateAppointment(appointmentId: string, update: any): Promise<any> {
-    return appointmentModel.findByIdAndUpdate(appointmentId, update, {
-      new: true,
+    return this.appointments.find({
+      query,
+      sort: { [sortField]: order },
+      skip,
+      limit,
     });
   }
 
-  async updateDoctorSlots(docId: string, slots_booked: any): Promise<any> {
-    return doctorModel.findByIdAndUpdate(
-      docId,
-      { slots_booked },
-      { new: true }
-    );
+  async findAppointmentById(appointmentId: string): Promise<IAppointment | null> {
+    return this.appointments.findById(appointmentId);
+  }
+
+  async updateAppointment(
+    appointmentId: string,
+    update: Partial<IAppointment>
+  ): Promise<IAppointment | null> {
+    return this.appointments.updateById(appointmentId, update);
+  }
+
+  async updateDoctorSlots(
+    docId: string,
+    slots_booked: number
+  ): Promise<IDoctor | null> {
+    return this.doctors.updateById(docId, { slots_booked } as any);
   }
 }

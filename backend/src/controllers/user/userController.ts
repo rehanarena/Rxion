@@ -4,7 +4,12 @@ import HttpStatus from "../../utils/statusCode";
 import dotenv from "dotenv";
 import specialityModel from "../../models/specialityModel";
 import fs from "fs";
-import s3 from "../../config/s3Config";
+import { s3Client } from "../../config/s3Config";
+import {
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { UpdateProfileRequestBody } from "../../interfaces/User/user";
 import { IUserService } from "../../interfaces/Service/IUserService";
 import { IAppointmentService } from "../../interfaces/Service/IAppointmentService";
@@ -250,33 +255,35 @@ export class UserController {
     }
 
     try {
-      const fileContent = fs.readFileSync(req.file.path);
+      const filePath = req.file.path;
+      const fileStream = fs.createReadStream(filePath);
       const uniqueFileName = `${Date.now()}-${req.file.originalname}`;
-      const params = {
-        Bucket: process.env.AWS_BUCKET_NAME as string,
+
+      const putCmd = new PutObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME!,
         Key: uniqueFileName,
-        Body: fileContent,
+        Body: fileStream,
         ContentType: req.file.mimetype,
-      };
-
-      const data = await s3.upload(params).promise();
-      fs.unlink(req.file.path, (err) => {
-        if (err) {
-          console.error("Error deleting local file:", err);
-        }
       });
-      const signedUrl = s3.getSignedUrl("getObject", {
-        Bucket: process.env.AWS_BUCKET_NAME as string,
+      await s3Client.send(putCmd);
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting local file:", err);
+      });
+      const getCmd = new GetObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME!,
         Key: uniqueFileName,
-        Expires: 60 * 60,
+      });
+      const signedUrl = await getSignedUrl(s3Client, getCmd, {
+        expiresIn: 60 * 60, 
       });
 
-      const fileData = {
-        url: signedUrl,
-        type: req.file.mimetype,
-        fileName: req.file.originalname,
-      };
-      res.status(HttpStatus.OK).json({ file: fileData });
+      res.status(HttpStatus.OK).json({
+        file: {
+          url: signedUrl,
+          type: req.file.mimetype,
+          fileName: req.file.originalname,
+        },
+      });
     } catch (error) {
       console.error("Error uploading file:", error);
       next(error);

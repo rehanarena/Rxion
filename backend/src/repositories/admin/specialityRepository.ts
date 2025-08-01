@@ -1,28 +1,40 @@
 import Specialty, { ISpecialty } from "../../models/specialityModel";
+import { BaseRepository } from "../baseRepository";
 import { ISpecialityRepository } from "../../interfaces/Repository/ISpecialityRepository";
 
-export class SpecialityRepository implements ISpecialityRepository {
-  async findSpecialtyByName(name: string): Promise<ISpecialty | null> {
-    return Specialty.findOne({ name });
+export class SpecialityRepository
+  extends BaseRepository<ISpecialty>
+  implements ISpecialityRepository
+{
+  constructor() {
+    super(Specialty);
   }
 
-  async insertSpecialty(specialtyData: { name: string; description: string }): Promise<ISpecialty> {
-    const specialty = new Specialty(specialtyData);
-    return specialty.save();
+  async findSpecialtyByName(name: string): Promise<ISpecialty | null> {
+    return this.findOne({ name });
+  }
+
+  async insertSpecialty(specialtyData: {
+    name: string;
+    description: string;
+  }): Promise<ISpecialty> {
+    return this.create(specialtyData as Partial<ISpecialty>);
   }
 
   async getSpecialties(): Promise<ISpecialty[]> {
-    return Specialty.find();
+    return this.find();
   }
-
   async deleteSpecialty(specialtyId: string): Promise<ISpecialty | null> {
-    return Specialty.findByIdAndDelete(specialtyId);
+    const existing = await this.findById(specialtyId);
+    if (!existing) return null;
+    await this.deleteById(specialtyId);
+    return existing;
   }
 
   async updateSpecialty(
     specialtyId: string,
     updateData: { name?: string; description?: string }
   ): Promise<ISpecialty | null> {
-    return Specialty.findByIdAndUpdate(specialtyId, updateData, { new: true });
+    return this.updateById(specialtyId, updateData as Partial<ISpecialty>);
   }
 }

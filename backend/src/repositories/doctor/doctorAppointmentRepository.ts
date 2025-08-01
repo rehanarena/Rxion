@@ -1,24 +1,29 @@
-import appointmentModel from "../../models/appoinmentModel";
-import { IAppointment } from "../../models/appoinmentModel";
+import appointmentModel, { IAppointment } from "../../models/appoinmentModel";
+import { BaseRepository } from "../baseRepository";
 import { IDoctorAppointmentRepository } from "../../interfaces/Repository/IDoctorAppointmentRepository";
 
-export class DoctorAppointmentRepository implements IDoctorAppointmentRepository {
+export class DoctorAppointmentRepository
+  extends BaseRepository<IAppointment>
+  implements IDoctorAppointmentRepository
+{
+  constructor() {
+    super(appointmentModel);
+  }
+
   async getAppointmentsByDoctor(docId: string): Promise<IAppointment[]> {
-    return appointmentModel.find({ docId });
+    return this.find({ query: { docId } });
   }
 
   async getAppointmentById(
     appointmentId: string
   ): Promise<IAppointment | null> {
-    return appointmentModel.findById(appointmentId);
+    return this.findById(appointmentId);
   }
 
   async updateAppointment(
     appointmentId: string,
     updateData: Partial<IAppointment>
   ): Promise<IAppointment | null> {
-    return appointmentModel.findByIdAndUpdate(appointmentId, updateData, {
-      new: true,
-    });
+    return this.updateById(appointmentId, updateData);
   }
 }

@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.chatHandler = chatHandler;
-const ChatModel_1 = __importDefault(require("../models/chatModel"));
+const ChatModel_1 = __importDefault(require("../models/ChatModel"));
 const userStatus = {};
 function chatHandler(socket, io) {
     socket.on("user-online", (userId) => {

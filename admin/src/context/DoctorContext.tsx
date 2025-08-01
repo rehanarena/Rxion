@@ -14,7 +14,7 @@ export const DoctorContext = createContext<DoctorContextType | undefined>(
 
 const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
   const backendUrl = import.meta.env.VITE_NODE_ENV==="PRODUCTION"? import.meta.env.VITE_PRODUCTION_URL_BACKEND: import.meta.env.VITE_BACKEND_URL
-  console.log(backendUrl)
+  // console.log(backendUrl)
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [dToken, setDToken] = useState<string>(
@@ -28,13 +28,13 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
       return;
     }
     try {
-      console.log(dToken)
+      // console.log(dToken)
       const { data } = await axios.get(`${backendUrl}/api/doctor/dashboard`, {
         headers: { dToken },
       });
       if (data.success) {
         setDashData(data.dashData);
-        console.log(data.dashData);
+        // console.log(data.dashData);
       } else {
         toast.error(data.message);
       }
@@ -72,9 +72,9 @@ const DoctorContextProvider: React.FC<DoctorContextProviderProps> = (props) => {
         headers: { dToken },
       });
       if (data.success && data.profileData) {
-        console.log("Doctor Data BEFORE state update:", profileData);
+        // console.log("Doctor Data BEFORE state update:", profileData);
         setProfileData(data.profileData); 
-        console.log("Doctor Data AFTER state update:", data.profileData);
+        // console.log("Doctor Data AFTER state update:", data.profileData);
       } else {
         toast.error(data.message || "Failed to fetch doctor profile");
       }
