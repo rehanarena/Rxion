@@ -16,10 +16,10 @@ const AppointmentService_1 = require("../services/user/AppointmentService");
 const PaymentService_1 = require("../services/user/PaymentService");
 // Repositories
 const authRepository_1 = require("../repositories/user/authRepository");
-const UserRepository_1 = require("../repositories/user/UserRepository");
-const OTPRepository_1 = require("../repositories/user/OTPRepository");
-const TokenRepository_1 = require("../repositories/user/TokenRepository");
-const DoctorRepository_1 = require("../repositories/doctor/DoctorRepository");
+const UserRepository_1 = require("../repositories/user/userRepository");
+const OTPRepository_1 = require("../repositories/user/otpRepository");
+const TokenRepository_1 = require("../repositories/user/tokenRepository");
+const DoctorRepository_1 = require("../repositories/doctor/doctorRepository");
 const AppointmentRepository_1 = require("../repositories/user/AppointmentRepository");
 const userRouter = express_1.default.Router();
 // Instantiate Repositories
