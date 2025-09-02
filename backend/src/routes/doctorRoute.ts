@@ -4,7 +4,7 @@ import { DoctorRepository } from "../repositories/doctor/DoctorRepository";
 import { DoctorService } from "../services/doctor/doctorService";
 import { DoctorController } from "../controllers/doctor/doctorController";
 import authDoctor from "../middlewares/authDoctor";
-import { DoctorOTPRepository } from "../repositories/doctor/doctorOTPRepository";
+import { DoctorOTPRepository } from "../repositories/doctor/doctorOtpRepository";
 import { SlotRepository } from "../repositories/doctor/slotRepository";
 import { SlotService } from "../services/doctor/slotService";
 import { SlotController } from "../controllers/doctor/slotController";
